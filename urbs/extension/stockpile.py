@@ -198,7 +198,7 @@ class TimedelayEUSecondaryProductionRule(AbstractConstraint):
                 f"Running constraint TimedelayEUSecondaryProductionRule for stf={stf} (start year)"
             )
             lhs = (
-                m.capacity_ext_eusecondary[stf, location, tech]
+                m.capacity_facility_eusecondary[stf, location, tech]
                 - m.cap_sec_prior[location, tech]
             )
             rhs = (
@@ -209,13 +209,13 @@ class TimedelayEUSecondaryProductionRule(AbstractConstraint):
 
         else:
             lhs = (
-                m.capacity_ext_eusecondary[stf, location, tech]
-                - m.capacity_ext_eusecondary[stf - 1, location, tech]
+                m.capacity_facility_eusecondary[stf, location, tech]
+                - m.capacity_facility_eusecondary[stf - 1, location, tech]
             )
             rhs = (
                 m.deltaQ_EUsecondary[location, tech]
                 + m.IR_EU_secondary[location, tech]
-                * m.capacity_ext_eusecondary[stf - 1, location, tech]
+                * m.capacity_facility_eusecondary[stf - 1, location, tech]
             )
 
             debug_print(
@@ -241,20 +241,20 @@ class Constraint1EUSecondaryToTotalRule(AbstractConstraint):  # NOTE disabled at
             return pyomo.Constraint.Skip
 
 
-class Constraint2EUSecondaryToTotalRule(AbstractConstraint):
-    def apply_rule(self, m, stf, location, tech):
-        l_value = m.l[location, tech]
-        if value(m.y0) >= stf - l_value:
-            lhs = m.capacity_ext_eusecondary[stf, location, tech]
-            rhs = m.DCR_solar[stf, location, tech] * m.capacity_ext[stf, location, tech]
-
-            debug_print(
-                f"Debug: STF = {stf}, Location = {location}, Tech = {tech}, LHS = {lhs}, RHS = {rhs}"
-            )
-
-            return lhs <= rhs
-        else:
-            return pyomo.Constraint.Skip
+#class Constraint2EUSecondaryToTotalRule(AbstractConstraint):
+#    def apply_rule(self, m, stf, location, tech):
+#        l_value = m.l[location, tech]
+#        if value(m.y0) >= stf - l_value:
+#            lhs = m.capacity_ext_eusecondary[stf, location, tech]
+#            rhs = m.DCR_solar[stf, location, tech] * m.capacity_ext[stf, location, tech]
+#
+#            debug_print(
+#                f"Debug: STF = {stf}, Location = {location}, Tech = {tech}, LHS = {lhs}, RHS = {rhs}"
+#            )
+#
+#            return lhs <= rhs
+#        else:
+ #           return pyomo.Constraint.Skip
 
 
 class ConstraintEUPrimaryToTotalRule(AbstractConstraint):
@@ -293,15 +293,15 @@ class ConstraintEUSecondaryToSecondaryRule(AbstractConstraint):
             return pyomo.Constraint.Skip
 
         if stf == value(m.y0):
-            lhs = m.capacity_ext_eusecondary[stf, location, tech]
+            lhs = m.capacity_facility_eusecondary[stf, location, tech]
             rhs = m.DR_secondary[location, tech] * m.cap_sec_prior[location, tech]
 
             return lhs >= rhs
         else:
-            lhs = m.capacity_ext_eusecondary[stf, location, tech]
+            lhs = m.capacity_facility_eusecondary[stf, location, tech]
             rhs = (
                 m.DR_secondary[location, tech]
-                * m.capacity_ext_eusecondary[stf - 1, location, tech]
+                * m.capacity_facility_eusecondary[stf - 1, location, tech]
             )
 
             debug_print(
@@ -350,11 +350,39 @@ class ConstraintBatteryCapRule(AbstractConstraint):
 
 class ConstraintCarryoverSecondary(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
-        return m.capacity_secondary_cumulative[
-            stf, location, tech
-        ] == m.total_secondary_cap_inital[location, tech] + sum(
-            m.capacity_ext_eusecondary[t, location, tech] for t in m.stf if t <= stf
-        )
+        # Scale values to MW or GW to avoid very large numbers
+        scaling_factor = 1000.0  # Convert to GW if values are in MW
+        return (m.capacity_secondary_cumulative[stf, location, tech] / scaling_factor ==
+                m.total_secondary_cap_inital[location, tech] / scaling_factor +
+                sum(m.capacity_ext_eusecondary[t, location, tech] / scaling_factor
+                    for t in m.stf if t <= stf))
+
+
+class ConstraintCarryoverFacility(AbstractConstraint):
+    def apply_rule(self, m, stf, location, tech):
+        # Scale values to MW or GW to avoid very large numbers
+        scaling_factor = 1000.0  # Convert to GW if values are in MW
+        return (m.capacity_facility_cumulative[stf, location, tech] / scaling_factor ==
+                m.total_facility_cap_initial[location, tech] / scaling_factor +
+                sum(m.capacity_facility_eusecondary[t, location, tech] / scaling_factor
+                    for t in m.stf if t <= stf))
+
+
+class ConstraintRemanufacturingFacilitySize(AbstractConstraint):
+    def apply_rule(self, m, stf, location, tech):
+        # Scale values to improve numerical stability
+        scaling_factor = 1000.0  # Convert to GW if values are in MW
+        return (m.capacity_inactive_eusecondary[stf, location, tech] / scaling_factor ==
+                (m.capacity_facility_cumulative[stf, location, tech] -
+                 m.capacity_ext_eusecondary[stf, location, tech]) / scaling_factor)
+
+
+class ConstraintLimitSecondaryCapacity(AbstractConstraint):
+    def apply_rule(self, m, stf, location, tech):
+        # Scale values to improve numerical stability
+        scaling_factor = 1000.0  # Convert to GW if values are in MW
+        return (m.capacity_ext_eusecondary[stf, location, tech] / scaling_factor <=
+                m.capacity_facility_cumulative[stf, location, tech] / scaling_factor)
 
 
 def apply_stockpiling_constraints(m):
@@ -368,13 +396,16 @@ def apply_stockpiling_constraints(m):
         TimedelayEUPrimaryProductionRule(),
         TimedelayEUSecondaryProductionRule(),
         # Constraint1EUSecondaryToTotalRule(), #ToDo fix this constraint
-        Constraint2EUSecondaryToTotalRule(),
+        # Constraint2EUSecondaryToTotalRule(),
         ConstraintEUPrimaryToTotalRule(),
         ConstraintEUSecondaryToSecondaryRule(),
         ConstraintMaxIntoStockRule(),
         ConstraintBatteryDemandRule(),
         ConstraintBatteryCapRule(),
         ConstraintCarryoverSecondary(),
+        ConstraintCarryoverFacility(),
+        ConstraintRemanufacturingFacilitySize(),
+        ConstraintLimitSecondaryCapacity()
     ]
 
     for i, constraint in enumerate(constraints):

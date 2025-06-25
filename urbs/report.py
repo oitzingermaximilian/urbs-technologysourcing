@@ -39,6 +39,8 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
         df_e_pro_in_grouped,
         pricereduction_sec,
         secondary_cumulative_capacity_df,
+        facilitiesdf,
+        facility_cumulative_capacity_df
     ) = get_constants(instance)
 
     # create spreadsheet writer object
@@ -63,6 +65,8 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
         secondary_cumulative_capacity_df.to_excel(
             writer, sheet_name="Cumulative Secondary Caps"
         )
+        facilitiesdf.to_excel(writer, sheet_name="Facilitiesvsinstalled")
+        facility_cumulative_capacity_df.to_excel(writer, sheet_name="Facility_Cumulative_Capacity")
 
         #################################################################################
 

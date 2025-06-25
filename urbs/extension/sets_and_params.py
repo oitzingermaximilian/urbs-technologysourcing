@@ -496,3 +496,9 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         initialize=initialize_param("capacity_scrap_total", default_value=0),
         doc="capacity_scrap_total",
     )
+    m.total_facility_cap_initial = pyomo.Param(
+        m.location,
+        m.tech,
+        initialize=initialize_param("total_facility_cap_initial", default_value=0),
+        doc="total_facility_cap_initial",
+    )

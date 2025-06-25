@@ -5,6 +5,7 @@ import glob
 import openpyxl
 import time
 import seaborn as sns
+import numpy as np
 
 # Set the font sizes for all plots
 plt.rcParams.update({
@@ -414,6 +415,99 @@ def commodities_demand(output_file_path):
     plt.close(fig_abs)
 
 
+def plot_facility_utilization(output_file_path):
+    # Extract scenario name and create output directory
+    file_name = os.path.basename(output_file_path)
+    scenario_name = file_name.replace("result_scenario_", "").replace(".xlsx", "")
+    base_dir = os.path.dirname(output_file_path)
+    output_dir = os.path.join(base_dir, f"figures_{scenario_name}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Read data from both sheets
+    total_capacity = pd.read_excel(output_file_path, sheet_name='Total Cap Fac')
+    used_capacity = pd.read_excel(output_file_path, sheet_name='capacity_ext_eusecondary')
+
+    # Define the years we want to plot
+    years = [2025, 2030, 2035, 2040, 2045, 2050]
+
+    # Extract locations and technologies
+    locations = total_capacity['key_0'].unique()
+    technologies = total_capacity['key_1'].unique()
+
+    # Create a figure for each technology
+    for tech in technologies:
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Filter data for current technology
+        tech_total = total_capacity[total_capacity['key_1'] == tech]
+        tech_used = used_capacity[used_capacity['key_1'] == tech]
+
+        # Calculate positions for bars
+        n_years = len(years)
+        n_locations = len(locations)
+        width = 0.35  # width of bars
+
+        # Create position arrays for bars
+        indices = np.arange(n_years)
+
+        # Plot bars for each location
+        for i, loc in enumerate(locations):
+            # Calculate x positions for this location's bars
+            x = indices + (i - (n_locations-1)/2) * (width + 0.1)
+
+            # Get values for each year
+            total_vals = [tech_total[(tech_total['key_0'] == loc) &
+                                   (tech_total['year'] == year)]['value'].values[0] / 1000
+                         if len(tech_total[(tech_total['key_0'] == loc) &
+                                         (tech_total['year'] == year)]) > 0 else 0
+                         for year in years]
+
+            used_vals = [tech_used[(tech_used['key_0'] == loc) &
+                                  (tech_used['year'] == year)]['value'].values[0] / 1000
+                        if len(tech_used[(tech_used['key_0'] == loc) &
+                                       (tech_used['year'] == year)]) > 0 else 0
+                        for year in years]
+
+            # Plot bars with thicker outlines
+            ax.bar(x, total_vals, width, label=f'Total Capacity {loc}' if i == 0 else "",
+                  color='lightgray', alpha=0.7, edgecolor='black', linewidth=1.5)
+            ax.bar(x, used_vals, width, label=f'Used Capacity {loc}' if i == 0 else "",
+                  color='darkblue', alpha=0.7, edgecolor='black', linewidth=1.5)
+
+        # Customize the plot
+        ax.set_xlabel('Year', labelpad=10)
+        ax.set_ylabel('Capacity (GW)', labelpad=10)
+        ax.set_title(f'Facility Capacity Utilization - {tech}', pad=15)
+        ax.set_xticks(indices)
+        ax.set_xticklabels(years, rotation=45, ha='right')
+
+        # Add legend
+        handles = []
+        labels = []
+        for loc in locations:
+            handles.extend([
+                plt.Rectangle((0,0),1,1, color='lightgray', alpha=0.7, edgecolor='black', linewidth=1.5),
+                plt.Rectangle((0,0),1,1, color='darkblue', alpha=0.7, edgecolor='black', linewidth=1.5)
+            ])
+            labels.extend([f'Total Capacity {loc}', f'Used Capacity {loc}'])
+
+        ax.legend(handles, labels, frameon=True, loc='upper left', bbox_to_anchor=(1, 1))
+
+        # Add grid for better readability
+        ax.grid(axis='y', alpha=0.3)
+
+        # Adjust layout to prevent legend cutoff
+        plt.tight_layout()
+
+        # Save the figure
+        safe_tech_name = tech.replace(" ", "_").replace("/", "_")
+        plt.savefig(os.path.join(output_dir, f'facility_utilization_{safe_tech_name}.png'),
+                   dpi=300, bbox_inches='tight')
+        plt.close(fig)
+
+    print(f"✅ Facility utilization plots saved in {output_dir}")
+
+
 # Example: Call this after saving Excel
 # write_carryovers_to_excel(..., output_file_path)
 # plot_capacity_decomposition_by_technology(output_file_path)
@@ -472,3 +566,4 @@ def wait_for_excel_sheets(path, expected_sheets, timeout=60):  # TODO re-add if 
 # lineplot_fuels("result/urbs-20250604T1424/result_scenario_base.xlsx")
 
 # plot_balance_created("result/urbs-20250604T1538/result_scenario_base.xlsx")
+plot_facility_utilization("result/urbs-20250625T2055/result_scenario_base.xlsx")

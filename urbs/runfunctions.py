@@ -39,17 +39,7 @@ def prepare_result_directory(result_name):
 def setup_solver(optim, logfile="solver.log"):
     """ """
     if optim.name == "gurobi":
-        # reference with list of option names
-        # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
         optim.set_options("logfile={}".format(logfile))
-        # Add detailed logging for binary variables
-        optim.options['DisplayInterval'] = 1
-        optim.options['MIPDisplay'] = 4  # Most verbose MIP display
-        optim.options['VarBranch'] = 1   # Strong branching
-        optim.options['SolutionLimit'] = 1
-        # Print binary variables in solution
-        optim.options['WriteSolution'] = 1
-
     elif optim.name == "glpk":
         # reference with list of options
         # execute 'glpsol --help'
@@ -980,6 +970,10 @@ def sliced_dataurbsextensionv1(
             tech: initial_conditions["Total Cap Sec"].get(("EU27", tech), 0)
             for tech in tech_to_update
         }
+        filtered_cumulativ_fac_start = {
+            tech: initial_conditions["Total Cap Fac"].get(("EU27", tech), 0)
+            for tech in tech_to_update
+        }
 
         filtered_pricereduction_sec_start = {
             tech: initial_conditions["Pricereduction"].get(("EU27", tech), 0)
@@ -992,7 +986,7 @@ def sliced_dataurbsextensionv1(
         }
 
         filtered_cap_sec_prior_start = {
-            tech: initial_conditions["capacity_ext_eusecondary"].get(("EU27", tech), 0)
+            tech: initial_conditions["capacity_facility_eusecondary"].get(("EU27", tech), 0)
             for tech in tech_to_update
         }
 
@@ -1019,6 +1013,10 @@ def sliced_dataurbsextensionv1(
                 current_cumulative_sec = data_urbsextensionv1["technologies"]["EU27"][
                     tech_key
                 ].get("Initial_secondary_cap", "Not Set")
+
+                current_cumulative_fac = data_urbsextensionv1["technologies"]["EU27"][
+                    tech_key
+                ].get("total_facility_cap_initial", "Not Set")
 
                 current_pricereduction_sec = data_urbsextensionv1["technologies"][
                     "EU27"
@@ -1067,6 +1065,11 @@ def sliced_dataurbsextensionv1(
                     "Initial_secondary_cap"
                 ] = new_cap_cumulative
 
+                new_fac_cumulative = filtered_cumulativ_fac_start.get(tech, 0)
+                data_urbsextensionv1["technologies"]["EU27"][tech_key][
+                    "total_facility_cap_initial"
+                ] = new_fac_cumulative
+
                 new_pricereduction = filtered_pricereduction_sec_start.get(tech, 0)
                 data_urbsextensionv1["technologies"]["EU27"][tech_key][
                     "price_reduction_init"
@@ -1096,6 +1099,9 @@ def sliced_dataurbsextensionv1(
                 )
                 print(
                     f"  Initial_secondary_cap: {current_cumulative_sec} -> {new_cap_cumulative}"
+                )
+                print(
+                    f"  Initial_secondary_fac: {current_cumulative_fac} -> {new_fac_cumulative}"
                 )
                 print(
                     f"  price_reduction_init: {current_pricereduction_sec} -> {new_pricereduction}"

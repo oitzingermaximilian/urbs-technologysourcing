@@ -22,6 +22,7 @@ def read_carry_over_from_excel(result_path, scenario_name):
     detailed_cap_sheet = pd.read_excel(filepath, sheet_name="extension_only_caps")
     dec_sheet = pd.read_excel(filepath, sheet_name="decom")
     secondary_cap = pd.read_excel(filepath, sheet_name="Cumulative Secondary Caps")
+    facility_cap = pd.read_excel(filepath, sheet_name="Facility_Cumulative_Capacity")
     scrap_sheet = pd.read_excel(filepath, sheet_name="scrap")
     balance_sheet = pd.read_excel(filepath, sheet_name="extension_balance")
     e_pro_in_sheet = pd.read_excel(filepath, sheet_name="e_pro_in")
@@ -29,7 +30,7 @@ def read_carry_over_from_excel(result_path, scenario_name):
     co2_sheet = pd.read_excel(filepath, sheet_name="us_co2")
     pricereduction_sec_sheet = pd.read_excel(filepath, sheet_name="pricereduction_sec")
     # process_cost_sheet = pd.read_excel(filepath, sheet_name="process_cost")
-
+    facility_sheet = pd.read_excel(filepath, sheet_name="Facilitiesvsinstalled")
     # Forward fill to clean up NaNs
     for df in [
         cap_sheet,
@@ -39,6 +40,8 @@ def read_carry_over_from_excel(result_path, scenario_name):
         secondary_cap,
         pricereduction_sec_sheet,
         scrap_sheet,
+        facility_sheet,
+        facility_cap
     ]:
         df["stf"] = df["stf"].fillna(method="ffill")
         if "location" in df.columns:
@@ -54,6 +57,7 @@ def read_carry_over_from_excel(result_path, scenario_name):
         "capacity_ext_stock",
         "capacity_ext_stock_imported",
         "newly_added_capacity",
+        "capacity_facility_eusecondary"
     ]
     carryovers = {}
 
@@ -82,7 +86,7 @@ def read_carry_over_from_excel(result_path, scenario_name):
         stock_year = stock_sheet[stock_sheet["stf"] == year]
         dec_year = dec_sheet[dec_sheet["stf"] == year]
         sec_year = secondary_cap[secondary_cap["stf"] == year]
-
+        fac_year = facility_cap[facility_cap["stf"] == year]
         co2_year = co2_grouped[co2_grouped["stf"] == year]
         cost_year = cost_grouped[cost_grouped["stf"] == year]
         scrap_year = scrap_sheet[scrap_sheet["stf"] == year]
@@ -92,6 +96,7 @@ def read_carry_over_from_excel(result_path, scenario_name):
         pricereduction_sec_year = pricereduction_sec_sheet[
             pricereduction_sec_sheet["stf"] == year
         ]
+        facility_year = facility_sheet[facility_sheet["stf"] == year]
         # process_cost_year = process_cost_grouped[process_cost_grouped["stf"] == year]
 
         # Create nested dictionary for process costs by cost type
@@ -118,6 +123,10 @@ def read_carry_over_from_excel(result_path, scenario_name):
             "Total Cap Sec": {
                 (row["location"], row["tech"]): row["capacity_secondary_cumulative"]
                 for _, row in sec_year.iterrows()
+            },
+            "Total Cap Fac": {
+                (row["location"], row["tech"]): row["capacity_facility_cumulative"]
+                for _, row in fac_year.iterrows()
             },
             "CO2_emissions": {
                 (row["sit"], row["pro"]): row["value"] for _, row in co2_year.iterrows()
@@ -166,6 +175,10 @@ def read_carry_over_from_excel(result_path, scenario_name):
             "newly_added_capacity": {
                 (row["location"], row["tech"]): row["newly_added_capacity"]
                 for _, row in detail_year.iterrows()
+            },
+            "capacity_facility_eusecondary": {
+                (row["location"], row["tech"]): row["capacity_facility_eusecondary"]
+                for _, row in facility_year.iterrows()
             },
         }
 

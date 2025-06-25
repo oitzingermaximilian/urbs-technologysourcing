@@ -22,6 +22,12 @@ def apply_variables(m):
     m.capacity_ext_eusecondary = pyomo.Var(
         m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
     )
+    m.capacity_facility_eusecondary = pyomo.Var(
+        m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    )
+    m.capacity_inactive_eusecondary = pyomo.Var(
+        m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    )
     m.capacity_ext_stock = pyomo.Var(
         m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
     )
@@ -112,5 +118,9 @@ def apply_variables(m):
     m.demand_bess = pyomo.Var(m.stf, m.location, domain=pyomo.NonNegativeReals)
 
     m.capacity_secondary_cumulative = pyomo.Var(
+        m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    )
+
+    m.capacity_facility_cumulative = pyomo.Var(
         m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
     )
