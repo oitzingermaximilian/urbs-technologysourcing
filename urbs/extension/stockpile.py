@@ -9,7 +9,7 @@ class AbstractConstraint(ABC):
         pass
 
 
-DEBUG = False  # Set to False to disable all debug prints
+DEBUG = True  # Set to False to disable all debug prints
 
 
 def debug_print(*args, **kwargs):

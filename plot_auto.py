@@ -524,6 +524,7 @@ def plot_all_scenarios(base_dir):  # TODO re-add if needed
             "Existing_Stock_Q_stock",
             "capacity_dec_start",
             "Total Cap Sec",
+            "Total Cap Fac",
             "CO2_emissions",
             "Total_Cost",
             "Total_Scrap",
@@ -536,6 +537,7 @@ def plot_all_scenarios(base_dir):  # TODO re-add if needed
             "capacity_ext_eusecondary",
             "capacity_ext_stock_imported",
             "newly_added_capacity",
+            "capacity_facility_eusecondary",
         ]
 
         wait_for_excel_sheets(file, expected_sheets)
@@ -566,4 +568,4 @@ def wait_for_excel_sheets(path, expected_sheets, timeout=60):  # TODO re-add if 
 # lineplot_fuels("result/urbs-20250604T1424/result_scenario_base.xlsx")
 
 # plot_balance_created("result/urbs-20250604T1538/result_scenario_base.xlsx")
-plot_facility_utilization("result/urbs-20250625T2055/result_scenario_base.xlsx")
+#plot_facility_utilization("result/urbs-20250625T2055/result_scenario_base.xlsx")

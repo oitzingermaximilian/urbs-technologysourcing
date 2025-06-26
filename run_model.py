@@ -472,6 +472,7 @@ def run_rolling_horizon(start_year=2024, end_year=2050, step=5):
         plot_auto.plot_scrap(output_file_path)
         plot_auto.plot_balance_created(output_file_path)
         plot_auto.lineplot_fuels(output_file_path)
+        plot_auto.plot_facility_utilization(output_file_path)
 
 
 # Execute selected mode

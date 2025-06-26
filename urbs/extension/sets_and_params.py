@@ -200,12 +200,12 @@ def apply_sets_and_params(m, data_urbsextensionv1):
     # 4 LR 10%
     variation_10={
         0: 0,
-        1: 122259.1475,
-        2: 208413.7077,
-        3: 269125.7967,
-        4: 311908.8802,
-        5: 342057.6079,
-        6: 363303.0561
+        1: 108674,
+        2: 185256,
+        3: 239222,
+        4: 277252,
+        5: 304051,
+        6: 322936
      }
 
     # 5 LR 25%
@@ -329,23 +329,36 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 212572.8099,
     }
 
-    # Cost reduction for wind onshore and offshore (tripled values)
+    # Cost reduction for wind onshore and offshore
     wind_cost_reduction = {
         0: 0,
-        1: 502030,
-        2: 855805,
-        3: 1105105,
-        4: 1280785,
-        5: 1404584,
-        6: 1491824,
+        1: 146474,
+        2: 249693,
+        3: 322430,
+        4: 373687,
+        5: 409808,
+        6: 435261,
     }
+
+    # Cost reduction for batteries
+    batterie_cost_reduction = {
+        0: 0,
+        1: 67921,
+        2: 115785,
+        3: 149514,
+        4: 173282,
+        5: 190032,
+        6: 201835,
+    }
+
 
     # Initialize WITHOUT stf dimension
     m.P_sec = pyomo.Param(
         m.location,  # Locations
         m.tech,  # Technologies
         m.nsteps_sec,  # Steps
-        initialize=lambda m, loc, tech, n: wind_cost_reduction[n] if tech in ['windon', 'windoff'] else variation_10[n]
+        initialize=lambda m, loc, tech, n: wind_cost_reduction[n] if tech in ['windon', 'windoff'] else (
+            batterie_cost_reduction[n] if tech == 'Batteries' else variation_10[n])
     )
 
     # param def for Capacity needed to reach next step
