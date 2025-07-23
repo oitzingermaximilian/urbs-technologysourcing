@@ -187,37 +187,37 @@ def apply_sets_and_params(m, data_urbsextensionv1):
     # })
 
     # 3 LR 5%
-    variation_5={
-     0: 0,
-     1: 64859.87772,
-     2: 119558.3938,
-     3: 165687.4918,
-     4: 204589.7114,
-     5: 237397.2614,
-     6: 265064.9716
-     }
+    variation_5 = {
+        0: 0,
+        1: 64859.87772,
+        2: 119558.3938,
+        3: 165687.4918,
+        4: 204589.7114,
+        5: 237397.2614,
+        6: 265064.9716,
+    }
 
     # 4 LR 10%
-    variation_10={
+    variation_10 = {
         0: 0,
         1: 108674,
         2: 185256,
         3: 239222,
         4: 277252,
         5: 304051,
-        6: 322936
-     }
+        6: 322936,
+    }
 
     # 5 LR 25%
-    variation_25={
+    variation_25 = {
         0: 0,
         1: 254792.7496,
         2: 352775.4865,
         3: 390455.5883,
         4: 404945.7946,
         5: 410518.1277,
-        6: 412661.0161
-     }
+        6: 412661.0161,
+    }
     # EEM6 LR 2.5%
     variation_6 = {
         0: 0,
@@ -329,36 +329,56 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 212572.8099,
     }
 
-    # Cost reduction for wind onshore and offshore
+    # Cost reduction for wind onshore and offshore 25 %
     wind_cost_reduction = {
         0: 0,
-        1: 146474,
-        2: 249693,
-        3: 322430,
-        4: 373687,
-        5: 409808,
-        6: 435261,
+        1: 305258.9464,
+        2: 422648.8921,
+        3: 467792.20,
+        4: 485152.4495,
+        5: 491828.4814,
+        6: 494395.80,
     }
 
-    # Cost reduction for batteries
+    # Cost reduction for batteries 25%
     batterie_cost_reduction = {
         0: 0,
-        1: 67921,
-        2: 115785,
-        3: 149514,
-        4: 173282,
-        5: 190032,
-        6: 201835,
+        1: 141551.5276,
+        2: 195986.3814,
+        3: 216919.77,
+        4: 224969.88,
+        5: 228065.6265,
+        6: 229256.12,
     }
 
+    # Cost reduction for pv 25%
+    PV_cost_reduction = {
+        0: 0,
+        1: 226482.4441,
+        2: 313578.21,
+        3: 347071.634,
+        4: 359951.8174,
+        5: 364905,
+        6: 366809.7921,
+    }
+
+    # New: 25% reduction percentage for all techs
+    reduction_percentage_25 = {
+        0: 1,
+        1: 0.384558576,
+        2: 0.147885298,
+        3: 0.05687056,
+        4: 0.021870061,
+        5: 0.00841032,
+        6: 0.003234261,
+    }
 
     # Initialize WITHOUT stf dimension
     m.P_sec = pyomo.Param(
         m.location,  # Locations
         m.tech,  # Technologies
         m.nsteps_sec,  # Steps
-        initialize=lambda m, loc, tech, n: wind_cost_reduction[n] if tech in ['windon', 'windoff'] else (
-            batterie_cost_reduction[n] if tech == 'Batteries' else variation_10[n])
+        initialize=lambda m, loc, tech, n: reduction_percentage_25[n],
     )
 
     # param def for Capacity needed to reach next step

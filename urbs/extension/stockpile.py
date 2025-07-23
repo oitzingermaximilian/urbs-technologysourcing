@@ -189,11 +189,18 @@ class TimedelayEUSecondaryProductionRule(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         if stf == 2024:
             debug_print(
-                f"Skipping TimedelayEUSecondaryProductionRule constraint for stf={stf} (global start year)"
+                f"Applying capacity limit for TimedelayEUSecondaryProductionRule for stf={stf} (first year)"
             )
-            return pyomo.Constraint.Skip
+            # Set a reasonable limit for 2024 instead of skipping
+            # For example: 5 GW (5000 MW) for renewables and 2 GW for others
+            if tech in ["solarPV", "Batteries"]:
+                max_capacity = 2500  # 5 GW limit for renewable technologies
+            else:
+                max_capacity = 1500  # 2 GW limit for other technologies
 
-        elif stf == value(m.y0):
+            return m.capacity_facility_eusecondary[stf, location, tech] <= max_capacity
+
+        elif stf == value(m.y0) and stf != 2024:
             debug_print(
                 f"Running constraint TimedelayEUSecondaryProductionRule for stf={stf} (start year)"
             )
@@ -241,7 +248,7 @@ class Constraint1EUSecondaryToTotalRule(AbstractConstraint):  # NOTE disabled at
             return pyomo.Constraint.Skip
 
 
-#class Constraint2EUSecondaryToTotalRule(AbstractConstraint):
+# class Constraint2EUSecondaryToTotalRule(AbstractConstraint):
 #    def apply_rule(self, m, stf, location, tech):
 #        l_value = m.l[location, tech]
 #        if value(m.y0) >= stf - l_value:
@@ -254,7 +261,7 @@ class Constraint1EUSecondaryToTotalRule(AbstractConstraint):  # NOTE disabled at
 #
 #            return lhs <= rhs
 #        else:
- #           return pyomo.Constraint.Skip
+#           return pyomo.Constraint.Skip
 
 
 class ConstraintEUPrimaryToTotalRule(AbstractConstraint):
@@ -352,37 +359,54 @@ class ConstraintCarryoverSecondary(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         # Scale values to MW or GW to avoid very large numbers
         scaling_factor = 1000.0  # Convert to GW if values are in MW
-        return (m.capacity_secondary_cumulative[stf, location, tech] / scaling_factor ==
-                m.total_secondary_cap_inital[location, tech] / scaling_factor +
-                sum(m.capacity_ext_eusecondary[t, location, tech] / scaling_factor
-                    for t in m.stf if t <= stf))
+        return m.capacity_secondary_cumulative[
+            stf, location, tech
+        ] / scaling_factor == m.total_secondary_cap_inital[
+            location, tech
+        ] / scaling_factor + sum(
+            m.capacity_ext_eusecondary[t, location, tech] / scaling_factor
+            for t in m.stf
+            if t <= stf
+        )
 
 
 class ConstraintCarryoverFacility(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         # Scale values to MW or GW to avoid very large numbers
         scaling_factor = 1000.0  # Convert to GW if values are in MW
-        return (m.capacity_facility_cumulative[stf, location, tech] / scaling_factor ==
-                m.total_facility_cap_initial[location, tech] / scaling_factor +
-                sum(m.capacity_facility_eusecondary[t, location, tech] / scaling_factor
-                    for t in m.stf if t <= stf))
+        return m.capacity_facility_cumulative[
+            stf, location, tech
+        ] / scaling_factor == m.total_facility_cap_initial[
+            location, tech
+        ] / scaling_factor + sum(
+            m.capacity_facility_eusecondary[t, location, tech] / scaling_factor
+            for t in m.stf
+            if t <= stf
+        )
 
 
 class ConstraintRemanufacturingFacilitySize(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         # Scale values to improve numerical stability
         scaling_factor = 1000.0  # Convert to GW if values are in MW
-        return (m.capacity_inactive_eusecondary[stf, location, tech] / scaling_factor ==
-                (m.capacity_facility_cumulative[stf, location, tech] -
-                 m.capacity_ext_eusecondary[stf, location, tech]) / scaling_factor)
+        return (
+            m.capacity_inactive_eusecondary[stf, location, tech] / scaling_factor
+            == (
+                m.capacity_facility_cumulative[stf, location, tech]
+                - m.capacity_ext_eusecondary[stf, location, tech]
+            )
+            / scaling_factor
+        )
 
 
 class ConstraintLimitSecondaryCapacity(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         # Scale values to improve numerical stability
         scaling_factor = 1000.0  # Convert to GW if values are in MW
-        return (m.capacity_ext_eusecondary[stf, location, tech] / scaling_factor <=
-                m.capacity_facility_cumulative[stf, location, tech] / scaling_factor)
+        return (
+            m.capacity_ext_eusecondary[stf, location, tech] / scaling_factor
+            <= m.capacity_facility_cumulative[stf, location, tech] / scaling_factor
+        )
 
 
 def apply_stockpiling_constraints(m):
@@ -405,7 +429,7 @@ def apply_stockpiling_constraints(m):
         ConstraintCarryoverSecondary(),
         ConstraintCarryoverFacility(),
         ConstraintRemanufacturingFacilitySize(),
-        ConstraintLimitSecondaryCapacity()
+        ConstraintLimitSecondaryCapacity(),
     ]
 
     for i, constraint in enumerate(constraints):
