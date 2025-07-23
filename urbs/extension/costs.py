@@ -77,10 +77,14 @@ class DefCostsNew(AbstractConstraint):
                 (
                     (
                         m.EU_secondary_costs[stf, site, tech]
-                        - m.pricereduction_sec[stf, site, tech]
+                        * m.pricereduction_sec[stf, site, tech]
                     )
-                    * m.capacity_facility_eusecondary[stf, site, tech]
-                    + m.cost_scrap[stf, site, tech]
+                    * m.capacity_ext_eusecondary[stf, site, tech]
+                    + 1000 * m.capacity_facility_eusecondary[stf, site, tech]
+                    + (
+                        m.cost_scrap[stf, site, tech]
+                        * m.pricereduction_sec[stf, site, tech]
+                    )
                 )
                 for stf in m.stf
                 for site in m.location
@@ -149,11 +153,17 @@ class CalculateYearlyEUPrimary(AbstractConstraint):
 class CalculateYearlyEUSecondary(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         eu_secondary_cost_value = (
-            m.EU_secondary_costs[stf, location, tech]
-            - m.pricereduction_sec[stf, location, tech]
-        ) * m.capacity_facility_eusecondary[stf, location, tech] + m.cost_scrap[
-            stf, location, tech
-        ]
+            (
+                m.EU_secondary_costs[stf, location, tech]
+                - m.pricereduction_sec[stf, location, tech]
+            )
+            * m.capacity_ext_eusecondary[stf, location, tech]
+            + 1000 * m.capacity_facility_eusecondary[stf, location, tech]
+            + (
+                m.cost_scrap[stf, location, tech]
+                * m.pricereduction_sec[stf, location, tech]
+            )
+        )
         expr = m.costs_EU_secondary[stf, location, tech] == eu_secondary_cost_value
         debug_print(
             f"[YearlyEUSecondary] STF={stf}, loc={location}, tech={tech}  ➞ "
