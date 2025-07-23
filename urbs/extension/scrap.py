@@ -28,7 +28,9 @@ class decommissioned_capacity_rule(AbstractConstraint):
             _exogenous = 2 * 1000
 
         # decide which branch - for wind technologies, we need to consider their 20-year lifetime
-        if stf >= value(m.y0) + m.l[location, tech]:  # Changed condition to properly handle lifetime
+        if (
+            stf >= value(m.y0) + m.l[location, tech]
+        ):  # Changed condition to properly handle lifetime
             expr = (
                 m.capacity_dec[stf, location, tech]
                 == m.capacity_ext_new[stf - m.l[location, tech], location, tech]
@@ -117,18 +119,23 @@ class cost_scrap_rule(AbstractConstraint):
         return expr
 
 
-# class scrap_total_decrease_rule(AbstractConstraint):
-#    def apply_rule(self, m, stf, location, tech):
-#        if tech == "solarPV":
-#            if stf <= 2030:
-#                return pyomo.Constraint.Skip
-#            else:
-#                return (
-#                    m.capacity_scrap_total[stf, location, tech]
-#                    <= m.capacity_scrap_total[stf - 1, location, tech]
-#                )
-#        else:
-#            return pyomo.Constraint.Skip
+class scrap_total_decrease_rule(AbstractConstraint):
+    def apply_rule(self, m, stf, location, tech):
+        if tech == "solarPV":
+            if stf <= 2030:
+                return pyomo.Constraint.Skip
+            elif stf == value(m.y0):
+                return (
+                    m.capacity_scrap_total[stf, location, tech]
+                    <= m.scrap_total[location, tech]
+                )
+            else:
+                return (
+                    m.capacity_scrap_total[stf, location, tech]
+                    <= m.capacity_scrap_total[stf - 1, location, tech]
+                )
+        else:
+            return pyomo.Constraint.Skip
 
 
 class scrap_recycling_increase_rule(AbstractConstraint):
@@ -158,7 +165,7 @@ def apply_scrap_constraints(m):
         capacity_scrap_total_rule(),
         cost_scrap_rule(),
         # scrap_total_decrease_rule(),
-        scrap_recycling_increase_rule(),
+        # scrap_recycling_increase_rule(),
     ]
 
     m.decommissioned_capacity_rule = pyomo.Constraint(
@@ -197,6 +204,6 @@ def apply_scrap_constraints(m):
     # m.scrap_recycling_increase_rule = pyomo.Constraint(
     #    m.stf,
     #    m.location,
-    #    m.tech,
+    ##    m.tech,
     #    rule=lambda m, stf, loc, tech: constraints[6].apply_rule(m, stf, loc, tech),
     # )
