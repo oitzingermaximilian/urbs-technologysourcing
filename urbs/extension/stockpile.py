@@ -9,7 +9,7 @@ class AbstractConstraint(ABC):
         pass
 
 
-DEBUG = True  # Set to False to disable all debug prints
+DEBUG = False  # Set to False to disable all debug prints
 
 
 def debug_print(*args, **kwargs):
@@ -194,9 +194,9 @@ class TimedelayEUSecondaryProductionRule(AbstractConstraint):
             # Set a reasonable limit for 2024 instead of skipping
             # For example: 5 GW (5000 MW) for renewables and 2 GW for others
             if tech in ["solarPV", "Batteries"]:
-                max_capacity = 2500  # 5 GW limit for renewable technologies
+                max_capacity = 2500  # 2.5 GW limit for renewable technologies
             else:
-                max_capacity = 1500  # 2 GW limit for other technologies
+                max_capacity = 1500  # 1.5 GW limit for other technologies
 
             return m.capacity_facility_eusecondary[stf, location, tech] <= max_capacity
 

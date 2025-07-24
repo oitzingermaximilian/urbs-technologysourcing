@@ -373,13 +373,38 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 0.003234261,
     }
 
-    # Initialize WITHOUT stf dimension
+    # Updated: 1% reduction percentage for all techs
+    reduction_percentage_1 = {
+        0: 1,
+        1: 0.967164685,
+        2: 0.935407528,
+        3: 0.904693127,
+        4: 0.874987243,
+        5: 0.846256761,
+        6: 0.818469654,
+    }
+
+    # Scale factor to make the numbers larger for numerical stability
+    scaling_factor = 100000  # Scale up by 100,000
+
+    # Convert percentage multipliers to scaled reduction amounts
+    # Since we want cost reduction to INCREASE from 0 to 6, we calculate (1 - percentage) and scale
+    scaled_reductions_1 = {
+        n: (1 - reduction_percentage_1[n]) * scaling_factor
+        for n in reduction_percentage_1.keys()
+    }
+
+    # Initialize P_sec with scaled values
     m.P_sec = pyomo.Param(
         m.location,  # Locations
         m.tech,  # Technologies
         m.nsteps_sec,  # Steps
-        initialize=lambda m, loc, tech, n: reduction_percentage_25[n],
+        initialize=lambda m, loc, tech, n: scaled_reductions_1[n],
+        doc="Scaled price reduction values (to be divided by scaling_factor in cost function)"
     )
+
+    # Store the scaling factor as a parameter for use in cost calculations
+    m.scaling_factor = pyomo.Param(initialize=scaling_factor, doc="Scaling factor for price reductions")
 
     # param def for Capacity needed to reach next step
     # Initialize the dictionary with values for capacityperstep_sec
@@ -535,3 +560,4 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         initialize=initialize_param("total_facility_cap_initial", default_value=0),
         doc="total_facility_cap_initial",
     )
+

@@ -23,10 +23,12 @@ class costsavings_constraint_sec(AbstractConstraint):
             m.P_sec[location, tech, n] * m.BD_sec[stf, location, tech, n]
             for n in m.nsteps_sec
         )
-        expr = m.pricereduction_sec[stf, location, tech] == pricereduction_value_sec
+        # Apply the scaling factor here to convert back to percentage reduction
+        scaled_pricereduction = pricereduction_value_sec / m.scaling_factor
+        expr = m.pricereduction_sec[stf, location, tech] == scaled_pricereduction
         debug_print(
             f"[costsavings] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"pricereduction_value_sec={pricereduction_value_sec}\n"
+            f"pricereduction_value_sec={pricereduction_value_sec}, scaled={scaled_pricereduction}\n"
             f"    expr: {expr}"
         )
         return expr

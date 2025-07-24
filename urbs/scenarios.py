@@ -6,6 +6,459 @@ from openpyxl import load_workbook
 # SCENARIO GENERATORS
 # In this script a variety of scenario generator functions are defined to
 # facilitate scenario definitions.
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+#########################################----CRM_Paper_szenarios----####################################################
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+def scenario_very_low(data, data_urbsextensionv1):
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf == 2024:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
+                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = (
+                    132230  # ENTSOG: around 30% of Gas supplied in 2023 was LNG, so i split the installed capacity of 188900MW Gas Power Plant in the EU.
+                )
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+            else:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+    if "commodity" in data:
+        co = data["commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Apply 4.052% yearly decrease for Piped Gas from 2024 to 2050
+            base_value = 319200000  # Starting value in 2024
+            yearly_decrease_factor = 0.95948  # 1 - 0.04052 = 0.95948
+
+            if stf == 2024:
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
+            else:
+                # Calculate the year difference from 2024
+                year_diff = stf - 2024
+                # Apply compound decrease
+                reduced_value = base_value * (yearly_decrease_factor ** year_diff)
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+                print(
+                    f"Set Piped Gas max for year {stf} to {reduced_value:.0f} (4.052% yearly decrease)"
+                )
+
+    if "process-commodity" in data:
+        proco = data["process-commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Check if the year (stf) is before 2030
+            if stf == 2024:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+            else:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+    if "recyclingcost_dict" in data_urbsextensionv1:
+        recyclingcost = data_urbsextensionv1["recyclingcost_dict"]
+
+        # Modify recycling costs for Solar PV, windon, windoff, and Batteries
+        technologies = ["solarPV", "windon", "windoff", "Batteries"]
+        location = "EU27"  # Assuming EU27 is the target location
+
+        # Define new recycling cost values for each technology
+        new_costs = {
+            "solarPV": 200,  # EUR/ton for Solar PV
+            "windon": 960.2,  # EUR/ton for Wind onshore
+            "windoff": 1446.6,  # EUR/ton for Wind offshore
+            "Batteries": 429.6,  # EUR/ton for Batteries
+        }
+
+        # Apply new costs for all years from 2024 to 2050
+        for stf in range(2024, 2051):
+            for tech in technologies:
+                key = (stf, location, tech)
+                if key in recyclingcost:
+                    recyclingcost[key] = new_costs[tech]
+                    print(f"Updated recycling cost for {tech} in {stf} to {new_costs[tech]} EUR/ton")
+
+    return data, data_urbsextensionv1
+
+
+def scenario_low(data, data_urbsextensionv1):
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf == 2024:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
+                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = (
+                    132230  # ENTSOG: around 30% of Gas supplied in 2023 was LNG, so i split the installed capacity of 188900MW Gas Power Plant in the EU.
+                )
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+            else:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+    if "commodity" in data:
+        co = data["commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Apply 4.052% yearly decrease for Piped Gas from 2024 to 2050
+            base_value = 319200000  # Starting value in 2024
+            yearly_decrease_factor = 0.95948  # 1 - 0.04052 = 0.95948
+
+            if stf == 2024:
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
+            else:
+                # Calculate the year difference from 2024
+                year_diff = stf - 2024
+                # Apply compound decrease
+                reduced_value = base_value * (yearly_decrease_factor ** year_diff)
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+                print(
+                    f"Set Piped Gas max for year {stf} to {reduced_value:.0f} (4.052% yearly decrease)"
+                )
+
+    if "process-commodity" in data:
+        proco = data["process-commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Check if the year (stf) is before 2030
+            if stf == 2024:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+            else:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+    if "recyclingcost_dict" in data_urbsextensionv1:
+        recyclingcost = data_urbsextensionv1["recyclingcost_dict"]
+
+        # Modify recycling costs for Solar PV, windon, windoff, and Batteries
+        technologies = ["solarPV", "windon", "windoff", "Batteries"]
+        location = "EU27"  # Assuming EU27 is the target location
+
+        # Define new recycling cost values for each technology
+        new_costs = {
+            "solarPV": 500,  # EUR/ton for Solar PV
+            "windon": 2400.5,  # EUR/ton for Wind onshore
+            "windoff": 3616.5,  # EUR/ton for Wind offshore
+            "Batteries": 1074,  # EUR/ton for Batteries
+        }
+
+        # Apply new costs for all years from 2024 to 2050
+        for stf in range(2024, 2051):
+            for tech in technologies:
+                key = (stf, location, tech)
+                if key in recyclingcost:
+                    recyclingcost[key] = new_costs[tech]
+                    print(f"Updated recycling cost for {tech} in {stf} to {new_costs[tech]} EUR/ton")
+
+    return data, data_urbsextensionv1
+
+def scenario_moderate(data, data_urbsextensionv1):
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf == 2024:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
+                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = (
+                    132230  # ENTSOG: around 30% of Gas supplied in 2023 was LNG, so i split the installed capacity of 188900MW Gas Power Plant in the EU.
+                )
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+            else:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+    if "commodity" in data:
+        co = data["commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Apply 4.052% yearly decrease for Piped Gas from 2024 to 2050
+            base_value = 319200000  # Starting value in 2024
+            yearly_decrease_factor = 0.95948  # 1 - 0.04052 = 0.95948
+
+            if stf == 2024:
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
+            else:
+                # Calculate the year difference from 2024
+                year_diff = stf - 2024
+                # Apply compound decrease
+                reduced_value = base_value * (yearly_decrease_factor ** year_diff)
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+                print(
+                    f"Set Piped Gas max for year {stf} to {reduced_value:.0f} (4.052% yearly decrease)"
+                )
+
+    if "process-commodity" in data:
+        proco = data["process-commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Check if the year (stf) is before 2030
+            if stf == 2024:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+            else:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+    if "recyclingcost_dict" in data_urbsextensionv1:
+        recyclingcost = data_urbsextensionv1["recyclingcost_dict"]
+
+        # Modify recycling costs for Solar PV, windon, windoff, and Batteries
+        technologies = ["solarPV", "windon", "windoff", "Batteries"]
+        location = "EU27"  # Assuming EU27 is the target location
+
+        # Define new recycling cost values for each technology
+        new_costs = {
+            "solarPV": 1000,  # EUR/ton for Solar PV
+            "windon": 4801,  # EUR/ton for Wind onshore
+            "windoff": 7233,  # EUR/ton for Wind offshore
+            "Batteries": 2148,  # EUR/ton for Batteries
+        }
+
+        # Apply new costs for all years from 2024 to 2050
+        for stf in range(2024, 2051):
+            for tech in technologies:
+                key = (stf, location, tech)
+                if key in recyclingcost:
+                    recyclingcost[key] = new_costs[tech]
+                    print(f"Updated recycling cost for {tech} in {stf} to {new_costs[tech]} EUR/ton")
+
+    return data, data_urbsextensionv1
+
+def scenario_high(data, data_urbsextensionv1):
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf == 2024:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
+                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = (
+                    132230  # ENTSOG: around 30% of Gas supplied in 2023 was LNG, so i split the installed capacity of 188900MW Gas Power Plant in the EU.
+                )
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+            else:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+    if "commodity" in data:
+        co = data["commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Apply 4.052% yearly decrease for Piped Gas from 2024 to 2050
+            base_value = 319200000  # Starting value in 2024
+            yearly_decrease_factor = 0.95948  # 1 - 0.04052 = 0.95948
+
+            if stf == 2024:
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
+            else:
+                # Calculate the year difference from 2024
+                year_diff = stf - 2024
+                # Apply compound decrease
+                reduced_value = base_value * (yearly_decrease_factor ** year_diff)
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+                print(
+                    f"Set Piped Gas max for year {stf} to {reduced_value:.0f} (4.052% yearly decrease)"
+                )
+
+    if "process-commodity" in data:
+        proco = data["process-commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Check if the year (stf) is before 2030
+            if stf == 2024:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+            else:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+    if "recyclingcost_dict" in data_urbsextensionv1:
+        recyclingcost = data_urbsextensionv1["recyclingcost_dict"]
+
+        # Modify recycling costs for Solar PV, windon, windoff, and Batteries
+        technologies = ["solarPV", "windon", "windoff", "Batteries"]
+        location = "EU27"  # Assuming EU27 is the target location
+
+        # Define new recycling cost values for each technology
+        new_costs = {
+            "solarPV": 2500,  # EUR/ton for Solar PV
+            "windon": 12002.5,  # EUR/ton for Wind onshore
+            "windoff": 18082.5,  # EUR/ton for Wind offshore
+            "Batteries": 5370,  # EUR/ton for Batteries
+        }
+
+        # Apply new costs for all years from 2024 to 2050
+        for stf in range(2024, 2051):
+            for tech in technologies:
+                key = (stf, location, tech)
+                if key in recyclingcost:
+                    recyclingcost[key] = new_costs[tech]
+                    print(f"Updated recycling cost for {tech} in {stf} to {new_costs[tech]} EUR/ton")
+
+    return data, data_urbsextensionv1
+
+def scenario_very_high(data, data_urbsextensionv1):
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf == 2024:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
+                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = (
+                    132230  # ENTSOG: around 30% of Gas supplied in 2023 was LNG, so i split the installed capacity of 188900MW Gas Power Plant in the EU.
+                )
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+            else:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+    if "commodity" in data:
+        co = data["commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Apply 4.052% yearly decrease for Piped Gas from 2024 to 2050
+            base_value = 319200000  # Starting value in 2024
+            yearly_decrease_factor = 0.95948  # 1 - 0.04052 = 0.95948
+
+            if stf == 2024:
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
+            else:
+                # Calculate the year difference from 2024
+                year_diff = stf - 2024
+                # Apply compound decrease
+                reduced_value = base_value * (yearly_decrease_factor ** year_diff)
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+                print(
+                    f"Set Piped Gas max for year {stf} to {reduced_value:.0f} (4.052% yearly decrease)"
+                )
+
+    if "process-commodity" in data:
+        proco = data["process-commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Check if the year (stf) is before 2030
+            if stf == 2024:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+            else:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+    if "recyclingcost_dict" in data_urbsextensionv1:
+        recyclingcost = data_urbsextensionv1["recyclingcost_dict"]
+
+        # Modify recycling costs for Solar PV, windon, windoff, and Batteries
+        technologies = ["solarPV", "windon", "windoff", "Batteries"]
+        location = "EU27"  # Assuming EU27 is the target location
+
+        # Define new recycling cost values for each technology
+        new_costs = {
+            "solarPV": 5000,  # EUR/ton for Solar PV
+            "windon": 24005,  # EUR/ton for Wind onshore
+            "windoff": 36165,  # EUR/ton for Wind offshore
+            "Batteries": 10740,  # EUR/ton for Batteries
+        }
+
+        # Apply new costs for all years from 2024 to 2050
+        for stf in range(2024, 2051):
+            for tech in technologies:
+                key = (stf, location, tech)
+                if key in recyclingcost:
+                    recyclingcost[key] = new_costs[tech]
+                    print(f"Updated recycling cost for {tech} in {stf} to {new_costs[tech]} EUR/ton")
+
+    return data, data_urbsextensionv1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ########################################################################################################################
 ########################################################################################################################
@@ -131,28 +584,68 @@ def scenario_base_nocap(
 
 # normal fossil fuel and delayed CO2 pricing
 def scenario_1(
-    data,
-    param_dict,
-    importcost_dict,
-    instalable_capacity_dict,
-    eu_primary_cost_dict,
-    eu_secondary_cost_dict,
-    dcr_dict,
-    stocklvl_dict,
+        data, data_urbsextensionv1
 ):
-    if not data:
-        print("Warning: param_dict is empty.")
-        return (
-            data,
-            param_dict,
-            importcost_dict,
-            instalable_capacity_dict,
-            eu_primary_cost_dict,
-            eu_secondary_cost_dict,
-            dcr_dict,
-            stocklvl_dict,
-        )
-    elif "commodity" in data:
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf == 2024:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
+                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = (
+                    132230  # ENTSOG: around 30% of Gas supplied in 2023 was LNG, so i split the installed capacity of 188900MW Gas Power Plant in the EU.
+                )
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+            else:
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
+                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+
+    if "commodity" in data:
+        co = data["commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Apply 4.052% yearly decrease for Piped Gas from 2024 to 2050
+            base_value = 319200000  # Starting value in 2024
+            yearly_decrease_factor = 0.95948  # 1 - 0.04052 = 0.95948
+
+            if stf == 2024:
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
+            else:
+                # Calculate the year difference from 2024
+                year_diff = stf - 2024
+                # Apply compound decrease
+                reduced_value = base_value * (yearly_decrease_factor ** year_diff)
+                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+                print(
+                    f"Set Piped Gas max for year {stf} to {reduced_value:.0f} (4.052% yearly decrease)"
+                )
+
+    if "process-commodity" in data:
+        proco = data["process-commodity"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            # Check if the year (stf) is before 2030
+            if stf == 2024:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+            else:
+                proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 0
+                proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0
+                proco.loc[
+                    (stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"
+                ] = 0
+                proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0
+    if "commodity" in data:
         co = data["commodity"]
         for stf in data["global_prop"].index.levels[0].tolist():
             # Check if the year (stf) is before 2030
@@ -170,18 +663,7 @@ def scenario_1(
                     (stf, "EU27", "CO2", "Env"), "price"
                 ]
 
-        return (
-            data,
-            param_dict,
-            importcost_dict,
-            instalable_capacity_dict,
-            eu_primary_cost_dict,
-            eu_secondary_cost_dict,
-            dcr_dict,
-            stocklvl_dict,
-        )
-    else:
-        print("Warning: 'commodity' not found in data.")
+    return data, data_urbsextensionv1
 
 
 ########################################################################################################################
