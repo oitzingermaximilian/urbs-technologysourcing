@@ -26,11 +26,21 @@ class costsavings_constraint_sec(AbstractConstraint):
         # Apply the scaling factor here to convert back to percentage reduction
         scaled_pricereduction = pricereduction_value_sec / m.scaling_factor
         expr = m.pricereduction_sec[stf, location, tech] == scaled_pricereduction
-        debug_print(
-            f"[costsavings] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"pricereduction_value_sec={pricereduction_value_sec}, scaled={scaled_pricereduction}\n"
-            f"    expr: {expr}"
-        )
+
+        # Improved debug formatting - separate lines for better visibility
+        if DEBUG:
+            print("=" * 60)
+            print(f"[COSTSAVINGS DEBUG] STF={stf}, Location={location}, Tech={tech}")
+            print(f"  Raw pricereduction_value_sec: {pricereduction_value_sec}")
+            print(f"  Scaling factor: {m.scaling_factor}")
+            print(f"  Final scaled_pricereduction: {scaled_pricereduction}")
+            print(
+                f"  BD_sec values: {[m.BD_sec[stf, location, tech, n].value if hasattr(m.BD_sec[stf, location, tech, n], 'value') else 'unset' for n in m.nsteps_sec]}"
+            )
+            print(f"  P_sec values: {[m.P_sec[location, tech, n] for n in m.nsteps_sec]}")
+            print(f"  Expression: {expr}")
+            print("=" * 60)
+
         return expr
 
 

@@ -75,6 +75,8 @@ class DefCostsNew(AbstractConstraint):
         elif cost_type_new == "Eu Cost Secondary":
             total_eu_cost_secondary = sum(
                 (
+                    # Debug print for each combination
+                    print(f"Using reduction: {m.pricereduction_sec[stf, site, tech]} for {tech} in {stf}") or
                     (
                         m.EU_secondary_costs[stf, site, tech]
                         * (1 - m.pricereduction_sec[stf, site, tech])
