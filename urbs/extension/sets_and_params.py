@@ -463,6 +463,22 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         for n in reduction_percentage_5.keys()
     }
 
+    # Define reduction percentage for 6% scenario (new)
+    reduction_percentage_6 = {
+        0: 1,
+        1: 0.814202932,
+        2: 0.662926414,
+        3: 0.53975663,
+        4: 0.439471431,
+        5: 0.357818927,
+        6: 0.29133722,
+    }
+
+    scaled_reduction6 = {
+        n: (1 - reduction_percentage_6[n]) * scaling_factor
+        for n in reduction_percentage_6.keys()
+    }
+
     # Store the scaling factor as a parameter for use in cost calculations
     m.scaling_factor = pyomo.Param(initialize=scaling_factor, doc="Scaling factor for price reductions")
 
@@ -471,7 +487,7 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         m.location,  # Locations
         m.tech,  # Technologies
         m.nsteps_sec,  # Steps
-        initialize=lambda m, loc, tech, n: scaled_reduction5[n],
+        initialize=lambda m, loc, tech, n: scaled_reduction6[n],
         doc="Scaled price reduction values (to be divided by scaling_factor in cost function)"
     )
 

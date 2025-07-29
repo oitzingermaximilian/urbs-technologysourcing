@@ -233,7 +233,7 @@ input_files = "urbs_intertemporal_2050"
 input_dir = "Input"
 input_path = os.path.join(input_dir, input_files)
 
-learning_rate = "LR5"
+learning_rate = "LR6"
 result_name = f"urbs-{learning_rate}"
 result_dir = urbs.prepare_result_directory(result_name)
 year = date.today().year
@@ -264,11 +264,17 @@ for country, color in my_colors.items():
 
 # select scenarios to be run
 scenarios = [
+    ("scenario_extremely_low", urbs.scenario_extremely_low),
     ("scenario_very_low", urbs.scenario_very_low),
     ("scenario_low", urbs.scenario_low),
-    ("scenario_moderate", urbs.scenario_moderate),
-    ("scenario_high", urbs.scenario_high),
+    ("scenario_moderately_low", urbs.scenario_moderately_low),
+    ("scenario_slightly_below_average", urbs.scenario_slightly_below_average),
+    ("scenario_average", urbs.scenario_average),
+    ("scenario_slightly_above_average", urbs.scenario_slightly_above_average),
+    ("scenario_moderately_high", urbs.scenario_moderately_high),
+("scenario_high", urbs.scenario_high),
     ("scenario_very_high", urbs.scenario_very_high),
+    ("scenario_extremely_high", urbs.scenario_extremely_high),
     #("scenario_base", urbs.scenario_base)
     ]
 
@@ -349,11 +355,17 @@ def run_myopic(window_length=5):
 def run_rolling_horizon(start_year=2024, end_year=2050, step=5):
     # select scenarios to be run
     scenarios = [
+        ("scenario_extremely_low", urbs.scenario_extremely_low),
         ("scenario_very_low", urbs.scenario_very_low),
         ("scenario_low", urbs.scenario_low),
-        ("scenario_moderate", urbs.scenario_moderate),
+        ("scenario_moderately_low", urbs.scenario_moderately_low),
+        ("scenario_slightly_below_average", urbs.scenario_slightly_below_average),
+        ("scenario_average", urbs.scenario_average),
+        ("scenario_slightly_above_average", urbs.scenario_slightly_above_average),
+        ("scenario_moderately_high", urbs.scenario_moderately_high),
         ("scenario_high", urbs.scenario_high),
         ("scenario_very_high", urbs.scenario_very_high),
+        ("scenario_extremely_high", urbs.scenario_extremely_high),
         # ("scenario_base", urbs.scenario_base)
     ]
 
