@@ -105,3 +105,4 @@ done
 echo ""
 echo "All learning rate tests completed at $(date)!"
 echo "If this test ran successfully, your full script should work too."
+

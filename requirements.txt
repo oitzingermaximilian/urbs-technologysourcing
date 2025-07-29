@@ -7,5 +7,8 @@ openpyxl==3.1.2
 xlrd==2.0.1
 pyomo==6.7.1
 psutil==5.9.8
-pyuti
-
+pyutilib
+xlsxwriter
+seaborn
+pathlib
+gurobipy
