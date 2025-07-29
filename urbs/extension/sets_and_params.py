@@ -1,10 +1,15 @@
 import pyomo.environ as pyomo
+import os
 
 
 def apply_sets_and_params(m, data_urbsextensionv1):
     ###############################################
     # universal sets and params for extension v1.0#
     ###############################################
+
+    # Learning rate selection via environment variable
+    LEARNING_RATE = os.environ.get('URBS_LR', 'LR5')  # Default to LR5
+    print(f"Using Learning Rate: {LEARNING_RATE}")
 
     # Excel read in
     base_params = data_urbsextensionv1["base_params"]
@@ -164,216 +169,15 @@ def apply_sets_and_params(m, data_urbsextensionv1):
     # -------EU-Secondary-------#
     # index set for n (=steps of linearization)
     m.nsteps_sec = pyomo.Set(initialize=range(0, 7))
-    # param def for price reduction
 
-    # m.P_sec = pyomo.Param(m.nsteps_sec, initialize={
-    #    0: 0,
-    #    1: 13593.82044,
-    #    2: 26741.2835,
-    #    3: 39457.04547,
-    #    4: 51755.28139,
-    #    5: 63649.70086,
-    #    6: 75153.56332
-    # })
-    # 2 LR 2%
-    # m.P_sec = pyomo.Param(m.nsteps_sec, initialize={
-    #    0: 0,
-    #    1: 26872.52452,
-    #    2: 52000.76746,
-    #    3: 75497.94923,
-    #    4: 97469.94116,
-    #    5: 118015.7425,
-    #    6: 137227.9266
-    # })
+    # Scale factor to make the numbers larger for numerical stability
+    scaling_factor = 100000  # Scale up by 100,000
 
-    # 3 LR 5%
-    variation_5 = {
-        0: 0,
-        1: 64859.87772,
-        2: 119558.3938,
-        3: 165687.4918,
-        4: 204589.7114,
-        5: 237397.2614,
-        6: 265064.9716,
-    }
+    # ========================================
+    # LEARNING RATE REDUCTION PERCENTAGES (sorted by learning rate %)
+    # ========================================
 
-    # 4 LR 10%
-    variation_10 = {
-        0: 0,
-        1: 108674,
-        2: 185256,
-        3: 239222,
-        4: 277252,
-        5: 304051,
-        6: 322936,
-    }
-
-    # 5 LR 25%
-    variation_25 = {
-        0: 0,
-        1: 254792.7496,
-        2: 352775.4865,
-        3: 390455.5883,
-        4: 404945.7946,
-        5: 410518.1277,
-        6: 412661.0161,
-    }
-    # EEM6 LR 2.5%
-    variation_6 = {
-        0: 0,
-        1: 33395.02122,
-        2: 64096.25634,
-        3: 92320.99775,
-        4: 118269.0101,
-        5: 142123.9441,
-        6: 164054.6365,
-    }
-    # EEM7 LR 3%
-    variation_7 = {
-        0: 0,
-        1: 39840.31305,
-        2: 75846.68759,
-        3: 108388.0736,
-        4: 137797.9162,
-        5: 164377.572,
-        6: 188399.3973,
-    }
-    # EEM8 LR 3.5%
-    variation_8 = {
-        0: 0,
-        1: 46208.92298,
-        2: 87260.20208,
-        3: 123729.5116,
-        4: 156128.2716,
-        5: 184910.8195,
-        6: 210480.7816,
-    }
-    # EEM9 LR 4%
-    variation_9 = {
-        0: 0,
-        1: 52501.37307,
-        2: 98344.78919,
-        3: 138374.5766,
-        4: 173327.9901,
-        5: 203848.7895,
-        6: 230499.0966,
-    }
-    # EEM10 LR 4.5%
-    variation_45 = {
-        0: 0,
-        1: 58718.18454,
-        2: 109108.2889,
-        3: 152351.496,
-        4: 189461.4601,
-        5: 221308.0674,
-        6: 248637.827,
-    }
-    # EEM11 LR 3.75%
-    variation_11 = {
-        0: 0,
-        1: 49364.63541,
-        2: 92843.11808,
-        3: 131137.3026,
-        4: 164865.3556,
-        5: 194571.7345,
-        6: 220735.9768,
-    }
-    # EEM12 LR 3.6%
-    variation_12 = {
-        0: 0,
-        1: 47473.48909,
-        2: 89503.18068,
-        3: 126713.3165,
-        4: 159656.5562,
-        5: 188822.1859,
-        6: 214643.3852,
-    }
-    # EEM13 LR 3.7%
-    variation_13 = {
-        0: 0,
-        1: 48735.01299,
-        2: 91733.06585,
-        3: 129669.4987,
-        4: 163140.1525,
-        5: 192670.7272,
-        6: 218725.0388,
-    }
-    # EEM14 LR 3.55%
-    # Define variation_14 correctly for each (nsteps_sec, tech) combination.
-    # Assuming wind is added to m.tech and further locations
-    # P_sec initialization (price reduction)
-    variation_14_updated = {
-        (n, tech, loc): (
-            value if tech in ["solarPV", "windon", "windoff", "Batteries"] else 0
-        )
-        for n, value in {
-            0: 0,
-            1: 46841.69972,
-            2: 88383.54549,
-            3: 125225.1836,
-            4: 157898.4141,
-            5: 186874.8668,
-            6: 212572.8099,
-        }.items()
-        for tech in m.tech
-        for loc in m.location
-    }
-
-    uniform_cost_reduction = {
-        0: 0,
-        1: 46841.69972,
-        2: 88383.54549,
-        3: 125225.1836,
-        4: 157898.4141,
-        5: 186874.8668,
-        6: 212572.8099,
-    }
-
-    # Cost reduction for wind onshore and offshore 25 %
-    wind_cost_reduction = {
-        0: 0,
-        1: 305258.9464,
-        2: 422648.8921,
-        3: 467792.20,
-        4: 485152.4495,
-        5: 491828.4814,
-        6: 494395.80,
-    }
-
-    # Cost reduction for batteries 25%
-    batterie_cost_reduction = {
-        0: 0,
-        1: 141551.5276,
-        2: 195986.3814,
-        3: 216919.77,
-        4: 224969.88,
-        5: 228065.6265,
-        6: 229256.12,
-    }
-
-    # Cost reduction for pv 25%
-    PV_cost_reduction = {
-        0: 0,
-        1: 226482.4441,
-        2: 313578.21,
-        3: 347071.634,
-        4: 359951.8174,
-        5: 364905,
-        6: 366809.7921,
-    }
-
-    # New: 25% reduction percentage for all techs
-    reduction_percentage_25 = {
-        0: 1,
-        1: 0.384558576,
-        2: 0.147885298,
-        3: 0.05687056,
-        4: 0.021870061,
-        5: 0.00841032,
-        6: 0.003234261,
-    }
-
-    # Updated: 1% reduction percentage for all techs
+    # 1% Learning Rate reduction percentage
     reduction_percentage_1 = {
         0: 1,
         1: 0.967164685,
@@ -384,22 +188,7 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 0.818469654,
     }
 
-    # Scale factor to make the numbers larger for numerical stability
-    scaling_factor = 100000  # Scale up by 100,000
-
-    # Convert percentage multipliers to scaled reduction amounts
-    # Since we want cost reduction to INCREASE from 0 to 6, we calculate (1 - percentage) and scale
-    scaled_reductions_1 = {
-        n: (1 - reduction_percentage_1[n]) * scaling_factor
-        for n in reduction_percentage_1.keys()
-    }
-
-    scaled_reductions_25 = {
-        n: (1 - reduction_percentage_25[n]) * scaling_factor
-        for n in reduction_percentage_25.keys()
-    }
-
-    # Define reduction percentage for 3.5 scenario
+    # 3.5% Learning Rate reduction percentage
     reduction_percentage_3_5 = {
         0: 1,
         1: 0.888384244,
@@ -410,12 +199,7 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 0.491592315,
     }
 
-    scaled_reduction3_5 = {
-        n: (1 - reduction_percentage_3_5[n]) * scaling_factor
-        for n in reduction_percentage_3_5.keys()
-    }
-
-    # Define reduction percentage for 4% scenario
+    # 4% Learning Rate reduction percentage
     reduction_percentage_4 = {
         0: 1,
         1: 0.873185089,
@@ -426,28 +210,7 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 0.443238897,
     }
 
-    scaled_reduction4 = {
-        n: (1 - reduction_percentage_4[n]) * scaling_factor
-        for n in reduction_percentage_4.keys()
-    }
-
-    # Define reduction percentage for 10% scenario
-    reduction_percentage_10 = {
-        0: 1,
-        1: 0.70468805,
-        2: 0.496585247,
-        3: 0.349937689,
-        4: 0.246596908,
-        5: 0.173773894,
-        6: 0.122456386,
-    }
-
-    scaled_reduction10 = {
-        n: (1 - reduction_percentage_10[n]) * scaling_factor
-        for n in reduction_percentage_10.keys()
-    }
-
-    # Define reduction percentage for 5% scenario
+    # 5% Learning Rate reduction percentage
     reduction_percentage_5 = {
         0: 1,
         1: 0.843333629,
@@ -458,12 +221,7 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 0.359746445,
     }
 
-    scaled_reduction5 = {
-        n: (1 - reduction_percentage_5[n]) * scaling_factor
-        for n in reduction_percentage_5.keys()
-    }
-
-    # Define reduction percentage for 6% scenario (new)
+    # 6% Learning Rate reduction percentage
     reduction_percentage_6 = {
         0: 1,
         1: 0.814202932,
@@ -474,59 +232,161 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         6: 0.29133722,
     }
 
+    # 7% Learning Rate reduction percentage
+    reduction_percentage_7 = {
+        0: 1,
+        1: 0.785782986,
+        2: 0.617454902,
+        3: 0.485185557,
+        4: 0.381250556,
+        5: 0.2995802,
+        6: 0.235405024,
+    }
+
+    # 8% Learning Rate reduction percentage
+    reduction_percentage_8 = {
+        0: 1,
+        1: 0.758063814,
+        2: 0.574660746,
+        3: 0.435629517,
+        4: 0.330234973,
+        5: 0.250339183,
+        6: 0.189773076,
+    }
+
+    # 9% Learning Rate reduction percentage
+    reduction_percentage_9 = {
+        0: 1,
+        1: 0.731035472,
+        2: 0.534412861,
+        3: 0.390674758,
+        4: 0.285597106,
+        5: 0.208781615,
+        6: 0.152626766,
+    }
+
+    # 10% Learning Rate reduction percentage
+    reduction_percentage_10 = {
+        0: 1,
+        1: 0.70468805,
+        2: 0.496585247,
+        3: 0.349937689,
+        4: 0.246596908,
+        5: 0.173773894,
+        6: 0.122456386,
+    }
+
+    # 25% Learning Rate reduction percentage
+    reduction_percentage_25 = {
+        0: 1,
+        1: 0.384558576,
+        2: 0.147885298,
+        3: 0.05687056,
+        4: 0.021870061,
+        5: 0.00841032,
+        6: 0.003234261,
+    }
+
+    # ========================================
+    # SCALED REDUCTIONS (sorted by learning rate %)
+    # Convert percentage multipliers to scaled reduction amounts
+    # Since we want cost reduction to INCREASE from 0 to 6, we calculate (1 - percentage) and scale
+    # ========================================
+
+    # 1% Learning Rate scaled reduction
+    scaled_reduction1 = {
+        n: (1 - reduction_percentage_1[n]) * scaling_factor
+        for n in reduction_percentage_1.keys()
+    }
+
+    # 3.5% Learning Rate scaled reduction
+    scaled_reduction3_5 = {
+        n: (1 - reduction_percentage_3_5[n]) * scaling_factor
+        for n in reduction_percentage_3_5.keys()
+    }
+
+    # 4% Learning Rate scaled reduction
+    scaled_reduction4 = {
+        n: (1 - reduction_percentage_4[n]) * scaling_factor
+        for n in reduction_percentage_4.keys()
+    }
+
+    # 5% Learning Rate scaled reduction
+    scaled_reduction5 = {
+        n: (1 - reduction_percentage_5[n]) * scaling_factor
+        for n in reduction_percentage_5.keys()
+    }
+
+    # 6% Learning Rate scaled reduction
     scaled_reduction6 = {
         n: (1 - reduction_percentage_6[n]) * scaling_factor
         for n in reduction_percentage_6.keys()
     }
 
+    # 7% Learning Rate scaled reduction
+    scaled_reduction7 = {
+        n: (1 - reduction_percentage_7[n]) * scaling_factor
+        for n in reduction_percentage_7.keys()
+    }
+
+    # 8% Learning Rate scaled reduction
+    scaled_reduction8 = {
+        n: (1 - reduction_percentage_8[n]) * scaling_factor
+        for n in reduction_percentage_8.keys()
+    }
+
+    # 9% Learning Rate scaled reduction
+    scaled_reduction9 = {
+        n: (1 - reduction_percentage_9[n]) * scaling_factor
+        for n in reduction_percentage_9.keys()
+    }
+
+    # 10% Learning Rate scaled reduction
+    scaled_reduction10 = {
+        n: (1 - reduction_percentage_10[n]) * scaling_factor
+        for n in reduction_percentage_10.keys()
+    }
+
+    # 25% Learning Rate scaled reduction
+    scaled_reduction25 = {
+        n: (1 - reduction_percentage_25[n]) * scaling_factor
+        for n in reduction_percentage_25.keys()
+    }
+
+    # ========================================
+    # DYNAMIC LEARNING RATE SELECTION
+    # ========================================
+
+    # Create learning rate mapping for dynamic selection
+    lr_mapping = {
+        'LR1': scaled_reduction1,
+        'LR3_5': scaled_reduction3_5,
+        'LR4': scaled_reduction4,
+        'LR5': scaled_reduction5,
+        'LR6': scaled_reduction6,
+        'LR7': scaled_reduction7,
+        'LR8': scaled_reduction8,
+        'LR9': scaled_reduction9,
+        'LR10': scaled_reduction10,
+        'LR25': scaled_reduction25
+    }
+
+    # Select the appropriate reduction based on environment variable
+    selected_reduction = lr_mapping.get(LEARNING_RATE, scaled_reduction5)
+    print(f"Selected reduction values: {selected_reduction}")
+
     # Store the scaling factor as a parameter for use in cost calculations
     m.scaling_factor = pyomo.Param(initialize=scaling_factor, doc="Scaling factor for price reductions")
 
-    # Initialize P_sec with scaled values
+    # Initialize P_sec with dynamically selected scaled values
     m.P_sec = pyomo.Param(
         m.location,  # Locations
         m.tech,  # Technologies
         m.nsteps_sec,  # Steps
-        initialize=lambda m, loc, tech, n: scaled_reductions_25[n],
-        doc="Scaled price reduction values (to be divided by scaling_factor in cost function)"
+        initialize=lambda m, loc, tech, n: selected_reduction[n],
+        doc=f"Scaled price reduction values for {LEARNING_RATE} (to be divided by scaling_factor in cost function)"
     )
 
-    # param def for Capacity needed to reach next step
-    # Initialize the dictionary with values for capacityperstep_sec
-    # capacity_init_values = {}
-
-    # Loop over all nsteps_sec, location, and tech
-    # for n in m.nsteps_sec:
-    #    for loc in m.location:
-    #        for tech in m.tech:
-    #            if tech == "solarPV":
-    #                # Use the predefined capacity values for solarPV (or any logic you want for tech)
-    #                capacity_init_values[(n, loc, tech)] = {
-    #                    0: 0,
-    #                    1: 100,
-    #                    2: 1000,
-    #                    3: 10000,
-    #                    4: 100000,
-    #                    5: 1000000,
-    #                    6: 10000000,
-    #                }.get(n, 0)  # Default to 0 for other steps
-    #            else:
-    #               # For other technologies (like wind), set the default to 0
-    #               capacity_init_values[(n, loc, tech)] = {
-    #                   0: 0,
-    #                   1: 100,
-    #                   2: 1000,
-    #                   3: 10000,
-    #                   4: 100000,
-    #                   5: 1000000,
-    #                   6: 10000000,
-    #               }.get(n, 0)  # Default to 0 for other steps
-    # print(capacity_init_values)
-
-    # Now initialize the Param with the dictionary TODO reenable if wokrs again
-    # m.capacityperstep_sec = pyomo.Param(
-    #    m.nsteps_sec, m.location, m.tech, initialize=capacity_init_values
-    # )
 
     # Define the step values (same for all technologies)
     uniform_step_values = {

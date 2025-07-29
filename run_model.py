@@ -226,14 +226,23 @@ parser.add_argument(
     default=5,
     help="Rolling horizon window length in years (default: 5)",
 )
+parser.add_argument(
+    "--lr",
+    choices=["LR1", "LR3_5", "LR4", "LR5", "LR6", "LR7", "LR8", "LR9", "LR10", "LR25"],
+    default="LR5",
+    help="Learning rate scenario (default: LR5)",
+)
 args = parser.parse_args()
+
+# Set environment variable for learning rate BEFORE importing urbs
+os.environ['URBS_LR'] = args.lr
 
 # Original setup (unchanged)
 input_files = "urbs_intertemporal_2050"
 input_dir = "Input"
 input_path = os.path.join(input_dir, input_files)
 
-learning_rate = "LR25"
+learning_rate = args.lr  # Use the selected learning rate
 result_name = f"urbs-{learning_rate}"
 result_dir = urbs.prepare_result_directory(result_name)
 year = date.today().year
