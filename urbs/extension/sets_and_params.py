@@ -399,6 +399,70 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         for n in reduction_percentage_25.keys()
     }
 
+    # Define reduction percentage for 3.5 scenario
+    reduction_percentage_3_5 = {
+        0: 1,
+        1: 0.888384244,
+        2: 0.789226565,
+        3: 0.701136445,
+        4: 0.622878571,
+        5: 0.553355508,
+        6: 0.491592315,
+    }
+
+    scaled_reduction3_5 = {
+        n: (1 - reduction_percentage_3_5[n]) * scaling_factor
+        for n in reduction_percentage_3_5.keys()
+    }
+
+    # Define reduction percentage for 4% scenario
+    reduction_percentage_4 = {
+        0: 1,
+        1: 0.873185089,
+        2: 0.7624522,
+        3: 0.665761892,
+        4: 0.581333357,
+        5: 0.507611619,
+        6: 0.443238897,
+    }
+
+    scaled_reduction4 = {
+        n: (1 - reduction_percentage_4[n]) * scaling_factor
+        for n in reduction_percentage_4.keys()
+    }
+
+    # Define reduction percentage for 10% scenario
+    reduction_percentage_10 = {
+        0: 1,
+        1: 0.70468805,
+        2: 0.496585247,
+        3: 0.349937689,
+        4: 0.246596908,
+        5: 0.173773894,
+        6: 0.122456386,
+    }
+
+    scaled_reduction10 = {
+        n: (1 - reduction_percentage_10[n]) * scaling_factor
+        for n in reduction_percentage_10.keys()
+    }
+
+    # Define reduction percentage for 5% scenario
+    reduction_percentage_5 = {
+        0: 1,
+        1: 0.843333629,
+        2: 0.711211609,
+        3: 0.599788667,
+        4: 0.505821953,
+        5: 0.426576663,
+        6: 0.359746445,
+    }
+
+    scaled_reduction5 = {
+        n: (1 - reduction_percentage_5[n]) * scaling_factor
+        for n in reduction_percentage_5.keys()
+    }
+
     # Store the scaling factor as a parameter for use in cost calculations
     m.scaling_factor = pyomo.Param(initialize=scaling_factor, doc="Scaling factor for price reductions")
 
@@ -407,7 +471,7 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         m.location,  # Locations
         m.tech,  # Technologies
         m.nsteps_sec,  # Steps
-        initialize=lambda m, loc, tech, n: scaled_reductions_25[n],
+        initialize=lambda m, loc, tech, n: scaled_reduction5[n],
         doc="Scaled price reduction values (to be divided by scaling_factor in cost function)"
     )
 

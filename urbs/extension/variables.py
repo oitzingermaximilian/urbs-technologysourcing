@@ -111,6 +111,14 @@ def apply_variables(m):
     )
     m.cost_scrap = pyomo.Var(m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals)
 
+    # Auxiliary variables temporarily removed - not using linearization yet
+    # m.eu_secondary_cost_reduction = pyomo.Var(
+    #     m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    # )
+    # m.scrap_cost_reduction = pyomo.Var(
+    #     m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    # )
+
     """
     These Variables are used to simulate a imaginary BESS demand in order to cover the dynamics of battery energy storage systems as well
     """
@@ -124,3 +132,11 @@ def apply_variables(m):
     m.capacity_facility_cumulative = pyomo.Var(
         m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
     )
+
+    # Auxiliary variables for linearizing EU secondary cost reduction only
+    m.eu_secondary_cost_reduction = pyomo.Var(
+        m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    )
+
+
+

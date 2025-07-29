@@ -110,10 +110,11 @@ class capacity_scrap_total_rule(AbstractConstraint):
 
 class cost_scrap_rule(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
+        # Apply price reduction directly to the scrap recycling price
+        reduced_scrap_price = m.f_scrap_rec[stf, location, tech] * (1 - m.pricereduction_sec[stf, location, tech])
         expr = (
             m.cost_scrap[stf, location, tech]
-            == m.f_scrap_rec[stf, location, tech]
-            * m.capacity_scrap_rec[stf, location, tech]
+            == reduced_scrap_price * m.capacity_scrap_rec[stf, location, tech]
         )
         debug_print(f"[cost_scrap] STF={stf} ➞ expr: {expr}")
         return expr
@@ -157,6 +158,16 @@ class scrap_recycling_increase_rule(AbstractConstraint):
         return expr
 
 
+class linearize_eu_secondary_cost_reduction(AbstractConstraint):
+    def apply_rule(self, m, stf, location, tech):
+        expr = (
+            m.eu_secondary_cost_reduction[stf, location, tech]
+            == m.EU_secondary_costs[stf, location, tech] * m.pricereduction_sec[stf, location, tech]
+        )
+        debug_print(f"[linearize_eu_cost] STF={stf} ➞ expr: {expr}")
+        return expr
+
+
 def apply_scrap_constraints(m):
     constraints = [
         decommissioned_capacity_rule(),
@@ -164,6 +175,7 @@ def apply_scrap_constraints(m):
         capacity_scrap_rec_rule(),
         capacity_scrap_total_rule(),
         cost_scrap_rule(),
+        linearize_eu_secondary_cost_reduction(),
         # scrap_total_decrease_rule(),
         # scrap_recycling_increase_rule(),
     ]
@@ -198,12 +210,9 @@ def apply_scrap_constraints(m):
         m.tech,
         rule=lambda m, stf, loc, tech: constraints[4].apply_rule(m, stf, loc, tech),
     )
-    # m.scrap_total_decrease_rule = pyomo.Constraint(
-    #    m.stf, m.location, m.tech, rule=lambda m, stf, loc, tech: constraints[5].apply_rule(m, stf, loc, tech)
-    # )
-    # m.scrap_recycling_increase_rule = pyomo.Constraint(
-    #    m.stf,
-    #    m.location,
-    ##    m.tech,
-    #    rule=lambda m, stf, loc, tech: constraints[6].apply_rule(m, stf, loc, tech),
-    # )
+    m.linearize_eu_secondary_cost_reduction = pyomo.Constraint(
+        m.stf,
+        m.location,
+        m.tech,
+        rule=lambda m, stf, loc, tech: constraints[5].apply_rule(m, stf, loc, tech),
+    )

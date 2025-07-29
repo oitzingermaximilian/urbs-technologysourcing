@@ -8,14 +8,6 @@ class AbstractConstraint(ABC):
         pass
 
 
-DEBUG = False  # flip to True to enable cost‐constraint logging
-
-
-def debug_print(*args, **kwargs):
-    if DEBUG:
-        print(*args, **kwargs)
-
-
 class DefCostsNew(AbstractConstraint):
     def apply_rule(self, m, cost_type_new):
         if cost_type_new == "Importcost":
@@ -37,10 +29,6 @@ class DefCostsNew(AbstractConstraint):
                 for tech in m.tech
             )
             expr = m.costs_new[cost_type_new] == total_import_cost
-            debug_print(
-                f"[DefCostsNew-Import] total_import_cost = {total_import_cost}\n"
-                f"    expr: {expr}"
-            )
             return expr
 
         elif cost_type_new == "Storagecost":
@@ -51,10 +39,6 @@ class DefCostsNew(AbstractConstraint):
                 for tech in m.tech
             )
             expr = m.costs_new[cost_type_new] == total_storage_cost
-            debug_print(
-                f"[DefCostsNew-Storage] total_storage_cost = {total_storage_cost}\n"
-                f"    expr: {expr}"
-            )
             return expr
 
         elif cost_type_new == "Eu Cost Primary":
@@ -66,37 +50,25 @@ class DefCostsNew(AbstractConstraint):
                 for tech in m.tech
             )
             expr = m.costs_new[cost_type_new] == total_eu_cost_primary
-            debug_print(
-                f"[DefCostsNew-EU Primary] total_eu_cost_primary = {total_eu_cost_primary}\n"
-                f"    expr: {expr}"
-            )
             return expr
 
         elif cost_type_new == "Eu Cost Secondary":
+            # Linearized version - only EU secondary costs need linearization now
+            # Scrap costs are handled directly in scrap.py with pricereduction applied to f_scrap_rec
             total_eu_cost_secondary = sum(
                 (
-                    # Debug print for each combination
-                    print(f"Using reduction: {m.pricereduction_sec[stf, site, tech]} for {tech} in {stf}") or
-                    (
-                        m.EU_secondary_costs[stf, site, tech]
-                        * (1 - m.pricereduction_sec[stf, site, tech])
-                    )
+                    # Linearized EU secondary costs: EU_secondary_costs - eu_secondary_cost_reduction
+                    (m.EU_secondary_costs[stf, site, tech] - m.eu_secondary_cost_reduction[stf, site, tech])
                     * m.capacity_ext_eusecondary[stf, site, tech]
                     + 1000 * m.capacity_facility_eusecondary[stf, site, tech]
-                    + (
-                        m.cost_scrap[stf, site, tech]
-                        * (1 - m.pricereduction_sec[stf, site, tech])
-                    )
+                    # Scrap costs are now linear (no reduction applied here, it's in scrap.py)
+                    + m.cost_scrap[stf, site, tech]
                 )
                 for stf in m.stf
                 for site in m.location
                 for tech in m.tech
             )
             expr = m.costs_new[cost_type_new] == total_eu_cost_secondary
-            debug_print(
-                f"[DefCostsNew-EU Secondary] total_eu_cost_secondary = {total_eu_cost_secondary}\n"
-                f"    expr: {expr}"
-            )
             return expr
 
         else:
@@ -118,10 +90,6 @@ class CalculateYearlyImportCost(AbstractConstraint):
             + m.anti_dumping_measures[stf, location, tech]
         )
         expr = m.costs_ext_import[stf, location, tech] == import_cost_value
-        debug_print(
-            f"[YearlyImport] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"import_cost_value={import_cost_value}\n    expr: {expr}"
-        )
         return expr
 
 
@@ -131,10 +99,6 @@ class CalculateYearlyStorageCost(AbstractConstraint):
             m.STORAGECOST[location, tech] * m.capacity_ext_stock[stf, location, tech]
         )
         expr = m.costs_ext_storage[stf, location, tech] == storage_cost_value
-        debug_print(
-            f"[YearlyStorage] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"storage_cost_value={storage_cost_value}\n    expr: {expr}"
-        )
         return expr
 
 
@@ -145,32 +109,22 @@ class CalculateYearlyEUPrimary(AbstractConstraint):
             * m.capacity_ext_euprimary[stf, location, tech]
         )
         expr = m.costs_EU_primary[stf, location, tech] == eu_primary_cost_value
-        debug_print(
-            f"[YearlyEUPrimary] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"eu_primary_cost_value={eu_primary_cost_value}\n    expr: {expr}"
-        )
         return expr
 
 
 class CalculateYearlyEUSecondary(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
+        # Linearized version - only EU secondary costs need linearization now
+        # Scrap costs are handled directly in scrap.py with pricereduction applied to f_scrap_rec
         eu_secondary_cost_value = (
-            (
-                m.EU_secondary_costs[stf, location, tech]
-                * (1 - m.pricereduction_sec[stf, location, tech])  # Changed to use (1 - pricereduction_sec)
-            )
+            # Linearized EU secondary costs: EU_secondary_costs - eu_secondary_cost_reduction
+            (m.EU_secondary_costs[stf, location, tech] - m.eu_secondary_cost_reduction[stf, location, tech])
             * m.capacity_ext_eusecondary[stf, location, tech]
             + 1000 * m.capacity_facility_eusecondary[stf, location, tech]
-            + (
-                m.cost_scrap[stf, location, tech]
-                * (1 - m.pricereduction_sec[stf, location, tech])  # Changed to use (1 - pricereduction_sec)
-            )
+            # Scrap costs are now linear (no reduction applied here, it's in scrap.py)
+            + m.cost_scrap[stf, location, tech]
         )
         expr = m.costs_EU_secondary[stf, location, tech] == eu_secondary_cost_value
-        debug_print(
-            f"[YearlyEUSecondary] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"eu_secondary_cost_value={eu_secondary_cost_value}\n    expr: {expr}"
-        )
         return expr
 
 
