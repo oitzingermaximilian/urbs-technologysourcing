@@ -13,6 +13,11 @@ import gurobipy as gp
 from collections import defaultdict
 import pyomo.environ as pyomo
 import pandas as pd
+import numpy as np
+# Import bilinear constraint detection
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from detect_bilinear_constraints import analyze_model_bilinearity
 
 
 def prepare_result_directory(result_name):
@@ -409,6 +414,20 @@ def run_scenario(
         indexlist=indexlist,
     )
 
+    # BILINEAR CONSTRAINT DETECTION
+    print("\n" + "="*80)
+    print("DETECTING BILINEAR CONSTRAINTS")
+    print("="*80)
+
+    # Create output directory for bilinear analysis
+    bilinear_output_dir = os.path.join(result_dir, "bilinear_analysis")
+
+    # Analyze model for bilinear constraints
+    bilinear_constraints = analyze_model_bilinearity(prob, bilinear_output_dir)
+
+    print(f"Bilinear constraint analysis complete. Found {len(bilinear_constraints)} bilinear constraints.")
+    print("="*80 + "\n")
+
     def summarize_constraints(model):
         print("\nConstraint Summary:")
         for cname in model.component_map(pyomo.Constraint, active=True):
@@ -420,6 +439,7 @@ def run_scenario(
     # summarize_constraints(prob)
     # prob_filename = os.path.join(result_dir, 'model.lp')
     # prob.write(prob_filename, io_options={'symbolic_solver_labels':True})
+
 
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, "{}.log").format(sce)
@@ -899,9 +919,7 @@ def read_scenario_prices(window_start):
         manufacturing_prices = pd.read_excel(
             scenario_file, sheet_name="manufacturing_prices", index_col="Stf"
         )
-        lng_prices = pd.read_excel(
-            scenario_file, sheet_name="lng_prices", index_col="Stf"
-        )
+        lng_prices = pd.read_excel(scenario_file, sheet_name="lng_prices", index_col="Stf")
         piped_gas_prices = pd.read_excel(
             scenario_file, sheet_name="piped_gas_prices", index_col="Stf"
         )

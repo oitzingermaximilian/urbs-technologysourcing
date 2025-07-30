@@ -95,6 +95,10 @@ def apply_variables(m):
     )
     m.BD_sec = pyomo.Var(m.stf, m.location, m.tech, m.nsteps_sec, domain=pyomo.Binary)
 
+    m.auxiliary_product_BD_q = pyomo.Var(
+        m.stf, m.location, m.tech, m.nsteps_sec, domain=pyomo.NonNegativeReals
+    )
+
     """
     These Variables are used for the scrap.py script constraints.
     """
@@ -138,5 +142,7 @@ def apply_variables(m):
         m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
     )
 
-
+    m.scrap_cost_reduction= pyomo.Var(
+        m.stf, m.location, m.tech, domain=pyomo.NonNegativeReals
+    )
 

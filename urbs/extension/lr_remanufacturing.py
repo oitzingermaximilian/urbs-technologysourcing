@@ -111,35 +111,32 @@ class q_perstep_constraint_sec(AbstractConstraint):
         return expr
 
 
+class auxiliary_variable_calculation(AbstractConstraint):
+    def apply_rule(self, m, stf, location, tech, nsteps_sec):
+        """
+        Defines the auxiliary variable as equal to BD_sec * capacity_ext_eusecondary.
+        This constraint establishes the relationship between the auxiliary variable
+        and the bilinear product it represents.
+        """
+        expr = (
+            m.auxiliary_product_BD_q[stf, location, tech, nsteps_sec]
+            == m.BD_sec[stf, location, tech, nsteps_sec] * m.capacity_ext_eusecondary[stf, location, tech]
+        )
+        debug_print(
+            f"[auxiliary_variable] STF={stf}, step={nsteps_sec}  ➞ "
+            f"aux_BD_q == BD_sec * capacity_ext"
+        )
+        return expr
+
+
 class upper_bound_z_constraint_sec(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech, nsteps_sec):
         """
-        Evaluates whether the left-hand side of the equation for the secondary upper bound
-        constraint is less than or equal to the right-hand side. The equation verifies
-        constraints in a secondary process model using provided variables and model parameters.
-
-        Args:
-            m: The model object containing relevant decision variables and parameters.
-            stf: The time step
-            location: The geographical or spatial identifier for the context of the calculation.
-            tech: The technology type involved in the computation.
-            nsteps_sec: The step in the secondary process sequence for which the constraint
-                is being evaluated.
-
-        Returns:
-            bool: True if the left-hand side value is less than or equal to the right-hand side
-                value of the constraint, otherwise False.
+        Uses auxiliary variable instead of bilinear product BD_sec * capacity_ext_eusecondary
         """
-        lhs_value = (
-            m.BD_sec[stf, location, tech, nsteps_sec]
-            * m.capacity_ext_eusecondary[stf, location, tech]
-        )
+        lhs_value = m.auxiliary_product_BD_q[stf, location, tech, nsteps_sec]
         rhs_value = m.gamma_sec * m.BD_sec[stf, location, tech, nsteps_sec]
 
-        # Debug: Print the left-hand side and right-hand side for upper bound comparison
-        # print(
-        #    f"Debug: upper_bound_z_eq_sec for stf={stf}, nsteps_sec={nsteps_sec}: LHS = {lhs_value}, RHS = {rhs_value}"
-        # )
         expr = lhs_value <= rhs_value
         debug_print(
             f"[upper_bound_z] STF={stf}, step={nsteps_sec}  ➞ "
@@ -151,82 +148,29 @@ class upper_bound_z_constraint_sec(AbstractConstraint):
 class upper_bound_z_q1_eq_sec(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech, nsteps_sec):
         """
-        Ensures that the left-hand side (LHS) value calculated using the model's boundary
-        data and capacity values for the specified secondary step does not exceed the
-        right-hand side (RHS) value representing the total possible capacity for the
-        configuration provided.
-
-        This function is typically used in optimization or constraint checks within
-        models and verifies compliance with an upper bound constraint.
-
-        Args:
-            m: The model object containing all relevant parameters and data structures.
-            stf: The time step
-            location: The identifier for the specific geographic or operational location.
-            tech: The identifier for the specific technology or equipment set.
-            nsteps_sec: The secondary step number or identifier in the process sequence.
-
-        Returns:
-            bool: True if the LHS value does not exceed the RHS value, indicating that
-            the upper bound constraint is satisfied; otherwise, False.
+        Uses auxiliary variable instead of bilinear product BD_sec * capacity_ext_eusecondary
         """
-
-        lhs_value = (
-            m.BD_sec[stf, location, tech, nsteps_sec]
-            * m.capacity_ext_eusecondary[stf, location, tech]
-        )
+        lhs_value = m.auxiliary_product_BD_q[stf, location, tech, nsteps_sec]
         rhs_value = m.capacity_ext_eusecondary[stf, location, tech]
 
-        # Debug: Print the left-hand side and right-hand side for upper bound comparison
-        # print(
-        #    f"Debug: upper_bound_z_q1_eq_sec for stf={stf}, nsteps_sec={nsteps_sec}: LHS = {lhs_value}, RHS = {rhs_value}"
-        # )
         expr = lhs_value <= rhs_value
         debug_print(
             f"[upper_bound_z_q1] STF={stf}, step={nsteps_sec}  ➞ "
             f"LHS={lhs_value}, RHS={rhs_value}, expr: {expr}"
         )
-
         return expr
 
 
 class lower_bound_z_eq_sec(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech, nsteps_sec):
         """
-        Compares the lower bound equation for secondary capacity extension in a given
-        location, scenario, and time step. The function asserts whether the computed lower
-        bound inequality holds by comparing the left-hand side (LHS) against the right-hand
-        side (RHS) of the condition.
-
-        Args:
-            m: The model object containing system parameters, variables, and coefficients
-                necessary for the capacity computation.
-            stf: The time step
-            location: The string or numerical identifier for the geographical location where
-                the secondary capacity extension is being considered.
-            tech: The string or numerical identifier representing the technology for which
-                the secondary capacity extension is analyzed.
-            nsteps_sec: The integer denoting the specific time step in the sequence relevant
-                to the secondary capacity computation.
-
-        Returns:
-            bool: True if the lower bound inequality holds, otherwise False. The result
-                indicates whether the LHS of the inequality is greater than or equal to the RHS.
+        Uses auxiliary variable instead of bilinear product BD_sec * capacity_ext_eusecondary
         """
-
-        lhs_value = (
-            m.BD_sec[stf, location, tech, nsteps_sec]
-            * m.capacity_ext_eusecondary[stf, location, tech]
-        )
+        lhs_value = m.auxiliary_product_BD_q[stf, location, tech, nsteps_sec]
         rhs_value = (
             m.capacity_ext_eusecondary[stf, location, tech]
             - (1 - m.BD_sec[stf, location, tech, nsteps_sec]) * m.gamma_sec
         )
-
-        # Debug: Print the left-hand side and right-hand side for lower bound comparison
-        # print(
-        #    f"Debug: lower_bound_z_eq_sec for stf={stf}, nsteps_sec={nsteps_sec}: LHS = {lhs_value}, RHS = {rhs_value}"
-        # )
 
         expr = lhs_value >= rhs_value
         debug_print(
@@ -239,40 +183,9 @@ class lower_bound_z_eq_sec(AbstractConstraint):
 class non_negativity_z_eq_sec(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech, nsteps_sec):
         """
-        Ensures non-negativity of a secondary use-related variable for the specified
-        staff, location, technology, and step in the secondary stage.
-
-        This function calculates the left-hand side (LHS) value based on the product
-        of a decision variable and capacity, ensuring that the resulting value is
-        non-negative. It serves as a constraint validation function for specific
-        optimization or computational models.
-
-        Debug information, including the value of the LHS, is printed to assist in
-        debugging or analysis of the computation.
-
-        Args:
-            m: Model object containing the decision variables and data required
-                for computing the constraint.
-            stf: The time step
-            location: Identifier for the location or facility in the computation.
-            tech: Identifier for the specific technology being referenced.
-            nsteps_sec: Integer or identifier representing the step in the secondary
-                stage.
-
-        Returns:
-            bool: True if the LHS value is greater than or equal to zero, indicating
-            non-negativity; otherwise, False.
+        Uses auxiliary variable instead of bilinear product BD_sec * capacity_ext_eusecondary
         """
-
-        lhs_value = (
-            m.BD_sec[stf, location, tech, nsteps_sec]
-            * m.capacity_ext_eusecondary[stf, location, tech]
-        )
-
-        # Debug: Print the value of the non-negativity constraint
-        # print(
-        #    f"Debug: non_negativity_z_eq_sec for stf={stf}, nsteps_sec={nsteps_sec}: LHS = {lhs_value}"
-        # )
+        lhs_value = m.auxiliary_product_BD_q[stf, location, tech, nsteps_sec]
 
         expr = lhs_value >= 0
         debug_print(
@@ -297,6 +210,17 @@ def apply_combined_lr_constraints(m):
         non_negativity_z_eq_sec(),
     ]
 
+    # Add auxiliary variable constraint
+    constraints_auxiliary = [
+        auxiliary_variable_calculation(),
+    ]
+
+    # Debug: Print the sets being used
+    print(f"DEBUG: m.stf = {list(m.stf)}")
+    print(f"DEBUG: m.location = {list(m.location)}")
+    print(f"DEBUG: m.tech = {list(m.tech)}")
+    print(f"DEBUG: m.nsteps_sec = {list(m.nsteps_sec)}")
+
     for i, constraint in enumerate(constraints_rm1):
         constraint_name = f"constraint_rm1_{i + 1}"
         setattr(
@@ -306,7 +230,7 @@ def apply_combined_lr_constraints(m):
                 m.stf,
                 m.location,
                 m.tech,
-                rule=lambda m, stf, loc, tech: constraint.apply_rule(m, stf, loc, tech),
+                rule=lambda m, stf, loc, tech, constraint=constraint: constraint.apply_rule(m, stf, loc, tech),
             ),
         )
 
@@ -320,7 +244,24 @@ def apply_combined_lr_constraints(m):
                 m.location,
                 m.tech,
                 m.nsteps_sec,
-                rule=lambda m, stf, loc, tech, nsteps_sec: constraint.apply_rule(
+                rule=lambda m, stf, loc, tech, nsteps_sec, constraint=constraint: constraint.apply_rule(
+                    m, stf, loc, tech, nsteps_sec
+                ),
+            ),
+        )
+
+    # Add auxiliary variable constraints with proper lambda closure
+    for i, constraint in enumerate(constraints_auxiliary):
+        constraint_name = f"constraint_auxiliary_{i + 1}"
+        setattr(
+            m,
+            constraint_name,
+            pyomo.Constraint(
+                m.stf,
+                m.location,
+                m.tech,
+                m.nsteps_sec,
+                rule=lambda m, stf, loc, tech, nsteps_sec, constraint=constraint: constraint.apply_rule(
                     m, stf, loc, tech, nsteps_sec
                 ),
             ),
