@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from pathlib import Path
+from matplotlib.colors import to_hex  # <-- Robust color conversion
 
 # Set the font sizes to match plot_auto.py style
 plt.rcParams.update(
@@ -29,6 +30,9 @@ LEARNING_RATES = {
     "LR4": "4% Learning Rate",
     "LR5": "5% Learning Rate",
     "LR6": "6% Learning Rate",
+    "LR7": "7% Learning Rate",
+    "LR8": "8% Learning Rate",
+    "LR9": "9% Learning Rate",
     "LR10": "10% Learning Rate",
     "LR25": "25% Learning Rate"
 }
@@ -72,7 +76,7 @@ def plot_eu_secondary_additions_by_years():
     print(f"Created/using output directory: {output_dir}")
 
     # First, let's identify what technologies are available
-    sample_df = load_scenario_data("LR25", "moderate", "Total Cap Sec")
+    sample_df = load_scenario_data("LR25", "average", "Total Cap Sec")
     if sample_df is None:
         print("Error: Could not load sample data to identify technologies")
         return
@@ -119,6 +123,10 @@ def plot_eu_secondary_additions_by_years():
                 data_for_boxplot.append(scenario_data)
                 labels_for_boxplot.append(scenario.replace('_', ' ').title())
 
+            # Use seaborn's color palette to always get enough colors
+            colors_gradient = sns.color_palette("Blues", n_colors=len(PRICE_SCENARIOS))
+            colors_gradient = [to_hex(c) for c in colors_gradient]
+
             # Create boxplot for this year
             box_plot = ax.boxplot(data_for_boxplot,
                                  labels=labels_for_boxplot,
@@ -126,8 +134,7 @@ def plot_eu_secondary_additions_by_years():
                                  showmeans=True,
                                  meanprops={'marker': 'D', 'markerfacecolor': 'red', 'markeredgecolor': 'red', 'markersize': 8})
 
-            # Color the boxes with a gradient
-            colors_gradient = ['#E8F4FD', '#B8D4E8', '#88B5D3', '#5896BE', '#2877A9']
+            # Color the boxes with the generated palette
             for patch, color in zip(box_plot['boxes'], colors_gradient):
                 patch.set_facecolor(color)
                 patch.set_alpha(0.7)
@@ -200,11 +207,13 @@ def plot_lng_demand_comparison():
     # Create the plot
     x_positions = np.arange(len(PRICE_SCENARIOS))
 
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+    # Use seaborn color palette for as many learning rates as needed
+    colors = sns.color_palette("tab10", n_colors=len(LEARNING_RATES))
+    colors = [to_hex(c) for c in colors]
 
     for i, (lr_name, values) in enumerate(data_for_plot.items()):
         ax.plot(x_positions, values, marker='o', linewidth=2,
-               markersize=8, label=lr_name, color=colors[i])
+               markersize=8, label=lr_name, color=colors[i % len(colors)])
 
     ax.set_xlabel('Price Scenarios')
     ax.set_ylabel('LNG Demand (BCM)')  # Adjust unit as needed

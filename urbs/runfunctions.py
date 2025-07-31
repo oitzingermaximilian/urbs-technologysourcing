@@ -114,10 +114,10 @@ def run_scenario(
     sce = scenario.__name__
     data = read_input(input_files, year)
 
-    print(f"\n--- Debugging run_scenario ---")
-    print(f"window_start: {window_start}, window_end: {window_end}")
-    print(f"indexlist: {indexlist}")
-    print("--------------------------\n")
+    # print(f"\n--- Debugging run_scenario ---")  # Commented out to reduce terminal output
+    # print(f"window_start: {window_start}, window_end: {window_end}")  # Commented out to reduce terminal output
+    # print(f"indexlist: {indexlist}")  # Commented out to reduce terminal output
+    # print("--------------------------\n")  # Commented out to reduce terminal output
 
     ### --------start of urbs-extensionv1.0 input data addition-------- ###
 
