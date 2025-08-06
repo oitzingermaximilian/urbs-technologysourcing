@@ -44,16 +44,19 @@ def plot_nzia_benchmark(output_file_path):
         "capacity_ext_stockout",
         "capacity_ext_euprimary",
         "capacity_ext_eusecondary",
+        "capacity_ext_imported"  # Add imported to read the data
     ]
 
     # Show actual sheet names
     wb = openpyxl.load_workbook(output_file_path, read_only=True)
     print(f"📄 Sheets in {output_file_path}: {wb.sheetnames}")
+
     # Read data
     data_frames = {
         sheet: pd.read_excel(output_file_path, sheet_name=sheet)
         for sheet in component_sheets
     }
+
     all_techs = sorted(
         set().union(*(df["key_1"].unique() for df in data_frames.values()))
     )
@@ -72,19 +75,30 @@ def plot_nzia_benchmark(output_file_path):
             print(f"⚠ No data for technology '{tech}', skipping plots.")
             continue
 
-        rel_data = abs_data.div(abs_data.sum(axis=1), axis=0).fillna(0)
+        # Calculate total additions (sum of all 4 components)
+        total_additions = abs_data.sum(axis=1)
+
+        # Calculate each component as percentage of TOTAL additions
+        rel_data = pd.DataFrame()
+        rel_data["capacity_ext_eusecondary"] = abs_data["capacity_ext_eusecondary"] / total_additions
+        rel_data["capacity_ext_stockout"] = abs_data["capacity_ext_stockout"] / total_additions
+        rel_data["capacity_ext_euprimary"] = abs_data["capacity_ext_euprimary"] / total_additions
+
+        # Handle division by zero
+        rel_data = rel_data.fillna(0)
+        rel_data = rel_data.replace([np.inf, -np.inf], 0)
 
         # === Styling ===
         colors = ["#FDC5B5", "#F99B7D", "#F76C5E"]  # Soft peach to coral
-        hatches = ["..", "//", "xx"]  # hatches = ["..", "//", "xx"]
-        labels = ["Remanufacturing", "Stock", "Manufacturing"]
+        hatches = ["..", "//", "xx"]
+        labels = ["Remanufacturing", "Stock", "Manufacturing"]  # Correct order
         sheet_order = [
-            "capacity_ext_eusecondary",
-            "capacity_ext_stockout",
-            "capacity_ext_euprimary",
+            "capacity_ext_eusecondary",  # Remanufacturing (first)
+            "capacity_ext_stockout",  # Stock (second)
+            "capacity_ext_euprimary",  # Manufacturing (third)
         ]
 
-        # RELATIVE PLOT
+        # RELATIVE PLOT - Now shows % of total capacity additions
         fig_rel, ax_rel = plt.subplots(figsize=(10, 6))
         bar_container = rel_data[sheet_order].plot(
             kind="bar",
@@ -101,20 +115,33 @@ def plot_nzia_benchmark(output_file_path):
                 bar.set_hatch(hatch)
 
         ax_rel.set_title(
-            f"Composition of Capacity Additions (40% Benchmark) - {tech}", pad=15
+            f"Local Sourcing as % of Total Capacity Additions - {tech}", pad=15
         )
         ax_rel.set_xlabel("Year", labelpad=10)
+        ax_rel.set_ylabel("% of Total Capacity Additions", labelpad=10)
         ax_rel.set_xticks(range(len(years)))
         ax_rel.set_xticklabels(years, rotation=45, ha="right")
-        ax_rel.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
-        ax_rel.set_yticklabels(["0%", "10%", "20%", "30%", "40%"])
-        ax_rel.set_ylim(0, 1.2)
-        ax_rel.legend(labels, frameon=True, loc="upper right")  # Legend inside
+
+        # Set y-axis as percentage (max 100% since it's part of total)
+        ax_rel.set_ylim(0, 1.0)
+        ax_rel.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+
+        # Add 40% reference line for NZIA benchmark
+        benchmark_line = ax_rel.axhline(y=0.4, color='red', linestyle='--', alpha=0.7, linewidth=2)
+
+        # Create combined legend with correct labels
+        bar_handles = [container[0] for container in bar_container.containers]
+        all_handles = bar_handles + [benchmark_line]
+        all_labels = labels + ['NZIA Benchmark']
+        ax_rel.legend(all_handles, all_labels, frameon=True, loc="upper right")
+
         ax_rel.grid(axis="y", alpha=0.3)
 
-        # ABSOLUTE PLOT
+        # ABSOLUTE PLOT - Only the 3 local components (exclude imported)
+        abs_data_display = abs_data[sheet_order]
+
         fig_abs, ax_abs = plt.subplots(figsize=(10, 6))
-        bar_container_abs = abs_data[sheet_order].plot(
+        bar_container_abs = abs_data_display.plot(
             kind="bar",
             stacked=True,
             color=colors,
@@ -128,12 +155,12 @@ def plot_nzia_benchmark(output_file_path):
             for bar in bar_group:
                 bar.set_hatch(hatch)
 
-        ax_abs.set_title(f"Absolute Capacity Additions 40% Benchmark - {tech}", pad=15)
+        ax_abs.set_title(f"Absolute Local Sourcing Capacity - {tech}", pad=15)
         ax_abs.set_ylabel("Capacity (GW)", labelpad=10)
         ax_abs.set_xlabel("Year", labelpad=10)
         ax_abs.set_xticks(range(len(years)))
         ax_abs.set_xticklabels(years, rotation=45, ha="right")
-        ax_abs.legend(labels, frameon=True, loc="upper right")  # Legend inside
+        ax_abs.legend(labels, frameon=True, loc="upper right")  # Only bar labels for absolute plot
         ax_abs.grid(axis="y", alpha=0.3)
 
         # Save figures
@@ -153,6 +180,17 @@ def plot_nzia_benchmark(output_file_path):
         plt.close(fig_abs)
 
         print(f"✔ Plots saved for: {tech} in {output_dir}")
+
+        # Debug: Show percentage calculations
+        print(f"   Local Sourcing Analysis for {tech}:")
+        for year in years:
+            if year in total_additions.index and total_additions[year] > 0:
+                total = total_additions[year]
+                local_total = abs_data_display.loc[year].sum()
+                imported = abs_data["capacity_ext_imported"][year]
+                local_percentage = (local_total / total) * 100
+                print(
+                    f"     {year}: Local={local_total:.1f}GW, Imported={imported:.1f}GW, Total={total:.1f}GW, Local%={local_percentage:.1f}%")
 
 
 def plot_scrap(output_file_path):
@@ -630,3 +668,4 @@ def wait_for_excel_sheets(path, expected_sheets, timeout=60):  # TODO re-add if 
 
 # plot_balance_created("result/urbs-20250604T1538/result_scenario_base.xlsx")
 # plot_facility_utilization("result/urbs-20250716T1015/result_scenario_base.xlsx")
+plot_nzia_benchmark(r"C:\Users\maxoi\OneDrive\Desktop\results_crm_paper\LR7\result_scenario_extremely_high.xlsx")

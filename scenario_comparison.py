@@ -5,6 +5,7 @@ import numpy as np
 import seaborn as sns
 from pathlib import Path
 from matplotlib.colors import to_hex  # <-- Robust color conversion
+from scipy.spatial import ConvexHull
 
 # Set the font sizes to match plot_auto.py style
 plt.rcParams.update(
@@ -167,70 +168,1278 @@ def plot_eu_secondary_additions_2040():
     plot_eu_secondary_additions_by_years()
 
 def plot_lng_demand_comparison():
-    """Plot LNG demand comparison across learning rates and price scenarios"""
+    """Plot LNG demand comparison across learning rates and price scenarios using a heatmap"""
 
-    # First, let's check what sheets are available to find LNG demand data
-    sample_file = Path(RESULTS_BASE_PATH) / "LR25" / "result_scenario_moderate.xlsx"
+    def mwh_to_bcm(mwh, energy_content_mj_per_m3=35.8):
+        return mwh * 3.6 * 1000 / (energy_content_mj_per_m3 * 1e9)
 
-    if sample_file.exists():
-        try:
-            xl = pd.ExcelFile(sample_file)
-            print("Available sheets:", xl.sheet_names)
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
 
-            # Look for sheets that might contain LNG demand data
-            potential_sheets = [sheet for sheet in xl.sheet_names
-                              if any(keyword in sheet.lower() for keyword in
-                                   ['lng', 'demand', 'gas', 'import', 'balance'])]
-            print("Potential LNG-related sheets:", potential_sheets)
+    # Prepare the data matrix
+    lng_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
 
-        except Exception as e:
-            print(f"Error reading sample file: {e}")
+    for i, scenario in enumerate(PRICE_SCENARIOS):
+        for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+            df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
 
-    # For now, let's create a placeholder plot structure
-    # You can modify this once we identify the correct sheet name
-    fig, ax = plt.subplots(figsize=(12, 8))
+            if df is not None:
+                # Filter for LNG data and years 2024-2040
+                lng_data = df[(df['key_2'].str.strip() == 'LNG') &
+                              (df['year'] >= 2024) &
+                              (df['year'] <= 2040)]
 
-    # Placeholder data - replace with actual LNG demand data
-    data_for_plot = {}
+                if not lng_data.empty:
+                    # Sum total LNG demand from 2024-2040 (in MWh)
+                    total_lng_mwh = lng_data['value'].sum()
+                    # Convert to BCM
+                    total_lng_bcm = mwh_to_bcm(total_lng_mwh)
+                    lng_matrix[i, j] = total_lng_bcm
+                else:
+                    lng_matrix[i, j] = np.nan
+            else:
+                lng_matrix[i, j] = np.nan
 
-    for lr_code, lr_name in LEARNING_RATES.items():
-        lng_demands = []
+    # Create the heatmap plot
+    fig, ax = plt.subplots(figsize=(14, 8))
+    sns.heatmap(
+        lng_matrix,
+        annot=True,
+        fmt=".1f",
+        cmap="YlOrRd",  # Yellow-Orange-Red gradient
+        linewidths=0.5,
+        linecolor='gray',
+        cbar_kws={'label': 'LNG Demand 2024-2040 (BCM)'},
+        ax=ax
+    )
 
-        for scenario in PRICE_SCENARIOS:
-            # TODO: Replace 'LNG_SHEET_NAME' with the actual sheet name containing LNG data
-            # df = load_scenario_data(lr_code, scenario, 'LNG_SHEET_NAME')
-            # For now, using placeholder values
-            lng_demands.append(np.random.uniform(50, 150))  # Placeholder
+    # Set axis labels and ticks
+    ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
+    ax.set_yticks(np.arange(len(PRICE_SCENARIOS)) + 0.5)
+    ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
+    ax.set_yticklabels([s.replace('_', ' ').title() for s in PRICE_SCENARIOS], rotation=0)
+    ax.set_xlabel("Learning Rate Scenario")
+    ax.set_ylabel("Price Scenario")
+    ax.set_title("LNG Demand Matrix (2024-2040)")
 
-        data_for_plot[lr_name] = lng_demands
+    plt.tight_layout()
+    output_path = output_dir / "lng_demand_matrix_2024_2040.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved LNG demand matrix plot: {output_path}")
 
-    # Create the plot
+    plt.show()
+
+    # Also create a line plot with better separation using alpha and markers
+    fig, ax = plt.subplots(figsize=(14, 8))
     x_positions = np.arange(len(PRICE_SCENARIOS))
 
-    # Use seaborn color palette for as many learning rates as needed
+    # Use different markers and line styles for better distinction
+    markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h']
+    linestyles = ['-', '--', '-.', ':']
+
     colors = sns.color_palette("tab10", n_colors=len(LEARNING_RATES))
     colors = [to_hex(c) for c in colors]
 
-    for i, (lr_name, values) in enumerate(data_for_plot.items()):
-        ax.plot(x_positions, values, marker='o', linewidth=2,
-               markersize=8, label=lr_name, color=colors[i % len(colors)])
+    for i, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+        lng_demands = lng_matrix[:, i]  # Get the column for this learning rate
+
+        ax.plot(x_positions, lng_demands,
+                marker=markers[i % len(markers)],
+                linestyle=linestyles[i % len(linestyles)],
+                linewidth=2, markersize=8,
+                label=lr_name,
+                color=colors[i % len(colors)],
+                alpha=0.8)
 
     ax.set_xlabel('Price Scenarios')
-    ax.set_ylabel('LNG Demand (BCM)')  # Adjust unit as needed
-    ax.set_title('LNG Demand Comparison Across Learning Rates and Price Scenarios')
+    ax.set_ylabel('LNG Demand 2024-2040 (BCM)')
+    ax.set_title('LNG Demand Comparison Across Learning Rates and Price Scenarios (2024-2040)')
     ax.set_xticks(x_positions)
-    ax.set_xticklabels([scenario.replace('_', ' ').title() for scenario in PRICE_SCENARIOS])
-    ax.legend()
+    ax.set_xticklabels([scenario.replace('_', ' ').title() for scenario in PRICE_SCENARIOS], rotation=45, ha='right')
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', ncol=1)
     ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    output_path_lines = output_dir / "lng_demand_lines_improved_2024_2040.png"
+    plt.savefig(output_path_lines, dpi=300, bbox_inches='tight')
+    print(f"Saved improved line plot: {output_path_lines}")
+
+    plt.show()
+
+def plot_lng_demand_yearly_scatter():
+    """Plot yearly LNG demand scatter plot - Option 1: Color by Learning Rate, markers for price scenarios"""
+
+    def mwh_to_bcm(mwh, energy_content_mj_per_m3=35.8):
+        return mwh * 3.6 * 1000 / (energy_content_mj_per_m3 * 1e9)
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Collect yearly data
+    yearly_data = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for scenario in PRICE_SCENARIOS:
+            df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
+
+            if df is not None:
+                # Filter for LNG data
+                lng_data = df[df['key_2'].str.strip() == 'LNG']
+
+                for _, row in lng_data.iterrows():
+                    year = row['year']
+                    lng_bcm = mwh_to_bcm(row['value'])
+                    yearly_data.append({
+                        'Year': year,
+                        'LNG_BCM': lng_bcm,
+                        'Learning_Rate': lr_name,
+                        'Price_Scenario': scenario.replace('_', ' ').title(),
+                        'LR_Code': lr_code,
+                        'Scenario_Code': scenario
+                    })
+
+    df_yearly = pd.DataFrame(yearly_data)
+
+    # Option 1: Color by Learning Rate, different markers for price scenarios
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Create unique markers for price scenarios
+    price_markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h', '+']
+    price_scenario_map = {scenario: price_markers[i % len(price_markers)]
+                          for i, scenario in enumerate(PRICE_SCENARIOS)}
+
+    colors = sns.color_palette("tab10", n_colors=len(LEARNING_RATES))
+    lr_color_map = {lr_name: colors[i] for i, lr_name in enumerate(LEARNING_RATES.values())}
+
+    for lr_name in LEARNING_RATES.values():
+        for scenario in PRICE_SCENARIOS:
+            scenario_title = scenario.replace('_', ' ').title()
+            subset = df_yearly[(df_yearly['Learning_Rate'] == lr_name) &
+                               (df_yearly['Price_Scenario'] == scenario_title)]
+
+            if not subset.empty:
+                ax.scatter(subset['Year'], subset['LNG_BCM'],
+                           color=lr_color_map[lr_name],
+                           marker=price_scenario_map[scenario],
+                           s=60, alpha=0.7,
+                           label=f"{lr_name}" if scenario == PRICE_SCENARIOS[0] else "")
+
+    ax.set_xlabel('Year')
+    ax.set_ylabel('LNG Demand (BCM)')
+    ax.set_title('Yearly LNG Demand by Learning Rate and Price Scenario')
+    ax.legend(title='Learning Rates', bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    output_path = output_dir / "lng_yearly_scatter_by_lr.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved yearly scatter plot: {output_path}")
+    plt.show()
+
+def plot_lng_demand_yearly_barplot():
+    """Plot yearly LNG demand using grouped bar plots - separate bars for each price scenario, grouped by learning rate"""
+
+    def mwh_to_bcm(mwh, energy_content_mj_per_m3=35.8):
+        return mwh * 3.6 * 1000 / (energy_content_mj_per_m3 * 1e9)
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Collect yearly data
+    yearly_data = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for scenario in PRICE_SCENARIOS:
+            df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
+
+            if df is not None:
+                # Filter for LNG data
+                lng_data = df[df['key_2'].str.strip() == 'LNG']
+
+                for _, row in lng_data.iterrows():
+                    year = row['year']
+                    lng_bcm = mwh_to_bcm(row['value'])
+                    yearly_data.append({
+                        'Year': year,
+                        'LNG_BCM': lng_bcm,
+                        'Learning_Rate': lr_name,
+                        'Price_Scenario': scenario.replace('_', ' ').title(),
+                        'LR_Code': lr_code,
+                        'Scenario_Code': scenario
+                    })
+
+    df_yearly = pd.DataFrame(yearly_data)
+
+    # Get unique years and sort them
+    years = sorted(df_yearly['Year'].unique())
+
+    # Create subplots for each learning rate
+    n_lr = len(LEARNING_RATES)
+    n_cols = 2  # 2 columns of subplots
+    n_rows = (n_lr + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5 * n_rows))
+    if n_lr == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten()
+
+    # Colors for price scenarios (use a colorful palette)
+    colors_price = sns.color_palette("Set3", n_colors=len(PRICE_SCENARIOS))
+
+    # Bar width and positioning
+    bar_width = 0.07  # Very slim bars as requested
+
+    for i, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+        ax = axes[i]
+
+        # For each year, create grouped bars
+        for year_idx, year in enumerate(years):
+            year_data = df_yearly[(df_yearly['LR_Code'] == lr_code) & (df_yearly['Year'] == year)]
+
+            for scenario_idx, scenario in enumerate(PRICE_SCENARIOS):
+                scenario_title = scenario.replace('_', ' ').title()
+                scenario_data = year_data[year_data['Price_Scenario'] == scenario_title]
+
+                if not scenario_data.empty:
+                    lng_value = scenario_data['LNG_BCM'].iloc[0]
+
+                    # Calculate bar position
+                    x_pos = year + (scenario_idx - len(PRICE_SCENARIOS) / 2) * bar_width
+
+                    ax.bar(x_pos, lng_value,
+                           width=bar_width,
+                           color=colors_price[scenario_idx],
+                           alpha=0.8,
+                           label=scenario_title if year_idx == 0 else "")
+
+        ax.set_xlabel('Year')
+        ax.set_ylabel('LNG Demand (BCM)')
+        ax.set_title(f'{lr_name}')
+        ax.grid(True, alpha=0.3, axis='y')
+        ax.set_xticks(years)
+
+        # Only show legend for the first subplot to avoid clutter
+        if i == 0:
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+    # Hide unused subplots
+    for i in range(n_lr, len(axes)):
+        axes[i].set_visible(False)
+
+    plt.suptitle('Yearly LNG Demand by Price Scenario (Grouped by Learning Rate)', fontsize=16)
+    plt.tight_layout()
+
+    output_path = output_dir / "lng_yearly_barplot_grouped.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved yearly bar plot: {output_path}")
+    plt.show()
+
+def plot_total_system_cost_matrix(): #TODO Disabled reenable if needed
+    """
+    Create a matrix heatmap of total system cost for the year 2040.
+    Rows: price scenarios
+    Columns: learning rate scenarios
+    Cell value: sum of 'value' column for year 2040 in the 'Total_Cost' sheet
+    """
+    # Prepare the data matrix
+    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+    for i, scenario in enumerate(PRICE_SCENARIOS):
+        for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+            df = load_scenario_data(lr_code, scenario, "Total_Cost")
+            if df is not None:
+                df_2040 = df[df['year'] == 2040]
+                total_cost = df_2040['value'].sum() / 1e9  # Convert to bEUR (assuming value in EUR)
+                cost_matrix[i, j] = total_cost
+            else:
+                cost_matrix[i, j] = np.nan  # Use NaN for missing data
+
+    # Create the heatmap plot
+    fig, ax = plt.subplots(figsize=(14, 8))
+    sns.heatmap(
+        cost_matrix,
+        annot=True,
+        fmt=".1f",
+        cmap="YlOrRd",  # Yellow-Orange-Red gradient for cost
+        linewidths=0.5,
+        linecolor='gray',
+        cbar_kws={'label': 'Total System Cost (bEUR)'},
+        ax=ax
+    )
+
+    # Set axis labels and ticks
+    ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
+    ax.set_yticks(np.arange(len(PRICE_SCENARIOS)) + 0.5)
+    ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
+    ax.set_yticklabels([s.replace('_', ' ').title() for s in PRICE_SCENARIOS], rotation=0)
+    ax.set_xlabel("Learning Rate Scenario")
+    ax.set_ylabel("Price Scenario")
+    ax.set_title("Total System Cost Matrix (2040)")
+
+    plt.tight_layout()
+    output_path = Path("scenario_comparison") / "total_system_cost_matrix_2040.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved total system cost matrix plot: {output_path}")
+
+    plt.show()
+
+def plot_total_system_cost_matrix_2024_2040():
+    """
+    Create a matrix heatmap of total system cost from 2024 to 2040.
+    Rows: price scenarios
+    Columns: learning rate scenarios
+    Cell value: sum of 'value' column for years 2024 to 2040 in the 'Total_Cost' sheet
+    """
+    # Prepare the data matrix
+    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+    for i, scenario in enumerate(PRICE_SCENARIOS):
+        for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+            df = load_scenario_data(lr_code, scenario, "Total_Cost")
+            if df is not None:
+                df_period = df[(df['year'] >= 2024) & (df['year'] <= 2040)]
+                total_cost = df_period['value'].sum() / 1e9  # Convert to bEUR (assuming value in EUR)
+                cost_matrix[i, j] = total_cost
+            else:
+                cost_matrix[i, j] = np.nan  # Use NaN for missing data
+
+    # Create the heatmap plot
+    fig, ax = plt.subplots(figsize=(14, 8))
+    sns.heatmap(
+        cost_matrix,
+        annot=True,
+        fmt=".1f",
+        cmap="YlOrRd",  # Yellow-Orange-Red gradient for cost
+        linewidths=0.5,
+        linecolor='gray',
+        cbar_kws={'label': 'Total System Cost (2024–2040, bEUR)'},
+        ax=ax
+    )
+
+    # Set axis labels and ticks
+    ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
+    ax.set_yticks(np.arange(len(PRICE_SCENARIOS)) + 0.5)
+    ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
+    ax.set_yticklabels([s.replace('_', ' ').title() for s in PRICE_SCENARIOS], rotation=0)
+    ax.set_xlabel("Learning Rate Scenario")
+    ax.set_ylabel("Price Scenario")
+    ax.set_title("Total System Cost Matrix (2024–2040)")
+
+    plt.tight_layout()
+    output_path = Path("scenario_comparison") / "total_system_cost_matrix_2024_2040.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved total system cost matrix plot (2024–2040): {output_path}")
+
+    plt.show()
+
+def plot_3d_cost_matrix_grid_style_fixed():
+    """
+    Create a 3D plot with corrected price scenario labels.
+    """
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Prepare the data matrix
+    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+    for i, scenario in enumerate(PRICE_SCENARIOS):
+        for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+            df = load_scenario_data(lr_code, scenario, "Total_Cost")
+            if df is not None:
+                df_period = df[(df['year'] >= 2024) & (df['year'] <= 2040)]
+                total_cost = df_period['value'].sum() / 1e9  # Convert to bEUR
+                cost_matrix[i, j] = total_cost
+            else:
+                cost_matrix[i, j] = np.nan
+
+    # DEBUG: Print the actual PRICE_SCENARIOS to see what we're working with
+    print("PRICE_SCENARIOS:")
+    for i, scenario in enumerate(PRICE_SCENARIOS):
+        print(f"{i}: {scenario}")
+
+    # Create 3D plot
+    fig = plt.figure(figsize=(14, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Create meshgrid for 3D surface
+    X = np.arange(len(LEARNING_RATES))
+    Y = np.arange(len(PRICE_SCENARIOS))
+    X, Y = np.meshgrid(X, Y)
+    Z = cost_matrix
+
+    # Rotate so lowest values face towards us
+    ax.view_init(elev=25, azim=225)
+
+    # Create the 3D surface plot
+    surf = ax.plot_surface(X, Y, Z,
+                           cmap='YlOrRd',
+                           alpha=0.9,
+                           linewidth=0.8,
+                           edgecolor='darkred',
+                           antialiased=True)
+
+    # Clean axis labels
+    ax.set_xlabel('Learning Rate [%]')
+    ax.set_ylabel('Price Scenario')
+    ax.set_zlabel('Cost [bEUR]')
+
+    # Set ticks
+    ax.set_xticks(range(len(LEARNING_RATES)))
+    ax.set_yticks(range(len(PRICE_SCENARIOS)))
+
+    # Simple learning rate labels
+    lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
+
+    # FIXED price scenario labels - be more specific to avoid duplicates
+    price_labels_fixed = []
+    for scenario in PRICE_SCENARIOS:
+        scenario_lower = scenario.lower()
+        if 'extremely_low' in scenario_lower:
+            price_labels_fixed.append('Ext Low')
+        elif 'very_low' in scenario_lower:
+            price_labels_fixed.append('Very Low')
+        elif 'moderately_low' in scenario_lower:
+            price_labels_fixed.append('Mod Low')
+        elif 'slightly_below_average' in scenario_lower:
+            price_labels_fixed.append('Below Avg')
+        elif 'slightly_above_average' in scenario_lower:
+            price_labels_fixed.append('Above Avg')
+        elif 'moderately_high' in scenario_lower:
+            price_labels_fixed.append('Mod High')
+        elif 'very_high' in scenario_lower:
+            price_labels_fixed.append('Very High')
+        elif 'extremely_high' in scenario_lower:
+            price_labels_fixed.append('Ext High')
+        elif scenario_lower == 'low':  # Only exact match for 'low'
+            price_labels_fixed.append('Low')
+        elif scenario_lower == 'high':  # Only exact match for 'high'
+            price_labels_fixed.append('High')
+        elif 'average' in scenario_lower:
+            price_labels_fixed.append('Average')
+        else:
+            # Fallback: use first 8 characters
+            price_labels_fixed.append(scenario.replace('_', ' ').title()[:8])
+
+    # DEBUG: Print the fixed labels
+    print("\nFixed price labels:")
+    for i, label in enumerate(price_labels_fixed):
+        print(f"{i}: {PRICE_SCENARIOS[i]} -> {label}")
+
+    ax.set_xticklabels(lr_labels, fontsize=10)
+    ax.set_yticklabels(price_labels_fixed, fontsize=9)
 
     plt.tight_layout()
 
     # Save the plot
-    output_path = Path("scenario_comparison_lng_demand.png")
+    output_path = output_dir / "3d_cost_matrix_grid_style_fixed.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    print(f"Saved plot: {output_path}")
+    print(f"Saved fixed grid style 3D plot: {output_path}")
 
     plt.show()
+
+def create_price_scenario_mapping():
+    """
+    Helper function to create a proper mapping for price scenarios
+    """
+
+    # Let's create a manual mapping to ensure no duplicates
+    price_mapping = {
+        'extremely_low': 'Ext Low',
+        'very_low': 'Very Low',
+        'low': 'Low',
+        'moderately_low': 'Mod Low',
+        'slightly_below_average': 'Below Avg',
+        'average': 'Average',
+        'slightly_above_average': 'Above Avg',
+        'moderately_high': 'Mod High',
+        'high': 'High',
+        'very_high': 'Very High',
+        'extremely_high': 'Ext High'
+    }
+
+    print("Price scenario mapping:")
+    for key, value in price_mapping.items():
+        print(f"{key} -> {value}")
+
+    return price_mapping
+
+def plot_3d_cost_matrix_with_mapping():
+    """
+    Create plot using explicit mapping to avoid label conflicts
+    """
+
+    # Get the mapping
+    price_mapping = create_price_scenario_mapping()
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Prepare the data matrix
+    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+    for i, scenario in enumerate(PRICE_SCENARIOS):
+        for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+            df = load_scenario_data(lr_code, scenario, "Total_Cost")
+            if df is not None:
+                df_period = df[(df['year'] >= 2024) & (df['year'] <= 2040)]
+                total_cost = df_period['value'].sum() / 1e9
+                cost_matrix[i, j] = total_cost
+            else:
+                cost_matrix[i, j] = np.nan
+
+    # Create 3D plot
+    fig = plt.figure(figsize=(14, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    X = np.arange(len(LEARNING_RATES))
+    Y = np.arange(len(PRICE_SCENARIOS))
+    X, Y = np.meshgrid(X, Y)
+    Z = cost_matrix
+
+    ax.view_init(elev=25, azim=225)
+
+    surf = ax.plot_surface(X, Y, Z,
+                           cmap='YlOrRd',
+                           alpha=0.9,
+                           linewidth=0.8,
+                           edgecolor='darkred',
+                           antialiased=True)
+
+    ax.set_xlabel('Learning Rate [%]')
+    ax.set_ylabel('Price Scenario')
+    ax.set_zlabel('Cost [bEUR]')
+
+    ax.set_xticks(range(len(LEARNING_RATES)))
+    ax.set_yticks(range(len(PRICE_SCENARIOS)))
+
+    lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
+
+    # Use the explicit mapping
+    price_labels_mapped = []
+    for scenario in PRICE_SCENARIOS:
+        scenario_clean = scenario.lower().replace('_', ' ').strip()
+        if scenario_clean in price_mapping:
+            price_labels_mapped.append(price_mapping[scenario_clean])
+        else:
+            # Fallback for any scenario not in mapping
+            price_labels_mapped.append(scenario.replace('_', ' ').title()[:8])
+
+    ax.set_xticklabels(lr_labels, fontsize=10)
+    ax.set_yticklabels(price_labels_mapped, fontsize=9)
+
+    plt.tight_layout()
+
+    output_path = output_dir / "3d_cost_matrix_mapped_labels.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved mapped labels 3D plot: {output_path}")
+
+    plt.show()
+
+def mwh_to_bcm(mwh, energy_content_mj_per_m3=35.8):
+    """Convert MWh to bcm for LNG"""
+    return mwh * 3.6 * 1000 / (energy_content_mj_per_m3 * 1e9)
+
+def find_pareto_front(costs, objectives, minimize_both=True):
+    """Find Pareto front points"""
+    points = np.column_stack((costs, objectives))
+
+    if minimize_both:
+        # For minimization problems
+        pareto_mask = np.ones(len(points), dtype=bool)
+        for i, point in enumerate(points):
+            if pareto_mask[i]:
+                # Check if any other point dominates this point
+                dominated = np.all(points <= point, axis=1) & np.any(points < point, axis=1)
+                if np.any(dominated):
+                    pareto_mask[i] = False
+    else:
+        # For cost minimization vs objective maximization
+        pareto_mask = np.ones(len(points), dtype=bool)
+        for i, point in enumerate(points):
+            if pareto_mask[i]:
+                # A point dominates if it has lower cost AND higher objective
+                dominated = (points[:, 0] <= point[0]) & (points[:, 1] >= point[1]) & \
+                            ((points[:, 0] < point[0]) | (points[:, 1] > point[1]))
+                if np.any(dominated):
+                    pareto_mask[i] = False
+
+    return pareto_mask
+
+def plot_pareto_cost_vs_lng():
+    """Pareto plot: Total system cost (2024-2030) vs LNG demand in 2030"""
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    results = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for scenario in PRICE_SCENARIOS:
+            # Load cost data
+            df_cost = load_scenario_data(lr_code, scenario, "Total_Cost")
+            # Load LNG data
+            df_lng = load_scenario_data(lr_code, scenario, "Commodities_Demand")
+
+            if df_cost is None or df_lng is None:
+                continue
+
+            # Total system cost 2024-2030 (including 2030)
+            cost_data = df_cost[(df_cost['year'] >= 2024) & (df_cost['year'] <= 2030)]
+            total_cost = cost_data['value'].sum() / 1e9  # Convert to billion EUR
+
+            # LNG demand in 2030 only (as it's import demand in that specific year)
+            lng_2030 = df_lng[(df_lng['year'] == 2030) & (df_lng['key_2'].str.strip() == 'LNG')]
+            if not lng_2030.empty:
+                lng_mwh = lng_2030['value'].sum()
+                lng_bcm = mwh_to_bcm(lng_mwh)
+            else:
+                lng_bcm = 0
+
+            results.append({
+                'Learning_Rate': lr_name,
+                'Price_Scenario': scenario.replace('_', ' ').title(),
+                'Total_Cost_bEUR': total_cost,
+                'LNG_Import_2030_BCM': lng_bcm,
+                'LR_Code': lr_code,
+                'Scenario_Code': scenario
+            })
+
+    df_results = pd.DataFrame(results)
+
+    # Find Pareto front (minimize cost, minimize LNG imports)
+    costs = df_results['Total_Cost_bEUR'].values
+    lng_imports = df_results['LNG_Import_2030_BCM'].values
+
+    pareto_mask = find_pareto_front(costs, lng_imports, minimize_both=True)
+    pareto_points = df_results[pareto_mask].copy()
+    pareto_points = pareto_points.sort_values('Total_Cost_bEUR')
+
+    # Create the plot
+    plt.figure(figsize=(12, 8))
+
+    # Plot all points
+    colors = sns.color_palette("tab10", n_colors=len(LEARNING_RATES))
+    lr_color_map = {lr_name: colors[i] for i, lr_name in enumerate(LEARNING_RATES.values())}
+
+    for lr_name in LEARNING_RATES.values():
+        subset = df_results[df_results['Learning_Rate'] == lr_name]
+        plt.scatter(subset['Total_Cost_bEUR'], subset['LNG_Import_2030_BCM'],
+                    color=lr_color_map[lr_name], label=lr_name, alpha=0.7, s=60)
+
+    # Plot Pareto front
+    plt.plot(pareto_points['Total_Cost_bEUR'], pareto_points['LNG_Import_2030_BCM'],
+             'r--', linewidth=2, label='Pareto Front')
+    plt.scatter(pareto_points['Total_Cost_bEUR'], pareto_points['LNG_Import_2030_BCM'],
+                color='red', s=100, marker='*', label='Pareto Optimal', zorder=5)
+
+    plt.xlabel('Total System Cost until 2030 (billion EUR)')
+    plt.ylabel('LNG Import Demand 2030 (BCM)')
+    plt.title('Pareto Front: Cost vs. LNG Import Demand')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    output_path = output_dir / "pareto_cost_vs_lng_2030.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved Pareto plot (Cost vs LNG): {output_path}")
+
+    # Print Pareto optimal points
+    print("\nPareto Optimal Points (Cost vs LNG):")
+    for _, row in pareto_points.iterrows():
+        print(f"  {row['Learning_Rate']} - {row['Price_Scenario']}: "
+              f"Cost={row['Total_Cost_bEUR']:.1f}b€, LNG={row['LNG_Import_2030_BCM']:.1f}BCM")
+
+    plt.show()
+
+def plot_pareto_cost_vs_remanufacturing():
+    """Pareto plot: Total system cost (2024-2030) vs Remanufacturing share in 2030"""
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    results = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for scenario in PRICE_SCENARIOS:
+            # Load cost data
+            df_cost = load_scenario_data(lr_code, scenario, "Total_Cost")
+            # Load remanufacturing data
+            df_reman = load_scenario_data(lr_code, scenario, "Total Cap Sec")
+
+            if df_cost is None or df_reman is None:
+                continue
+
+            # Total system cost 2024-2030
+            cost_data = df_cost[(df_cost['year'] >= 2024) & (df_cost['year'] <= 2030)]
+            total_cost = cost_data['value'].sum() / 1e9  # Convert to billion EUR
+
+            # Remanufacturing additions in 2030 (sum across all technologies)
+            reman_2030 = df_reman[df_reman['year'] == 2030]
+            total_reman = reman_2030['value'].sum() / 1000  # Convert MW to GW
+
+            results.append({
+                'Learning_Rate': lr_name,
+                'Price_Scenario': scenario.replace('_', ' ').title(),
+                'Total_Cost_bEUR': total_cost,
+                'Remanufacturing_2030_GW': total_reman,
+                'LR_Code': lr_code,
+                'Scenario_Code': scenario
+            })
+
+    df_results = pd.DataFrame(results)
+
+    # Find Pareto front (minimize cost, maximize remanufacturing)
+    costs = df_results['Total_Cost_bEUR'].values
+    remanufacturing = df_results['Remanufacturing_2030_GW'].values
+
+    pareto_mask = find_pareto_front(costs, remanufacturing, minimize_both=False)
+    pareto_points = df_results[pareto_mask].copy()
+    pareto_points = pareto_points.sort_values('Total_Cost_bEUR')
+
+    # Create the plot
+    plt.figure(figsize=(12, 8))
+
+    # Plot all points
+    colors = sns.color_palette("tab10", n_colors=len(LEARNING_RATES))
+    lr_color_map = {lr_name: colors[i] for i, lr_name in enumerate(LEARNING_RATES.values())}
+
+    for lr_name in LEARNING_RATES.values():
+        subset = df_results[df_results['Learning_Rate'] == lr_name]
+        plt.scatter(subset['Total_Cost_bEUR'], subset['Remanufacturing_2030_GW'],
+                    color=lr_color_map[lr_name], label=lr_name, alpha=0.7, s=60)
+
+    # Plot Pareto front
+    plt.plot(pareto_points['Total_Cost_bEUR'], pareto_points['Remanufacturing_2030_GW'],
+             'r--', linewidth=2, label='Pareto Front')
+    plt.scatter(pareto_points['Total_Cost_bEUR'], pareto_points['Remanufacturing_2030_GW'],
+                color='red', s=100, marker='*', label='Pareto Optimal', zorder=5)
+
+    plt.xlabel('Total System Cost until 2030 (billion EUR)')
+    plt.ylabel('Remanufacturing Additions 2030 (GW)')
+    plt.title('Pareto Front: Cost vs. Remanufacturing Additions')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    output_path = output_dir / "pareto_cost_vs_remanufacturing_2030.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved Pareto plot (Cost vs Remanufacturing): {output_path}")
+
+    # Print Pareto optimal points
+    print("\nPareto Optimal Points (Cost vs Remanufacturing):")
+    for _, row in pareto_points.iterrows():
+        print(f"  {row['Learning_Rate']} - {row['Price_Scenario']}: "
+              f"Cost={row['Total_Cost_bEUR']:.1f}b€, Reman={row['Remanufacturing_2030_GW']:.1f}GW")
+
+    plt.show()
+
+def get_fixed_price_labels():
+    """
+    Generate fixed price scenario labels to avoid duplicates
+    """
+    # FIXED price scenario labels - be more specific to avoid duplicates
+    price_labels_fixed = []
+    for scenario in PRICE_SCENARIOS:
+        scenario_lower = scenario.lower()
+        if 'extremely_low' in scenario_lower:
+            price_labels_fixed.append('Ext Low')
+        elif 'very_low' in scenario_lower:
+            price_labels_fixed.append('Very Low')
+        elif 'moderately_low' in scenario_lower:
+            price_labels_fixed.append('Mod Low')
+        elif 'slightly_below_average' in scenario_lower:
+            price_labels_fixed.append('Below Avg')
+        elif 'slightly_above_average' in scenario_lower:
+            price_labels_fixed.append('Above Avg')
+        elif 'moderately_high' in scenario_lower:
+            price_labels_fixed.append('Mod High')
+        elif 'very_high' in scenario_lower:
+            price_labels_fixed.append('Very High')
+        elif 'extremely_high' in scenario_lower:
+            price_labels_fixed.append('Ext High')
+        elif scenario_lower == 'low':  # Only exact match for 'low'
+            price_labels_fixed.append('Low')
+        elif scenario_lower == 'high':  # Only exact match for 'high'
+            price_labels_fixed.append('High')
+        elif 'average' in scenario_lower:
+            price_labels_fixed.append('Average')
+        else:
+            # Fallback: use first 8 characters
+            price_labels_fixed.append(scenario.replace('_', ' ').title()[:8])
+
+    # DEBUG: Print the fixed labels
+    print("\nFixed price labels:")
+    for i, label in enumerate(price_labels_fixed):
+        print(f"{i}: {PRICE_SCENARIOS[i]} -> {label}")
+
+    return price_labels_fixed
+
+def plot_3d_scrap_bars_cumulative():
+    """
+    Create 3D bar charts showing cumulative scrap 2024-2040 for 4 key technologies
+    """
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Key technologies to analyze
+    technologies = ['solarPV', 'windon', 'windoff', 'Batteries']
+
+    # Get fixed price labels
+    price_labels_fixed = get_fixed_price_labels()
+
+    # Create figure with 2x2 subplots
+    fig = plt.figure(figsize=(20, 16))
+
+    for tech_idx, technology in enumerate(technologies):
+        ax = fig.add_subplot(2, 2, tech_idx + 1, projection='3d')
+
+        # Prepare data matrix
+        scrap_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+        for i, scenario in enumerate(PRICE_SCENARIOS):
+            for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+                # Load from "Total_Scrap" sheet, then filter by technology
+                df = load_scenario_data(lr_code, scenario, "Total_Scrap")
+                if df is not None and not df.empty:
+                    # Filter for specific technology
+                    tech_data = df[df['key_1'] == technology]
+                    if not tech_data.empty:
+                        df_period = tech_data[(tech_data['year'] >= 2024) & (tech_data['year'] <= 2040)]
+                        cumulative_scrap = df_period['value'].sum() / 1e6  # Convert to megatons
+                        scrap_matrix[i, j] = cumulative_scrap
+                    else:
+                        scrap_matrix[i, j] = 0
+                else:
+                    scrap_matrix[i, j] = 0
+
+        # Create 3D bar plot
+        X = np.arange(len(LEARNING_RATES))
+        Y = np.arange(len(PRICE_SCENARIOS))
+        X, Y = np.meshgrid(X, Y)
+
+        # Flatten for bar plot
+        x_flat = X.flatten()
+        y_flat = Y.flatten()
+        z_flat = np.zeros_like(x_flat)
+        dx = dy = 0.8
+        dz = scrap_matrix.flatten()
+
+        # Create bars with color mapping
+        max_val = np.max(dz) if np.max(dz) > 0 else 1
+        colors = plt.cm.YlOrRd(dz / max_val)
+
+        ax.bar3d(x_flat, y_flat, z_flat, dx, dy, dz, color=colors, alpha=0.8)
+
+        # Customize plot
+        ax.set_title(f'{technology} - Cumulative Scrap 2024-2040', fontsize=14, pad=20)
+        ax.set_xlabel('Learning Rate [%]')
+        ax.set_ylabel('Price Scenario')
+        ax.set_zlabel('Scrap [Mt]')
+
+        # Set ticks
+        ax.set_xticks(range(len(LEARNING_RATES)))
+        ax.set_yticks(range(len(PRICE_SCENARIOS)))
+
+        # Use fixed labels
+        lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
+
+        ax.set_xticklabels(lr_labels, fontsize=8)
+        ax.set_yticklabels(price_labels_fixed, fontsize=8)
+
+        # Set viewing angle
+        ax.view_init(elev=25, azim=45)
+
+    plt.suptitle('Cumulative Scrap Generation by Technology (2024-2040)', fontsize=16)
+    plt.tight_layout()
+
+    output_path = output_dir / "3d_scrap_bars_cumulative.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved cumulative scrap 3D bars: {output_path}")
+
+    plt.show()
+
+def plot_3d_scrap_bars_2040():
+    """
+    Create 3D bar charts showing 2040 annual scrap for 4 key technologies
+    """
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    technologies = ['solarPV', 'windon', 'windoff', 'Batteries']
+
+    # Get fixed price labels
+    price_labels_fixed = get_fixed_price_labels()
+
+    fig = plt.figure(figsize=(20, 16))
+
+    for tech_idx, technology in enumerate(technologies):
+        ax = fig.add_subplot(2, 2, tech_idx + 1, projection='3d')
+
+        # Prepare data matrix for 2040
+        scrap_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+        for i, scenario in enumerate(PRICE_SCENARIOS):
+            for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+                # Load from "Total_Scrap" sheet, then filter by technology
+                df = load_scenario_data(lr_code, scenario, "Total_Scrap")
+                if df is not None and not df.empty:
+                    # Filter for specific technology
+                    tech_data = df[df['key_1'] == technology]
+                    if not tech_data.empty:
+                        scrap_2040 = tech_data[tech_data['year'] == 2040]['value']
+                        if not scrap_2040.empty:
+                            scrap_matrix[i, j] = scrap_2040.iloc[0] / 1e6  # Convert to megatons
+                        else:
+                            scrap_matrix[i, j] = 0
+                    else:
+                        scrap_matrix[i, j] = 0
+                else:
+                    scrap_matrix[i, j] = 0
+
+        # Create 3D bar plot
+        X = np.arange(len(LEARNING_RATES))
+        Y = np.arange(len(PRICE_SCENARIOS))
+        X, Y = np.meshgrid(X, Y)
+
+        x_flat = X.flatten()
+        y_flat = Y.flatten()
+        z_flat = np.zeros_like(x_flat)
+        dx = dy = 0.8
+        dz = scrap_matrix.flatten()
+
+        # Create bars with color mapping
+        max_val = np.max(dz) if np.max(dz) > 0 else 1
+        colors = plt.cm.YlOrRd(dz / max_val)
+
+        ax.bar3d(x_flat, y_flat, z_flat, dx, dy, dz, color=colors, alpha=0.8)
+
+        # Customize plot
+        ax.set_title(f'{technology} - Annual Scrap in 2040', fontsize=14, pad=20)
+        ax.set_xlabel('Learning Rate [%]')
+        ax.set_ylabel('Price Scenario')
+        ax.set_zlabel('Scrap [Mt/year]')
+
+        # Set ticks and labels
+        ax.set_xticks(range(len(LEARNING_RATES)))
+        ax.set_yticks(range(len(PRICE_SCENARIOS)))
+
+        lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
+
+        ax.set_xticklabels(lr_labels, fontsize=8)
+        ax.set_yticklabels(price_labels_fixed, fontsize=8)
+
+        ax.view_init(elev=25, azim=45)
+
+    plt.suptitle('Annual Scrap Generation by Technology in 2040', fontsize=16)
+    plt.tight_layout()
+
+    output_path = output_dir / "3d_scrap_bars_2040.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved 2040 scrap 3D bars: {output_path}")
+
+    plt.show()
+
+def plot_scrap_time_evolution_3d():
+    """
+    Create 3D surfaces showing scrap evolution over time for solarPV
+    """
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Focus on one technology for clarity
+    technology = 'solarPV'
+
+    # Key years to show
+    key_years = [2025, 2030, 2035, 2040]
+
+    # Get fixed price labels
+    price_labels_fixed = get_fixed_price_labels()
+
+    fig = plt.figure(figsize=(20, 16))
+
+    for year_idx, year in enumerate(key_years):
+        ax = fig.add_subplot(2, 2, year_idx + 1, projection='3d')
+
+        # Prepare data matrix for this year
+        scrap_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+
+        for i, scenario in enumerate(PRICE_SCENARIOS):
+            for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+                # Load from "Total_Scrap" sheet, then filter by technology
+                df = load_scenario_data(lr_code, scenario, "Total_Scrap")
+                if df is not None and not df.empty:
+                    # Filter for specific technology
+                    tech_data = df[df['key_1'] == technology]
+                    if not tech_data.empty:
+                        year_data = tech_data[tech_data['year'] == year]['value']
+                        if not year_data.empty:
+                            scrap_matrix[i, j] = year_data.iloc[0] / 1e6  # Convert to megatons
+                        else:
+                            scrap_matrix[i, j] = 0
+                    else:
+                        scrap_matrix[i, j] = 0
+                else:
+                    scrap_matrix[i, j] = 0
+
+        # Create 3D surface
+        X = np.arange(len(LEARNING_RATES))
+        Y = np.arange(len(PRICE_SCENARIOS))
+        X, Y = np.meshgrid(X, Y)
+        Z = scrap_matrix
+
+        surf = ax.plot_surface(X, Y, Z,
+                               cmap='YlOrRd',
+                               alpha=0.8,
+                               linewidth=0.5,
+                               edgecolor='darkred')
+
+        ax.set_title(f'{technology} Scrap - {year}', fontsize=14)
+        ax.set_xlabel('Learning Rate [%]')
+        ax.set_ylabel('Price Scenario')
+        ax.set_zlabel('Scrap [Mt/year]')
+
+        # Set ticks
+        ax.set_xticks(range(len(LEARNING_RATES)))
+        ax.set_yticks(range(len(PRICE_SCENARIOS)))
+
+        lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
+        # Use shorter labels for better fit in time evolution plots
+        price_labels_short = [label[:6] for label in price_labels_fixed]
+
+        ax.set_xticklabels(lr_labels, fontsize=8)
+        ax.set_yticklabels(price_labels_short, fontsize=7)
+
+        ax.view_init(elev=25, azim=225)
+
+    plt.suptitle(f'{technology} Scrap Evolution Over Time', fontsize=16)
+    plt.tight_layout()
+
+    output_path = output_dir / f"3d_scrap_time_evolution_{technology}.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"Saved time evolution plot: {output_path}")
+
+    plt.show()
+
+def generate_all_scrap_visualizations():
+    """
+    Generate all recommended scrap visualizations with fixed labeling
+    """
+    print("Generating cumulative scrap 3D bar charts...")
+    plot_3d_scrap_bars_cumulative()
+
+    print("Generating 2040 annual scrap 3D bar charts...")
+    plot_3d_scrap_bars_2040()
+
+    print("Generating time evolution 3D surfaces...")
+    plot_scrap_time_evolution_3d()
+
+    print("All scrap visualizations completed!")
+
+
+def plot_lng_lines_by_learning_rate():
+    """
+    Plot LNG demand over time - separate subplot for each learning rate,
+    with different colored lines for each price scenario
+    """
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Collect all LNG data
+    lng_data = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for scenario in PRICE_SCENARIOS:
+            df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
+
+            if df is not None:
+                # Filter for LNG data
+                lng_subset = df[df['key_2'].str.strip() == 'LNG']
+
+                for _, row in lng_subset.iterrows():
+                    lng_data.append({
+                        'year': row['year'],
+                        'lng_bcm': mwh_to_bcm(row['value']),
+                        'lr_code': lr_code,
+                        'lr_name': lr_name,
+                        'scenario': scenario
+                    })
+
+    df_lng = pd.DataFrame(lng_data)
+
+    if df_lng.empty:
+        print("No LNG data found!")
+        return
+
+    # Get fixed price labels
+    price_labels_fixed = get_fixed_price_labels()
+    price_label_map = dict(zip(PRICE_SCENARIOS, price_labels_fixed))
+
+    # Split learning rates into groups of 4 for multiple PNGs
+    lr_items = list(LEARNING_RATES.items())
+    lr_groups = [lr_items[i:i + 4] for i in range(0, len(lr_items), 4)]
+
+    # Colors for price scenarios
+    colors = sns.color_palette("tab10", len(PRICE_SCENARIOS))
+    color_map = dict(zip(PRICE_SCENARIOS, colors))
+
+    for group_idx, lr_group in enumerate(lr_groups):
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        axes = axes.flatten()
+
+        for i, (lr_code, lr_name) in enumerate(lr_group):
+            ax = axes[i]
+
+            # Plot each price scenario as a separate line
+            for scenario in PRICE_SCENARIOS:
+                scenario_data = df_lng[(df_lng['lr_code'] == lr_code) &
+                                       (df_lng['scenario'] == scenario)]
+
+                if not scenario_data.empty:
+                    scenario_data_sorted = scenario_data.sort_values('year')
+                    ax.plot(scenario_data_sorted['year'],
+                            scenario_data_sorted['lng_bcm'],
+                            color=color_map[scenario],
+                            linewidth=2,
+                            marker='o',
+                            markersize=4,
+                            label=price_label_map[scenario],
+                            alpha=0.8)
+
+            ax.set_xlabel('Year')
+            ax.set_ylabel('LNG Demand (BCM)')
+            ax.set_title(f'{lr_name}')
+            ax.grid(True, alpha=0.3)
+
+            # Add legend to first subplot only
+            if i == 0:
+                ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+        # Hide unused subplots if we have fewer than 4 in this group
+        for i in range(len(lr_group), 4):
+            axes[i].set_visible(False)
+
+        plt.suptitle(f'LNG Demand by Price Scenario - Group {group_idx + 1}', fontsize=16)
+        plt.tight_layout()
+
+        output_path = output_dir / f"lng_lines_by_lr_group_{group_idx + 1}.png"
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"Saved LNG lines by LR group {group_idx + 1}: {output_path}")
+        plt.show()
+
+
+def plot_lng_lines_by_price_scenario():
+    """
+    Plot LNG demand over time - separate subplot for each price scenario,
+    with different colored lines for each learning rate
+    """
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Collect all LNG data
+    lng_data = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for scenario in PRICE_SCENARIOS:
+            df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
+
+            if df is not None:
+                # Filter for LNG data
+                lng_subset = df[df['key_2'].str.strip() == 'LNG']
+
+                for _, row in lng_subset.iterrows():
+                    lng_data.append({
+                        'year': row['year'],
+                        'lng_bcm': mwh_to_bcm(row['value']),
+                        'lr_code': lr_code,
+                        'lr_name': lr_name,
+                        'scenario': scenario
+                    })
+
+    df_lng = pd.DataFrame(lng_data)
+
+    if df_lng.empty:
+        print("No LNG data found!")
+        return
+
+    # Get fixed price labels
+    price_labels_fixed = get_fixed_price_labels()
+    price_label_map = dict(zip(PRICE_SCENARIOS, price_labels_fixed))
+
+    # Split price scenarios into groups of 4 for multiple PNGs
+    scenario_groups = [PRICE_SCENARIOS[i:i + 4] for i in range(0, len(PRICE_SCENARIOS), 4)]
+
+    # Colors for learning rates
+    colors = sns.color_palette("viridis", len(LEARNING_RATES))
+    lr_color_map = dict(zip(LEARNING_RATES.keys(), colors))
+
+    for group_idx, scenario_group in enumerate(scenario_groups):
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        axes = axes.flatten()
+
+        for i, scenario in enumerate(scenario_group):
+            ax = axes[i]
+
+            # Plot each learning rate as a separate line
+            for lr_code, lr_name in LEARNING_RATES.items():
+                lr_data = df_lng[(df_lng['scenario'] == scenario) &
+                                 (df_lng['lr_code'] == lr_code)]
+
+                if not lr_data.empty:
+                    lr_data_sorted = lr_data.sort_values('year')
+                    ax.plot(lr_data_sorted['year'],
+                            lr_data_sorted['lng_bcm'],
+                            color=lr_color_map[lr_code],
+                            linewidth=2,
+                            marker='s',
+                            markersize=4,
+                            label=lr_name,
+                            alpha=0.8)
+
+            ax.set_xlabel('Year')
+            ax.set_ylabel('LNG Demand (BCM)')
+            ax.set_title(f'{price_label_map[scenario]}')
+            ax.grid(True, alpha=0.3)
+
+            # Add legend to first subplot only
+            if i == 0:
+                ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+        # Hide unused subplots if we have fewer than 4 in this group
+        for i in range(len(scenario_group), 4):
+            axes[i].set_visible(False)
+
+        plt.suptitle(f'LNG Demand by Learning Rate - Group {group_idx + 1}', fontsize=16)
+        plt.tight_layout()
+
+        output_path = output_dir / f"lng_lines_by_scenario_group_{group_idx + 1}.png"
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"Saved LNG lines by scenario group {group_idx + 1}: {output_path}")
+        plt.show()
+
+
+def generate_all_lng_line_plots():
+    """Generate both types of LNG line plots"""
+    print("Generating LNG line plots grouped by Learning Rate...")
+    plot_lng_lines_by_learning_rate()
+
+    print("Generating LNG line plots grouped by Price Scenario...")
+    plot_lng_lines_by_price_scenario()
+
+    print("All LNG line plots completed!")
+
 
 def main():
     """Main function to generate all comparison plots"""
@@ -245,9 +1454,20 @@ def main():
     # Generate plots
     print("\n1. Generating EU Secondary Additions 2040 comparison...")
     plot_eu_secondary_additions_2040()
-
     print("\n2. Generating LNG Demand comparison...")
+    generate_all_lng_line_plots()
     plot_lng_demand_comparison()
+    plot_lng_demand_yearly_scatter()
+    plot_lng_demand_yearly_barplot()
+    print("\n3. Generating Cost Matrix...")
+    plot_total_system_cost_matrix_2024_2040()
+    plot_3d_cost_matrix_grid_style_fixed()
+
+    print("\n4. Generating Pareto Plots...")
+    plot_pareto_cost_vs_remanufacturing()
+    plot_pareto_cost_vs_lng()
+    print("\n5. Generating Scrap Plots...")
+    generate_all_scrap_visualizations()
 
     print("\nScenario comparison plotting completed!")
 
