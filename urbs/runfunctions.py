@@ -17,7 +17,7 @@ import numpy as np
 # Import bilinear constraint detection
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from detect_bilinear_constraints import analyze_model_bilinearity
+#from detect_bilinear_constraints import analyze_model_bilinearity
 
 
 def prepare_result_directory(result_name):

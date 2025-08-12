@@ -53,9 +53,28 @@ PRICE_SCENARIOS = [
     "extremely_high"
 ]
 
+# Define rolling horizon results path
+ROLLING_HORIZON_BASE_PATH = r"C:\Users\maxoi\OneDrive\Desktop\results_crm_paper"
+
 def load_scenario_data(lr_folder, scenario, sheet_name):
     """Load data from a specific learning rate folder and scenario"""
     file_path = Path(RESULTS_BASE_PATH) / lr_folder / f"result_scenario_{scenario}.xlsx"
+
+    if not file_path.exists():
+        print(f"Warning: File not found: {file_path}")
+        return None
+
+    try:
+        df = pd.read_excel(file_path, sheet_name=sheet_name)
+        return df
+    except Exception as e:
+        print(f"Error loading {file_path}, sheet {sheet_name}: {e}")
+        return None
+
+def load_rolling_horizon_data(lr_folder, rolling_horizon_folder, scenario, sheet_name):
+    """Load data from a specific rolling horizon folder and scenario"""
+    # Corrected path structure: results_crm_paper/LR_folder/rolling_horizon_folder/scenario_name.xlsx
+    file_path = Path(RESULTS_BASE_PATH) / lr_folder / rolling_horizon_folder / f"scenario_{scenario}.xlsx"
 
     if not file_path.exists():
         print(f"Warning: File not found: {file_path}")
@@ -1429,17 +1448,312 @@ def plot_lng_lines_by_price_scenario():
         print(f"Saved LNG lines by scenario group {group_idx + 1}: {output_path}")
         plt.show()
 
+def lng_lineplot_horizons(lr_code="LR25", price_scenario="extremely_low"):
+    """
+    Plot LNG demand over time for a specific LR and price scenario combination
+    across all rolling horizons. Shows 4 lines (one for each rolling horizon).
 
-def generate_all_lng_line_plots():
-    """Generate both types of LNG line plots"""
-    print("Generating LNG line plots grouped by Learning Rate...")
-    plot_lng_lines_by_learning_rate()
+    Args:
+        lr_code (str): Learning rate code (e.g., "LR1", "LR25")
+        price_scenario (str): Price scenario name (e.g., "extremely_low", "average")
+    """
 
-    print("Generating LNG line plots grouped by Price Scenario...")
-    plot_lng_lines_by_price_scenario()
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+    print(f"Creating LNG rolling horizon comparison for {lr_code} - {price_scenario}...")
 
-    print("All LNG line plots completed!")
+    # Define all rolling horizon folders
+    rolling_horizons = [
+        "rolling_2024_to_2050",
+        "rolling_2029_to_2050",
+        "rolling_2034_to_2050",
+        "rolling_2039_to_2050"
+    ]
 
+    # Colors and markers for each rolling horizon
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']  # Blue, Orange, Green, Red
+    markers = ['o', 's', '^', 'D']
+
+    plt.figure(figsize=(14, 8))
+
+    # Collect data for each rolling horizon
+    for horizon_idx, rolling_horizon in enumerate(rolling_horizons):
+        print(f"  Processing {rolling_horizon}...")
+
+        # Load data for this rolling horizon
+        df = load_rolling_horizon_data(lr_code, rolling_horizon, price_scenario, "e_pro_in")
+
+        if df is not None:
+            # Strip whitespace from commodity names
+            df['com'] = df['com'].str.strip()
+
+            # Filter for LNG data and only years up to 2040
+            lng_data = df[(df['com'] == 'LNG') & (df['stf'] <= 2040)]
+
+            if not lng_data.empty:
+                # Group by year and sum LNG demand for each year
+                yearly_lng = lng_data.groupby('stf')['e_pro_in'].sum().reset_index()
+                yearly_lng['lng_bcm'] = yearly_lng['e_pro_in'].apply(mwh_to_bcm)
+
+                # Sort by year for proper line plotting
+                yearly_lng = yearly_lng.sort_values('stf')
+
+                # Plot line for this rolling horizon
+                plt.plot(yearly_lng['stf'], yearly_lng['lng_bcm'],
+                        color=colors[horizon_idx],
+                        marker=markers[horizon_idx],
+                        linewidth=2,
+                        markersize=6,
+                        label=f"{rolling_horizon.replace('_', ' ').title()}",
+                        alpha=0.8)
+
+                print(f"    Plotted {len(yearly_lng)} data points for {rolling_horizon}")
+            else:
+                print(f"    No LNG data found for {rolling_horizon}")
+        else:
+            print(f"    Could not load data for {rolling_horizon}")
+
+    plt.xlabel('Year')
+    plt.ylabel('LNG Demand (BCM)')
+    plt.title(f'LNG Demand Over Time: {lr_code} - {price_scenario.replace("_", " ").title()}')
+    plt.legend(title='Rolling Horizons', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.xlim(None, 2041)  # Set x-axis limit to end at 2040
+
+    plt.tight_layout()
+    output_path = output_dir / f"lng_lineplot_horizons_{lr_code}_{price_scenario}.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"✓ Saved LNG demand rolling horizon line plot: {output_path}")
+
+    plt.show()
+
+def plot_lng_demand_rolling_horizon_boxplots():
+    """
+    Plot LNG demand boxplots from rolling horizon results
+    - For 2030: 2 side-by-side plots for rolling_2024_to_2050 vs rolling_2029_to_2050
+    - For 2040: 4 plots (2x2) for rolling_2024_to_2050, rolling_2029_to_2050, rolling_2034_to_2050, rolling_2039_to_2050
+    X-axis: Price Scenarios, Boxplots contain values from all learning rates for each price scenario
+    Y-axis: Centered around median (median = 0), showing deviations from median
+    """
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+    print(f"Creating LNG demand rolling horizon boxplots...")
+
+    # Define rolling horizon folders for each target year
+    rolling_horizons_2030 = ["rolling_2024_to_2050", "rolling_2029_to_2050"]
+    rolling_horizons_2040 = ["rolling_2024_to_2050", "rolling_2029_to_2050", "rolling_2034_to_2050", "rolling_2039_to_2050"]
+
+    # ===== PLOT FOR 2030 (2 side-by-side subplots) =====
+    print("Generating 2030 LNG demand rolling horizon boxplots...")
+    fig_2030, axes_2030 = plt.subplots(1, 2, figsize=(20, 8))
+
+    for horizon_idx, rolling_horizon in enumerate(rolling_horizons_2030):
+        ax = axes_2030[horizon_idx]
+        print(f"  Processing {rolling_horizon}")
+
+        # Collect data for this rolling horizon - organized by PRICE SCENARIOS (x-axis)
+        data_for_boxplot = []
+        labels_for_boxplot = []
+        all_values = []  # Collect all values to calculate median
+
+        # For each price scenario, collect data from all learning rates
+        for scenario in PRICE_SCENARIOS:
+            scenario_data = []
+
+            for lr_code, lr_name in LEARNING_RATES.items():
+                df = load_rolling_horizon_data(lr_code, rolling_horizon, scenario, "e_pro_in")
+
+                if df is not None:
+                    # Strip whitespace from commodity names
+                    df['com'] = df['com'].str.strip()
+
+                    # Filter for LNG data in 2030
+                    lng_data = df[(df['com'] == 'LNG') & (df['stf'] == 2030)]
+                    if not lng_data.empty:
+                        lng_demand_mwh = lng_data['e_pro_in'].sum()
+                        lng_demand_bcm = mwh_to_bcm(lng_demand_mwh)
+                        scenario_data.append(lng_demand_bcm)
+                        all_values.append(lng_demand_bcm)
+                    else:
+                        scenario_data.append(0)
+                else:
+                    scenario_data.append(0)
+
+            data_for_boxplot.append(scenario_data)
+            labels_for_boxplot.append(scenario.replace('_', ' ').title())
+
+        # Check if we have any non-zero data
+        non_zero_values = [val for val in all_values if val > 0]
+        has_data = len(non_zero_values) > 0
+        print(f"    Has data: {has_data}")
+
+        if not has_data:
+            ax.text(0.5, 0.5, f'No LNG data available\nfor {rolling_horizon}',
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=14)
+            ax.set_title(f'{rolling_horizon.replace("_", " ").title()} - No Data')
+            continue
+
+        # Calculate median of all non-zero values for centering
+        median_value = np.median(non_zero_values)
+        print(f"    Median value: {median_value:.2f} BCM")
+
+        # Center all data around median (subtract median from each value)
+        data_for_boxplot_centered = []
+        for scenario_data in data_for_boxplot:
+            centered_data = [(val - median_value) if val > 0 else 0 for val in scenario_data]
+            data_for_boxplot_centered.append(centered_data)
+
+        # Create boxplot colors
+        colors_gradient = sns.color_palette("Blues", n_colors=len(PRICE_SCENARIOS))
+        colors_gradient = [to_hex(c) for c in colors_gradient]
+
+        # Create boxplot
+        box_plot = ax.boxplot(data_for_boxplot_centered,
+                             labels=labels_for_boxplot,
+                             patch_artist=True,
+                             showmeans=True,
+                             meanprops={'marker': 'D', 'markerfacecolor': 'red', 'markeredgecolor': 'red', 'markersize': 8})
+
+        # Color the boxes
+        for patch, color in zip(box_plot['boxes'], colors_gradient):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.7)
+
+        # Add horizontal line at y=0 (median)
+        ax.axhline(y=0, color='black', linestyle='-', linewidth=1, alpha=0.8, label='Median')
+
+        # Customize subplot
+        ax.set_xlabel('Price Scenarios')
+        ax.set_ylabel('LNG Demand Deviation from Median (BCM)')
+        ax.set_title(f'{rolling_horizon.replace("_", " ").title()}\n(Median: {median_value:.2f} BCM)')
+        ax.grid(True, alpha=0.3)
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        # Set y-axis limits based on centered data range
+        all_centered = [val for sublist in data_for_boxplot_centered for val in sublist if val != 0]
+        if all_centered:
+            y_range = max(abs(min(all_centered)), abs(max(all_centered)))
+            ax.set_ylim(-y_range * 1.1, y_range * 1.1)
+
+    # Add overall title and save for 2030
+    fig_2030.suptitle('LNG Demand in 2030 - Rolling Horizon Comparison (Centered on Median)', fontsize=16, y=0.98)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+
+    output_path_2030 = output_dir / "lng_demand_2030_rolling_horizons_boxplots_centered.png"
+    plt.savefig(output_path_2030, dpi=300, bbox_inches='tight')
+    print(f"✓ Saved LNG demand 2030 plot: {output_path_2030}")
+
+    # ===== PLOT FOR 2040 (4 subplots in 2x2 grid) =====
+    print("Generating 2040 LNG demand rolling horizon boxplots...")
+    fig_2040, axes_2040 = plt.subplots(2, 2, figsize=(20, 16))
+    axes_2040 = axes_2040.flatten()
+
+    for horizon_idx, rolling_horizon in enumerate(rolling_horizons_2040):
+        ax = axes_2040[horizon_idx]
+        print(f"  Processing {rolling_horizon}")
+
+        # Collect data for this rolling horizon - organized by PRICE SCENARIOS (x-axis)
+        data_for_boxplot = []
+        labels_for_boxplot = []
+        all_values = []  # Collect all values to calculate median
+
+        # For each price scenario, collect data from all learning rates
+        for scenario in PRICE_SCENARIOS:
+            scenario_data = []
+
+            for lr_code, lr_name in LEARNING_RATES.items():
+                df = load_rolling_horizon_data(lr_code, rolling_horizon, scenario, "e_pro_in")
+
+                if df is not None:
+                    # Strip whitespace from commodity names
+                    df['com'] = df['com'].str.strip()
+
+                    # Filter for LNG data in 2040
+                    lng_data = df[(df['com'] == 'LNG') & (df['stf'] == 2040)]
+                    if not lng_data.empty:
+                        lng_demand_mwh = lng_data['e_pro_in'].sum()
+                        lng_demand_bcm = mwh_to_bcm(lng_demand_mwh)
+                        scenario_data.append(lng_demand_bcm)
+                        all_values.append(lng_demand_bcm)
+                    else:
+                        scenario_data.append(0)
+                else:
+                    scenario_data.append(0)
+
+            data_for_boxplot.append(scenario_data)
+            labels_for_boxplot.append(scenario.replace('_', ' ').title())
+
+        # Check if we have any non-zero data
+        non_zero_values = [val for val in all_values if val > 0]
+        has_data = len(non_zero_values) > 0
+        print(f"    Has data: {has_data}")
+
+        if not has_data:
+            ax.text(0.5, 0.5, f'No LNG data available\nfor {rolling_horizon}',
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=14)
+            ax.set_title(f'{rolling_horizon.replace("_", " ").title()} - No Data')
+            continue
+
+        # Calculate median of all non-zero values for centering
+        median_value = np.median(non_zero_values)
+        print(f"    Median value: {median_value:.2f} BCM")
+
+        # Center all data around median (subtract median from each value)
+        data_for_boxplot_centered = []
+        for scenario_data in data_for_boxplot:
+            centered_data = [(val - median_value) if val > 0 else 0 for val in scenario_data]
+            data_for_boxplot_centered.append(centered_data)
+
+        # Create boxplot colors
+        colors_gradient = sns.color_palette("Blues", n_colors=len(PRICE_SCENARIOS))
+        colors_gradient = [to_hex(c) for c in colors_gradient]
+
+        # Create boxplot
+        box_plot = ax.boxplot(data_for_boxplot_centered,
+                             labels=labels_for_boxplot,
+                             patch_artist=True,
+                             showmeans=True,
+                             meanprops={'marker': 'D', 'markerfacecolor': 'red', 'markeredgecolor': 'red', 'markersize': 8})
+
+        # Color the boxes
+        for patch, color in zip(box_plot['boxes'], colors_gradient):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.7)
+
+        # Add horizontal line at y=0 (median)
+        ax.axhline(y=0, color='black', linestyle='-', linewidth=1, alpha=0.8)
+
+        # Customize subplot
+        ax.set_xlabel('Price Scenarios')
+        ax.set_ylabel('LNG Demand Deviation from Median (BCM)')
+        ax.set_title(f'{rolling_horizon.replace("_", " ").title()}\n(Median: {median_value:.2f} BCM)')
+        ax.grid(True, alpha=0.3)
+        plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+        # Set y-axis limits based on centered data range
+        all_centered = [val for sublist in data_for_boxplot_centered for val in sublist if val != 0]
+        if all_centered:
+            y_range = max(abs(min(all_centered)), abs(max(all_centered)))
+            ax.set_ylim(-y_range * 1.1, y_range * 1.1)
+
+    # Add overall title and save for 2040
+    fig_2040.suptitle('LNG Demand in 2040 - Rolling Horizon Comparison (Centered on Median)', fontsize=16, y=0.98)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+
+    output_path_2040 = output_dir / "lng_demand_2040_rolling_horizons_boxplots_centered.png"
+    plt.savefig(output_path_2040, dpi=300, bbox_inches='tight')
+    print(f"✓ Saved LNG demand 2040 plot: {output_path_2040}")
+
+    print("✓ Rolling horizon boxplot generation completed successfully!")
+
+    # Close figures to free memory
+    plt.close(fig_2030)
+    plt.close(fig_2040)
 
 def main():
     """Main function to generate all comparison plots"""
@@ -1453,23 +1767,27 @@ def main():
 
     # Generate plots
     print("\n1. Generating EU Secondary Additions 2040 comparison...")
-    plot_eu_secondary_additions_2040()
+    #plot_eu_secondary_additions_2040()
     print("\n2. Generating LNG Demand comparison...")
-    generate_all_lng_line_plots()
-    plot_lng_demand_comparison()
-    plot_lng_demand_yearly_scatter()
-    plot_lng_demand_yearly_barplot()
+    #generate_all_lng_line_plots()
+    #plot_lng_demand_comparison()
+    #plot_lng_demand_yearly_scatter()
+    #plot_lng_demand_yearly_barplot()
+    #lng_lineplot_horizons()
+    #plot_lng_demand_rolling_horizon_boxplots()
     print("\n3. Generating Cost Matrix...")
-    plot_total_system_cost_matrix_2024_2040()
-    plot_3d_cost_matrix_grid_style_fixed()
+    #plot_total_system_cost_matrix_2024_2040()
+    #plot_3d_cost_matrix_grid_style_fixed()
 
     print("\n4. Generating Pareto Plots...")
-    plot_pareto_cost_vs_remanufacturing()
-    plot_pareto_cost_vs_lng()
+    #plot_pareto_cost_vs_remanufacturing()
+    #plot_pareto_cost_vs_lng()
     print("\n5. Generating Scrap Plots...")
-    generate_all_scrap_visualizations()
+    #generate_all_scrap_visualizations()
 
     print("\nScenario comparison plotting completed!")
 
+
 if __name__ == "__main__":
     main()
+

@@ -9,7 +9,7 @@ class AbstractConstraint(ABC):
         pass
 
 
-DEBUG = False  # Set True to enable debug logs
+DEBUG = True  # Set True to enable debug logs
 
 
 def debug_print(*args, **kwargs):
@@ -19,6 +19,8 @@ def debug_print(*args, **kwargs):
 
 class costsavings_constraint_sec_investment(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
+        # Price reduction equals the sum of (step-specific price reduction * binary decision for that step)
+        # This ensures only the active step's price reduction is applied
         investment_reduction_value = sum(
             m.P_sec_investment[location, tech, n] * m.BD_sec[stf, location, tech, n]
             for n in m.nsteps_sec
@@ -30,33 +32,16 @@ class costsavings_constraint_sec_investment(AbstractConstraint):
             print("=" * 60)
             print(f"[INVESTMENT COSTSAVINGS DEBUG] STF={stf}, Location={location}, Tech={tech}")
             print(f"  Investment reduction value: {investment_reduction_value}")
-            print(
-                f"  BD_sec values: {[m.BD_sec[stf, location, tech, n].value if hasattr(m.BD_sec[stf, location, tech, n], 'value') else 'unset' for n in m.nsteps_sec]}"
-            )
-            print(f"  P_sec_investment values: {[m.P_sec_investment[location, tech, n] for n in m.nsteps_sec]}")
-            print(f"  Expression: {expr}")
-            print("=" * 60)
-
-        return expr
-
-
-class costsavings_constraint_sec_recycling(AbstractConstraint):
-    def apply_rule(self, m, stf, location, tech):
-        recycling_reduction_value = sum(
-            m.P_sec_recycling[location, tech, n] * m.BD_sec[stf, location, tech, n]
-            for n in m.nsteps_sec
-        )
-        expr = m.pricereduction_sec_recycling[stf, location, tech] == recycling_reduction_value
-
-        # Improved debug formatting - separate lines for better visibility
-        if DEBUG:
-            print("=" * 60)
-            print(f"[RECYCLING COSTSAVINGS DEBUG] STF={stf}, Location={location}, Tech={tech}")
-            print(f"  Recycling reduction value: {recycling_reduction_value}")
-            print(
-                f"  BD_sec values: {[m.BD_sec[stf, location, tech, n].value if hasattr(m.BD_sec[stf, location, tech, n], 'value') else 'unset' for n in m.nsteps_sec]}"
-            )
-            print(f"  P_sec_recycling values: {[m.P_sec_recycling[location, tech, n] for n in m.nsteps_sec]}")
+            bd_values = [m.BD_sec[stf, location, tech, n].value if hasattr(m.BD_sec[stf, location, tech, n], 'value') else 'unset' for n in m.nsteps_sec]
+            print(f"  BD_sec values: {bd_values}")
+            p_values = [m.P_sec_investment[location, tech, n] for n in m.nsteps_sec]
+            print(f"  P_sec_investment values: {p_values}")
+            # Simplified active step contributions without nested quotes
+            contributions = []
+            for n in m.nsteps_sec:
+                bd_val = m.BD_sec[stf, location, tech, n].value if hasattr(m.BD_sec[stf, location, tech, n], 'value') else 'unset'
+                contributions.append((n, m.P_sec_investment[location, tech, n], f'BD_sec={bd_val}'))
+            print(f"  Active step contributions: {contributions}")
             print(f"  Expression: {expr}")
             print("=" * 60)
 
@@ -66,7 +51,7 @@ class costsavings_constraint_sec_recycling(AbstractConstraint):
 class BD_limitation_constraint_sec(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         bd_sum_value_sec = sum(m.BD_sec[stf, location, tech, n] for n in m.nsteps_sec)
-        expr_ok = bd_sum_value_sec <= 1
+        expr_ok = bd_sum_value_sec <= 1  # Allow sum <= 1 as in original
         debug_print(
             f"[BD_limitation] STF={stf}, loc={location}, tech={tech}  ➞ "
             f"bd_sum_value_sec={bd_sum_value_sec} <= 1? {expr_ok}"
@@ -218,7 +203,6 @@ class non_negativity_z_eq_sec(AbstractConstraint):
 def apply_combined_lr_constraints(m):
     constraints_rm1 = [
         costsavings_constraint_sec_investment(),
-        costsavings_constraint_sec_recycling(),
         BD_limitation_constraint_sec(),
         relation_pnew_to_pprior_constraint_sec(),
         q_perstep_constraint_sec(),
@@ -287,3 +271,28 @@ def apply_combined_lr_constraints(m):
                 ),
             ),
         )
+
+    # Replace the recycling price reduction variable with an expression that derives from BD_sec
+    # This ensures recycling reduction uses the same BD_sec values chosen by investment constraint
+    def recycling_reduction_rule(m, stf, location, tech):
+        recycling_reduction_value = sum(
+            m.P_sec_recycling[location, tech, n] * m.BD_sec[stf, location, tech, n]
+            for n in m.nsteps_sec
+        )
+        if DEBUG:
+            print("=" * 60)
+            print(f"[RECYCLING EXPRESSION DEBUG] STF={stf}, Location={location}, Tech={tech}")
+            print(f"  Recycling reduction value (DERIVED): {recycling_reduction_value}")
+            print("=" * 60)
+        return recycling_reduction_value
+
+    # Override the recycling price reduction variable with an expression
+    # This will automatically calculate the value based on BD_sec without creating constraints
+    #m.del_component('pricereduction_sec_recycling')  # Remove the variable
+    m.pricereduction_sec_recycling = pyomo.Expression(
+        m.stf,
+        m.location,
+        m.tech,
+        rule=recycling_reduction_rule,
+        doc="Recycling price reduction derived from BD_sec values determined by investment constraint"
+    )
