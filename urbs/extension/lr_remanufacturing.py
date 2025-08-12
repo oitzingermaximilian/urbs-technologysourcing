@@ -51,10 +51,35 @@ class costsavings_constraint_sec_investment(AbstractConstraint):
 class BD_limitation_constraint_sec(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
         bd_sum_value_sec = sum(m.BD_sec[stf, location, tech, n] for n in m.nsteps_sec)
-        expr_ok = bd_sum_value_sec <= 1  # Allow sum <= 1 as in original
+        expr_ok = bd_sum_value_sec == 1  # Force exactly one selection instead of <= 1
+
+        # Enhanced debugging
+        if DEBUG:
+            print("=" * 80)
+            print(f"[BD_limitation DETAILED] STF={stf}, loc={location}, tech={tech}")
+            print(f"  Number of steps (nsteps_sec): {len(list(m.nsteps_sec))}")
+            print(f"  Steps available: {list(m.nsteps_sec)}")
+            print(f"  Sum constraint: {bd_sum_value_sec} == 1")
+
+            # Check if this constraint might cause infeasibility
+            try:
+                # Check P_sec values to see if there are incentives
+                p_inv_values = [m.P_sec_investment[location, tech, n] for n in m.nsteps_sec]
+                p_rec_values = [m.P_sec_recycling[location, tech, n] for n in m.nsteps_sec]
+                print(f"  P_sec_investment values: {p_inv_values}")
+                print(f"  P_sec_recycling values: {p_rec_values}")
+
+                # Check capacity requirements
+                cap_values = [m.capacityperstep_sec[location, tech, n] for n in m.nsteps_sec]
+                print(f"  Capacity per step values: {cap_values}")
+
+            except Exception as e:
+                print(f"  Warning: Could not access parameter values: {e}")
+            print("=" * 80)
+
         debug_print(
             f"[BD_limitation] STF={stf}, loc={location}, tech={tech}  ➞ "
-            f"bd_sum_value_sec={bd_sum_value_sec} <= 1? {expr_ok}"
+            f"bd_sum_value_sec={bd_sum_value_sec} == 1? {expr_ok}"
         )
         return expr_ok
 
