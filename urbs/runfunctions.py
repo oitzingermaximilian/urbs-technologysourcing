@@ -830,7 +830,7 @@ def slice_data_for_window(data, window_start, window_end, initial_conditions):
                 ):
                     # Create a new row for 'CO2 budget' at the window_start year
                     new_co2_budget_row = pd.DataFrame(
-                        {"value": ["inf"]},  # Set CO2 budget to infinity as string
+                        {"value": [999999999999]},  # Set CO2 budget to infinity as string
                         index=pd.MultiIndex.from_tuples(
                             [(window_start, "CO2 budget")],
                             names=sliced_df.index.names,
