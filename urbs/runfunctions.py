@@ -8,6 +8,7 @@ from .plot import *
 from .input import *
 from .validation import *
 from .saveload import *
+from .simple_constraint_check import quick_rhs_check, find_largest_rhs
 from pyomo.opt.results import TerminationCondition, SolverStatus  # Correct import
 import gurobipy as gp
 from collections import defaultdict
@@ -413,6 +414,19 @@ def run_scenario(
         window_end=window_end,
         indexlist=indexlist,
     )
+
+    # CONSTRAINT ANALYSIS - Check for large RHS values
+    print("\n" + "="*60)
+    print("CONSTRAINT RHS ANALYSIS")
+    print("="*60)
+    try:
+        # Quick check for large RHS constraints
+        find_largest_rhs(prob, top_n=10)
+        print("\n" + "-"*40)
+        quick_rhs_check(prob, threshold=1e7)
+    except Exception as e:
+        print(f"Error during constraint analysis: {e}")
+    print("="*60 + "\n")
 
     # BILINEAR CONSTRAINT DETECTION
     #print("\n" + "="*80)
