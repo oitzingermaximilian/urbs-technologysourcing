@@ -781,7 +781,7 @@ def slice_data_for_window(data, window_start, window_end, initial_conditions):
 
                 if co2_limit_mask.any():
                     sliced_df.loc[co2_limit_mask, "value"] = (
-                        999999999999  # or 9999999999 or any other large number
+                        599999999  # or 9999999999 or any other large number
                     )
                     print(f"Set CO2 limit to inf for years {window_start}–{window_end}")
 
