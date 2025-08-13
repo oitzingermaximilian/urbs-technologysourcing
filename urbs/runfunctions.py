@@ -9,6 +9,7 @@ from .input import *
 from .validation import *
 from .saveload import *
 from .simple_constraint_check import quick_rhs_check, find_largest_rhs
+from .enhanced_constraint_analyzer import comprehensive_rhs_analysis, analyze_constraint_scaling_detailed
 from pyomo.opt.results import TerminationCondition, SolverStatus  # Correct import
 import gurobipy as gp
 from collections import defaultdict
@@ -424,6 +425,25 @@ def run_scenario(
         find_largest_rhs(prob, top_n=10)
         print("\n" + "-"*40)
         quick_rhs_check(prob, threshold=1e7)
+        
+        # Enhanced analysis to find the 3e+11 values that Gurobi is seeing
+        print("\n" + "-"*40)
+        print("ENHANCED ANALYSIS - Searching for 3e+11 values...")
+        try:
+            from urbs.enhanced_constraint_analyzer import comprehensive_rhs_analysis
+            comprehensive_rhs_analysis(prob, thresholds=[1e9, 1e10, 1e11, 3e11])
+        except ImportError:
+            print("Enhanced analyzer not available, using basic analysis")
+            
+        # NEW: Comprehensive scaling analysis for costs and coefficients
+        print("\n" + "-"*40)
+        print("ANALYZING COSTS AND COEFFICIENTS - This is likely where the 3e+11 values are!")
+        try:
+            from urbs.comprehensive_scaling_analyzer import comprehensive_scaling_analysis
+            comprehensive_scaling_analysis(prob)
+        except ImportError:
+            print("Comprehensive scaling analyzer not available")
+            
     except Exception as e:
         print(f"Error during constraint analysis: {e}")
     print("="*60 + "\n")

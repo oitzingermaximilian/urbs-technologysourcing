@@ -1117,7 +1117,7 @@ def def_specific_process_costs_rule(m, stf, sit, pro, cost_type):
         raise NotImplementedError("Unknown cost type.")
 
 
-def cost_rule(m):  # urbs_solar Extention
+def cost_rule(m):  # urbs_solar Extension
     # Calculate total base costs from m.costs
     total_base_costs = pyomo.summation(m.costs)
     total_ext_costs = pyomo.summation(m.costs_new)
@@ -1126,7 +1126,6 @@ def cost_rule(m):  # urbs_solar Extention
     # Calculate the total combined costs
     total_costs = total_base_costs + total_ext_costs
     # print("Total Combined Costs (Base + Solar):", total_costs)  # Print total costs
-
     return total_costs
 
 

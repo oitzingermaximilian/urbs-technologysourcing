@@ -30,21 +30,29 @@ def quick_rhs_check(model, threshold=1e7):
 
                 # Check upper bound
                 if hasattr(con, 'upper') and con.upper is not None:
-                    if abs(con.upper) > threshold:
-                        large_constraints.append((constraint_name, index, 'upper', con.upper))
+                    # Convert to float to handle Pyomo numeric types
+                    upper_val = float(con.upper)
+                    if abs(upper_val) > threshold:
+                        large_constraints.append((constraint_name, index, 'upper', upper_val))
 
                 # Check lower bound
                 if hasattr(con, 'lower') and con.lower is not None:
-                    if abs(con.lower) > threshold:
-                        large_constraints.append((constraint_name, index, 'lower', con.lower))
+                    # Convert to float to handle Pyomo numeric types
+                    lower_val = float(con.lower)
+                    if abs(lower_val) > threshold:
+                        large_constraints.append((constraint_name, index, 'lower', lower_val))
 
-            except:
+            except Exception as e:
+                # Skip constraints that can't be processed
                 continue
 
     # Print results
     if large_constraints:
-        for name, idx, bound_type, value in large_constraints:
-            print(f"{name}[{idx}] ({bound_type}): {value:.2e}")
+        for name, idx, bound_type, value in large_constraints[:20]:  # Limit to top 20
+            try:
+                print(f"{name}[{idx}] ({bound_type}): {value:.2e}")
+            except:
+                print(f"{name}[{idx}] ({bound_type}): {value}")
     else:
         print("No large RHS constraints found!")
 
@@ -67,10 +75,10 @@ def find_largest_rhs(model, top_n=10):
                 con = constraint[index]
 
                 if hasattr(con, 'upper') and con.upper is not None:
-                    all_rhs.append((constraint.name, index, 'upper', abs(con.upper)))
+                    all_rhs.append((constraint.name, index, 'upper', abs(float(con.upper))))
 
                 if hasattr(con, 'lower') and con.lower is not None:
-                    all_rhs.append((constraint.name, index, 'lower', abs(con.lower)))
+                    all_rhs.append((constraint.name, index, 'lower', abs(float(con.lower))))
 
             except:
                 continue
@@ -99,9 +107,9 @@ def solver_scaling_check(model):
                 con = constraint[index]
 
                 if hasattr(con, 'upper') and con.upper is not None:
-                    rhs_values.append(abs(con.upper))
+                    rhs_values.append(abs(float(con.upper)))
                 if hasattr(con, 'lower') and con.lower is not None:
-                    rhs_values.append(abs(con.lower))
+                    rhs_values.append(abs(float(con.lower)))
 
             except:
                 continue
