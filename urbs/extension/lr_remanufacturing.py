@@ -119,7 +119,7 @@ class relation_pnew_to_pprior_constraint_sec(AbstractConstraint):
             debug_print(
                 f"[relation_pnew-recursive] STF={stf} ➞ {lhs} >= {rhs} ? {expr}"
             )
-
+        
         return expr
 
 
