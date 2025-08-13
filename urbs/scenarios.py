@@ -27,9 +27,10 @@ def scenario_extremely_low(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -113,9 +114,10 @@ def scenario_very_low(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -198,9 +200,10 @@ def scenario_low(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -283,9 +286,10 @@ def scenario_moderately_low(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -368,9 +372,10 @@ def scenario_slightly_below_average(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -453,9 +458,10 @@ def scenario_average(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -538,9 +544,10 @@ def scenario_slightly_above_average(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -623,9 +630,10 @@ def scenario_moderately_high(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -708,9 +716,10 @@ def scenario_high(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -793,9 +802,10 @@ def scenario_very_high(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -878,9 +888,10 @@ def scenario_extremely_high(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -994,9 +1005,10 @@ def scenario_base(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -1109,9 +1121,10 @@ def scenario_1(
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
 
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
