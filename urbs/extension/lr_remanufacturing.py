@@ -22,7 +22,7 @@ class costsavings_constraint_sec_investment(AbstractConstraint):
         # ✅ CORRECTED: Use auxiliary variable instead of bilinear product
         # Original bilinear: P_sec_investment[n] * BD_sec[n] * capacity_ext_eusecondary
         # Linearized: P_sec_investment[n] * auxiliary_product_BD_q[n]
-
+        
         investment_reduction_value = sum(
             m.P_sec_investment[location, tech, n] * m.auxiliary_product_BD_q[stf, location, tech, n]
             for n in m.nsteps_sec
@@ -262,25 +262,25 @@ def apply_combined_lr_constraints(m):
             ),
         )
 
-    # ✅ FIXED: Replace the recycling expression to use auxiliary variable
-    def recycling_reduction_rule(m, stf, location, tech):
-        # Use auxiliary variable instead of trilinear product
-        recycling_reduction_value = sum(
-            m.P_sec_recycling[location, tech, n] * m.auxiliary_product_BD_q[stf, location, tech, n]
-            for n in m.nsteps_sec
-        )
-        if DEBUG:
-            print("=" * 60)
-            print(f"[RECYCLING EXPRESSION DEBUG] STF={stf}, Location={location}, Tech={tech}")
-            print(f"  Recycling reduction value (LINEARIZED): {recycling_reduction_value}")
-            print("=" * 60)
-        return recycling_reduction_value
+    # ✅ FIXED: Replace the recycling expression to use auxiliary variable #TODO reenable pricereduction on Scrap if needed
+    #def recycling_reduction_rule(m, stf, location, tech):
+    #    # Use auxiliary variable instead of trilinear product
+    #    recycling_reduction_value = sum(
+    #        m.P_sec_recycling[location, tech, n] * m.auxiliary_product_BD_q[stf, location, tech, n]
+    #        for n in m.nsteps_sec
+    #    )
+    #    if DEBUG:
+    #        print("=" * 60)
+    #        print(f"[RECYCLING EXPRESSION DEBUG] STF={stf}, Location={location}, Tech={tech}")
+    #        print(f"  Recycling reduction value (LINEARIZED): {recycling_reduction_value}")
+    #        print("=" * 60)
+    #    return recycling_reduction_value
 
     # Override the recycling price reduction variable with a linear expression
-    m.pricereduction_sec_recycling = pyomo.Expression(
-        m.stf,
-        m.location,
-        m.tech,
-        rule=recycling_reduction_rule,
-        doc="Recycling price reduction using linearized auxiliary variable"
-    )
+    #m.pricereduction_sec_recycling = pyomo.Expression(
+    #    m.stf,
+    #    m.location,
+    #    m.tech,
+    #   rule=recycling_reduction_rule,
+    #    doc="Recycling price reduction using linearized auxiliary variable"
+    #)
