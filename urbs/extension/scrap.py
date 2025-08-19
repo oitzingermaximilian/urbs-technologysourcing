@@ -22,8 +22,10 @@ class decommissioned_capacity_rule(AbstractConstraint):
         # determine exogenous
         if tech == "solarPV":
             _exogenous = 7.5 * 1000
-        elif tech in ("windon", "windoff"):
-            _exogenous = 12.5 * 1000
+        elif tech == "windon":
+            _exogenous = 2 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
+        elif tech == "windoff":
+            _exogenous = 0.5 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
         else:
             _exogenous = 2 * 1000
 

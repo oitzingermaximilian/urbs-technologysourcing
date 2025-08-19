@@ -813,7 +813,7 @@ def slice_data_for_window(data, window_start, window_end, initial_conditions):
 
                 if co2_limit_mask.any():
                     sliced_df.loc[co2_limit_mask, "value"] = (
-                        599999999  # or 9999999999 or any other large number
+                        float("inf")  # or 9999999999 or any other large number
                     )
                     print(f"Set CO2 limit to inf for years {window_start}–{window_end}")
 
@@ -843,7 +843,7 @@ def slice_data_for_window(data, window_start, window_end, initial_conditions):
                 ):
                     # Create a new row for 'CO2 budget' at the window_start year
                     new_co2_budget_row = pd.DataFrame(
-                        {"value": [999999999999]},  # Set CO2 budget to infinity as string
+                        {"value": [float("inf")]},  # Set CO2 budget to infinity as string
                         index=pd.MultiIndex.from_tuples(
                             [(window_start, "CO2 budget")],
                             names=sliced_df.index.names,
