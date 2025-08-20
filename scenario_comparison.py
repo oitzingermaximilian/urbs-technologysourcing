@@ -2160,3 +2160,177 @@ main_lng_nz()
 
 # For all scenarios combined (54 scenarios)
 #main()
+
+def lng_lineplot_range():
+    """
+    Plot LNG demand range over time showing min/max envelope across all price scenarios.
+    Creates separate plots for each learning rate and rolling horizon combination.
+    Creates two separate plots: one for LNG_NZ scenarios and one for LNG_PF scenarios.
+    """
+
+    # Create output directory
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+    print(f"Creating LNG range plots for all LRs and rolling horizons...")
+
+    rolling_horizons = [
+        "rolling_2024_to_2050",
+        "rolling_2029_to_2050",
+        "rolling_2034_to_2050",
+        "rolling_2039_to_2050"
+    ]
+
+    # Different colors for each rolling horizon
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+
+    # Separate NZ and PF scenarios
+    nz_scenarios = SCENARIO_COMBOS_LNG_NZ
+    pf_scenarios = SCENARIO_COMBOS_LNG_PF
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        print(f"Processing LR: {lr_code}")
+
+        # ===== PLOT 1: LNG_NZ SCENARIOS =====
+        plt.figure(figsize=(14, 8))
+
+        for horizon_idx, rolling_horizon in enumerate(rolling_horizons):
+            print(f"  Processing NZ horizon: {rolling_horizon}")
+
+            # Process NZ scenarios only
+            nz_scenario_data = {}  # year -> [values across NZ scenarios]
+            for price_scenario in nz_scenarios:
+                df = load_rolling_horizon_data(lr_code, rolling_horizon, price_scenario, "e_pro_in")
+                if df is not None:
+                    df['com'] = df['com'].str.strip()
+                    lng_data = df[(df['com'] == 'LNG') & (df['stf'] <= 2040)]
+                    if not lng_data.empty:
+                        yearly_lng = lng_data.groupby('stf')['e_pro_in'].sum().reset_index()
+                        yearly_lng['lng_bcm'] = yearly_lng['e_pro_in'].apply(mwh_to_bcm)
+
+                        for _, row in yearly_lng.iterrows():
+                            year = row['stf']
+                            bcm = row['lng_bcm']
+                            if year not in nz_scenario_data:
+                                nz_scenario_data[year] = []
+                            nz_scenario_data[year].append(bcm)
+
+            # Plot NZ range
+            if nz_scenario_data:
+                years_nz = sorted(nz_scenario_data.keys())
+                min_values_nz = []
+                max_values_nz = []
+
+                for year in years_nz:
+                    values = nz_scenario_data[year]
+                    if values:
+                        min_values_nz.append(min(values))
+                        max_values_nz.append(max(values))
+                    else:
+                        min_values_nz.append(0)
+                        max_values_nz.append(0)
+
+                if years_nz and any(max_values_nz):
+                    # Plot NZ range
+                    plt.fill_between(years_nz, min_values_nz, max_values_nz,
+                                   color=colors[horizon_idx], alpha=0.3,
+                                   label=f"{rolling_horizon.replace('_', ' ').title()} (Range)")
+
+                    # Plot NZ min and max lines
+                    plt.plot(years_nz, min_values_nz,
+                            color=colors[horizon_idx], linestyle='--', linewidth=1.5,
+                            label=f"{rolling_horizon.replace('_', ' ').title()} (Min)")
+
+                    plt.plot(years_nz, max_values_nz,
+                            color=colors[horizon_idx], linestyle='-', linewidth=2,
+                            label=f"{rolling_horizon.replace('_', ' ').title()} (Max)")
+
+                    print(f"    Plotted NZ range: {min(min_values_nz):.1f} - {max(max_values_nz):.1f} BCM")
+
+        # Finalize NZ plot
+        plt.xlabel('Year')
+        plt.ylabel('LNG Demand (BCM)')
+        plt.title(f'LNG Demand Range: Net Zero Scenarios\n{lr_name}')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.xlim(None, 2041)
+        plt.tight_layout()
+
+        output_path_nz = output_dir / f"lng_range_plot_NZ_{lr_code}.png"
+        plt.savefig(output_path_nz, dpi=300, bbox_inches='tight')
+        print(f"✓ Saved NZ plot: {output_path_nz}")
+        plt.show()
+        plt.close()
+
+        # ===== PLOT 2: LNG_PF SCENARIOS =====
+        plt.figure(figsize=(14, 8))
+
+        for horizon_idx, rolling_horizon in enumerate(rolling_horizons):
+            print(f"  Processing PF horizon: {rolling_horizon}")
+
+            # Process PF scenarios only
+            pf_scenario_data = {}  # year -> [values across PF scenarios]
+            for price_scenario in pf_scenarios:
+                df = load_rolling_horizon_data(lr_code, rolling_horizon, price_scenario, "e_pro_in")
+                if df is not None:
+                    df['com'] = df['com'].str.strip()
+                    lng_data = df[(df['com'] == 'LNG') & (df['stf'] <= 2040)]
+                    if not lng_data.empty:
+                        yearly_lng = lng_data.groupby('stf')['e_pro_in'].sum().reset_index()
+                        yearly_lng['lng_bcm'] = yearly_lng['e_pro_in'].apply(mwh_to_bcm)
+
+                        for _, row in yearly_lng.iterrows():
+                            year = row['stf']
+                            bcm = row['lng_bcm']
+                            if year not in pf_scenario_data:
+                                pf_scenario_data[year] = []
+                            pf_scenario_data[year].append(bcm)
+
+            # Plot PF range
+            if pf_scenario_data:
+                years_pf = sorted(pf_scenario_data.keys())
+                min_values_pf = []
+                max_values_pf = []
+
+                for year in years_pf:
+                    values = pf_scenario_data[year]
+                    if values:
+                        min_values_pf.append(min(values))
+                        max_values_pf.append(max(values))
+                    else:
+                        min_values_pf.append(0)
+                        max_values_pf.append(0)
+
+                if years_pf and any(max_values_pf):
+                    # Plot PF range with different styling
+                    plt.fill_between(years_pf, min_values_pf, max_values_pf,
+                                   color=colors[horizon_idx], alpha=0.4, hatch='///',
+                                   label=f"{rolling_horizon.replace('_', ' ').title()} (Range)")
+
+                    # Plot PF min and max lines
+                    plt.plot(years_pf, min_values_pf,
+                            color=colors[horizon_idx], linestyle='--', linewidth=1.5,
+                            label=f"{rolling_horizon.replace('_', ' ').title()} (Min)")
+
+                    plt.plot(years_pf, max_values_pf,
+                            color=colors[horizon_idx], linestyle='-', linewidth=2,
+                            label=f"{rolling_horizon.replace('_', ' ').title()} (Max)")
+
+                    print(f"    Plotted PF range: {min(min_values_pf):.1f} - {max(max_values_pf):.1f} BCM")
+
+        # Finalize PF plot
+        plt.xlabel('Year')
+        plt.ylabel('LNG Demand (BCM)')
+        plt.title(f'LNG Demand Range: Persisting Fossil Scenarios\n{lr_name}')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.xlim(None, 2041)
+        plt.tight_layout()
+
+        output_path_pf = output_dir / f"lng_range_plot_PF_{lr_code}.png"
+        plt.savefig(output_path_pf, dpi=300, bbox_inches='tight')
+        print(f"✓ Saved PF plot: {output_path_pf}")
+        plt.show()
+        plt.close()
+
+    print("✓ LNG range plot generation completed!")
+
