@@ -84,7 +84,7 @@ def {func_name}(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass

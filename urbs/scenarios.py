@@ -59,7 +59,7 @@ def scenario_min_min_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -160,7 +160,7 @@ def scenario_min_min_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -261,7 +261,7 @@ def scenario_min_min_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -362,7 +362,7 @@ def scenario_min_min_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -463,7 +463,7 @@ def scenario_min_min_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -564,7 +564,7 @@ def scenario_min_min_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -665,7 +665,7 @@ def scenario_min_avg_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -766,7 +766,7 @@ def scenario_min_avg_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -867,7 +867,7 @@ def scenario_min_avg_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -968,7 +968,7 @@ def scenario_min_avg_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1069,7 +1069,7 @@ def scenario_min_avg_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1170,7 +1170,7 @@ def scenario_min_avg_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1271,7 +1271,7 @@ def scenario_min_high_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1372,7 +1372,7 @@ def scenario_min_high_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1473,7 +1473,7 @@ def scenario_min_high_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1574,7 +1574,7 @@ def scenario_min_high_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1675,7 +1675,7 @@ def scenario_min_high_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1776,7 +1776,7 @@ def scenario_min_high_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1877,7 +1877,7 @@ def scenario_avg_min_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -1978,7 +1978,7 @@ def scenario_avg_min_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2079,7 +2079,7 @@ def scenario_avg_min_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2180,7 +2180,7 @@ def scenario_avg_min_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2281,7 +2281,7 @@ def scenario_avg_min_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2382,7 +2382,7 @@ def scenario_avg_min_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2483,7 +2483,7 @@ def scenario_avg_avg_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2584,7 +2584,7 @@ def scenario_avg_avg_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2685,7 +2685,7 @@ def scenario_avg_avg_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2786,7 +2786,7 @@ def scenario_avg_avg_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2887,7 +2887,7 @@ def scenario_avg_avg_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -2988,7 +2988,7 @@ def scenario_avg_avg_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3089,7 +3089,7 @@ def scenario_avg_high_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3190,7 +3190,7 @@ def scenario_avg_high_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3291,7 +3291,7 @@ def scenario_avg_high_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3392,7 +3392,7 @@ def scenario_avg_high_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3493,7 +3493,7 @@ def scenario_avg_high_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3594,7 +3594,7 @@ def scenario_avg_high_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3695,7 +3695,7 @@ def scenario_high_min_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3796,7 +3796,7 @@ def scenario_high_min_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3897,7 +3897,7 @@ def scenario_high_min_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -3998,7 +3998,7 @@ def scenario_high_min_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4099,7 +4099,7 @@ def scenario_high_min_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4200,7 +4200,7 @@ def scenario_high_min_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4301,7 +4301,7 @@ def scenario_high_avg_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4402,7 +4402,7 @@ def scenario_high_avg_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4503,7 +4503,7 @@ def scenario_high_avg_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4604,7 +4604,7 @@ def scenario_high_avg_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4705,7 +4705,7 @@ def scenario_high_avg_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4806,7 +4806,7 @@ def scenario_high_avg_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -4907,7 +4907,7 @@ def scenario_high_high_min_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -5008,7 +5008,7 @@ def scenario_high_high_min_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -5109,7 +5109,7 @@ def scenario_high_high_avg_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -5210,7 +5210,7 @@ def scenario_high_high_avg_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -5311,7 +5311,7 @@ def scenario_high_high_high_LNG_NZ(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
@@ -5412,7 +5412,7 @@ def scenario_high_high_high_LNG_PF(data, data_urbsextensionv1):
                 
                 # Set LNG commodity price
                 try:
-                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                    co.loc[(stf, "EU27", "LNG", "Stock"), "price"] = lng_price
                 except KeyError:
                     # If the exact location doesn't exist, try alternative indexing
                     pass
