@@ -36,100 +36,101 @@ LEARNING_RATES = {
     "LR7": "7% Learning Rate",
     "LR8": "8% Learning Rate",
     "LR9": "9% Learning Rate",
-    "LR10": "10% Learning Rate",
-    "LR25": "25% Learning Rate"
+    "LR10": "10% Learning Rate"
 }
 
-# Define price scenarios in order - updated to match CRM_Paper scenarios
-SCENARIO_COMBOS = [
-    "min_min_min",
-    "min_min_avg",
-    "min_min_high",
-    "min_avg_min",
-    "min_avg_avg",
-    "min_avg_high",
-    "min_high_min",
-    "min_high_avg",
-    "min_high_high",
-    "avg_min_min",
-    "avg_min_avg",
-    "avg_min_high",
-    "avg_avg_min",
-    "avg_avg_avg",
-    "avg_avg_high",
-    "avg_high_min",
-    "avg_high_avg",
-    "avg_high_high",
-    "high_min_min",
-    "high_min_avg",
-    "high_min_high",
-    "high_avg_min",
-    "high_avg_avg",
-    "high_avg_high",
-    "high_high_min",
-    "high_high_avg",
-    "high_high_high",
+# Define price scenarios in order - split by LNG type
+SCENARIO_COMBOS_LNG_NZ = [
+    "min_min_min_LNG_NZ",
+    "min_min_avg_LNG_NZ",
+    "min_min_high_LNG_NZ",
+    "min_avg_min_LNG_NZ",
+    "min_avg_avg_LNG_NZ",
+    "min_avg_high_LNG_NZ",
+    "min_high_min_LNG_NZ",
+    "min_high_avg_LNG_NZ",
+    "min_high_high_LNG_NZ",
+    "avg_min_min_LNG_NZ",
+    "avg_min_avg_LNG_NZ",
+    "avg_min_high_LNG_NZ",
+    "avg_avg_min_LNG_NZ",
+    "avg_avg_avg_LNG_NZ",
+    "avg_avg_high_LNG_NZ",
+    "avg_high_min_LNG_NZ",
+    "avg_high_avg_LNG_NZ",
+    "avg_high_high_LNG_NZ",
+    "high_min_min_LNG_NZ",
+    "high_min_avg_LNG_NZ",
+    "high_min_high_LNG_NZ",
+    "high_avg_min_LNG_NZ",
+    "high_avg_avg_LNG_NZ",
+    "high_avg_high_LNG_NZ",
+    "high_high_min_LNG_NZ",
+    "high_high_avg_LNG_NZ",
+    "high_high_high_LNG_NZ",
 ]
 
-SCENARIO_COMBOS_LNG = [
-    "min_min_min_LNG_NZ",
+SCENARIO_COMBOS_LNG_PF = [
     "min_min_min_LNG_PF",
-    "min_min_avg_LNG_NZ",
     "min_min_avg_LNG_PF",
-    "min_min_high_LNG_NZ",
     "min_min_high_LNG_PF",
-    "min_avg_min_LNG_NZ",
     "min_avg_min_LNG_PF",
-    "min_avg_avg_LNG_NZ",
     "min_avg_avg_LNG_PF",
-    "min_avg_high_LNG_NZ",
     "min_avg_high_LNG_PF",
-    "min_high_min_LNG_NZ",
     "min_high_min_LNG_PF",
-    "min_high_avg_LNG_NZ",
     "min_high_avg_LNG_PF",
-    "min_high_high_LNG_NZ",
     "min_high_high_LNG_PF",
-    "avg_min_min_LNG_NZ",
     "avg_min_min_LNG_PF",
-    "avg_min_avg_LNG_NZ",
     "avg_min_avg_LNG_PF",
-    "avg_min_high_LNG_NZ",
     "avg_min_high_LNG_PF",
-    "avg_avg_min_LNG_NZ",
     "avg_avg_min_LNG_PF",
-    "avg_avg_avg_LNG_NZ",
     "avg_avg_avg_LNG_PF",
-    "avg_avg_high_LNG_NZ",
     "avg_avg_high_LNG_PF",
-    "avg_high_min_LNG_NZ",
     "avg_high_min_LNG_PF",
-    "avg_high_avg_LNG_NZ",
     "avg_high_avg_LNG_PF",
-    "avg_high_high_LNG_NZ",
     "avg_high_high_LNG_PF",
-    "high_min_min_LNG_NZ",
     "high_min_min_LNG_PF",
-    "high_min_avg_LNG_NZ",
     "high_min_avg_LNG_PF",
-    "high_min_high_LNG_NZ",
     "high_min_high_LNG_PF",
-    "high_avg_min_LNG_NZ",
     "high_avg_min_LNG_PF",
-    "high_avg_avg_LNG_NZ",
     "high_avg_avg_LNG_PF",
-    "high_avg_high_LNG_NZ",
     "high_avg_high_LNG_PF",
-    "high_high_min_LNG_NZ",
     "high_high_min_LNG_PF",
-    "high_high_avg_LNG_NZ",
     "high_high_avg_LNG_PF",
-    "high_high_high_LNG_NZ",
     "high_high_high_LNG_PF",
 ]
 
 # Define rolling horizon results path
 ROLLING_HORIZON_BASE_PATH = r"C:\Users\maxoi\OneDrive\Desktop\results_crm_paper"
+
+def create_compact_scenario_label(scenario):
+    """
+    Create a compact label from the new 3x3x3 scenario naming structure.
+
+    Args:
+        scenario (str): Scenario name like "min_avg_high_LNG_NZ" or "avg_min_min_LNG_PF"
+
+    Returns:
+        str: Compact label like "mah_nz" or "amm_pf"
+    """
+    # Remove LNG prefix and split
+    if '_LNG_' in scenario:
+        params_part, lng_type = scenario.split('_LNG_')
+        params = params_part.split('_')
+
+        if len(params) == 3:
+            param1, param2, param3 = params
+            # Use first letter of each parameter
+            p1 = param1[0].lower()
+            p2 = param2[0].lower()
+            p3 = param3[0].lower()
+
+            # Create compact label without "LNG"
+            label = f"{p1}{p2}{p3}_{lng_type.lower()}"
+            return label
+
+    # Fallback to original method if pattern doesn't match
+    return scenario.replace('_', ' ').title()
 
 def load_scenario_data(lr_folder, scenario, sheet_name):
     """Load data from a specific learning rate folder and scenario"""
@@ -216,7 +217,7 @@ def plot_eu_secondary_additions_by_years():
                         scenario_data.append(0)
 
                 data_for_boxplot.append(scenario_data)
-                labels_for_boxplot.append(scenario.replace('_', ' ').title())
+                labels_for_boxplot.append(create_compact_scenario_label(scenario))
 
             # Use seaborn's color palette to always get enough colors
             colors_gradient = sns.color_palette("Blues", n_colors=len(SCENARIO_COMBOS_LNG))
@@ -312,7 +313,7 @@ def plot_lng_demand_comparison():
     ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
     ax.set_yticks(np.arange(len(SCENARIO_COMBOS_LNG)) + 0.5)
     ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
-    ax.set_yticklabels([s.replace('_', ' ').title() for s in SCENARIO_COMBOS_LNG], rotation=0)
+    ax.set_yticklabels([create_compact_scenario_label(s) for s in SCENARIO_COMBOS_LNG], rotation=0)
     ax.set_xlabel("Learning Rate Scenario")
     ax.set_ylabel("Price Scenario")
     ax.set_title("LNG Demand Matrix (2024-2040)")
@@ -350,7 +351,7 @@ def plot_lng_demand_comparison():
     ax.set_ylabel('LNG Demand 2024-2040 (BCM)')
     ax.set_title('LNG Demand Comparison Across Learning Rates and Price Scenarios (2024-2040)')
     ax.set_xticks(x_positions)
-    ax.set_xticklabels([scenario.replace('_', ' ').title() for scenario in SCENARIO_COMBOS_LNG], rotation=45, ha='right')
+    ax.set_xticklabels([create_compact_scenario_label(s) for s in SCENARIO_COMBOS_LNG], rotation=45, ha='right')
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', ncol=1)
     ax.grid(True, alpha=0.3)
 
@@ -569,7 +570,7 @@ def plot_total_system_cost_matrix(): #TODO Disabled reenable if needed
     ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
     ax.set_yticks(np.arange(len(SCENARIO_COMBOS_LNG)) + 0.5)
     ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
-    ax.set_yticklabels([s.replace('_', ' ').title() for s in SCENARIO_COMBOS_LNG], rotation=0)
+    ax.set_yticklabels([create_compact_scenario_label(s) for s in SCENARIO_COMBOS_LNG], rotation=0)
     ax.set_xlabel("Learning Rate Scenario")
     ax.set_ylabel("Price Scenario")
     ax.set_title("Total System Cost Matrix (2040)")
@@ -618,7 +619,7 @@ def plot_total_system_cost_matrix_2024_2040():
     ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
     ax.set_yticks(np.arange(len(SCENARIO_COMBOS_LNG)) + 0.5)
     ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
-    ax.set_yticklabels([s.replace('_', ' ').title() for s in SCENARIO_COMBOS_LNG], rotation=0)
+    ax.set_yticklabels([create_compact_scenario_label(s) for s in SCENARIO_COMBOS_LNG], rotation=0)
     ax.set_xlabel("Learning Rate Scenario")
     ax.set_ylabel("Price Scenario")
     ax.set_title("Total System Cost Matrix (2024–2040)")
@@ -632,7 +633,7 @@ def plot_total_system_cost_matrix_2024_2040():
 
 def plot_3d_cost_matrix_grid_style_fixed():
     """
-    Create a 3D plot with corrected price scenario labels.
+    Create a 3D plot with corrected price scenario labels using the new compact labeling.
     """
 
     # Create output directory
@@ -690,43 +691,16 @@ def plot_3d_cost_matrix_grid_style_fixed():
     # Simple learning rate labels
     lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
 
-    # FIXED price scenario labels - be more specific to avoid duplicates
-    price_labels_fixed = []
-    for scenario in SCENARIO_COMBOS_LNG:
-        scenario_lower = scenario.lower()
-        if 'extremely_low' in scenario_lower:
-            price_labels_fixed.append('Ext Low')
-        elif 'very_low' in scenario_lower:
-            price_labels_fixed.append('Very Low')
-        elif 'moderately_low' in scenario_lower:
-            price_labels_fixed.append('Mod Low')
-        elif 'slightly_below_average' in scenario_lower:
-            price_labels_fixed.append('Below Avg')
-        elif 'slightly_above_average' in scenario_lower:
-            price_labels_fixed.append('Above Avg')
-        elif 'moderately_high' in scenario_lower:
-            price_labels_fixed.append('Mod High')
-        elif 'very_high' in scenario_lower:
-            price_labels_fixed.append('Very High')
-        elif 'extremely_high' in scenario_lower:
-            price_labels_fixed.append('Ext High')
-        elif scenario_lower == 'low':  # Only exact match for 'low'
-            price_labels_fixed.append('Low')
-        elif scenario_lower == 'high':  # Only exact match for 'high'
-            price_labels_fixed.append('High')
-        elif 'average' in scenario_lower:
-            price_labels_fixed.append('Average')
-        else:
-            # Fallback: use first 8 characters
-            price_labels_fixed.append(scenario.replace('_', ' ').title()[:8])
+    # Use the new compact scenario labeling function
+    price_labels_compact = [create_compact_scenario_label(scenario) for scenario in SCENARIO_COMBOS_LNG]
 
-    # DEBUG: Print the fixed labels
-    print("\nFixed price labels:")
-    for i, label in enumerate(price_labels_fixed):
+    # DEBUG: Print the compact labels
+    print("\nCompact price labels:")
+    for i, label in enumerate(price_labels_compact):
         print(f"{i}: {SCENARIO_COMBOS_LNG[i]} -> {label}")
 
     ax.set_xticklabels(lr_labels, fontsize=10)
-    ax.set_yticklabels(price_labels_fixed, fontsize=9)
+    ax.set_yticklabels(price_labels_compact, fontsize=9)
 
     plt.tight_layout()
 
@@ -736,32 +710,6 @@ def plot_3d_cost_matrix_grid_style_fixed():
     print(f"Saved fixed grid style 3D plot: {output_path}")
 
     plt.show()
-
-def create_price_scenario_mapping():
-    """
-    Helper function to create a proper mapping for price scenarios
-    """
-
-    # Let's create a manual mapping to ensure no duplicates
-    price_mapping = {
-        'extremely_low': 'Ext Low',
-        'very_low': 'Very Low',
-        'low': 'Low',
-        'moderately_low': 'Mod Low',
-        'slightly_below_average': 'Below Avg',
-        'average': 'Average',
-        'slightly_above_average': 'Above Avg',
-        'moderately_high': 'Mod High',
-        'high': 'High',
-        'very_high': 'Very High',
-        'extremely_high': 'Ext High'
-    }
-
-    print("Price scenario mapping:")
-    for key, value in price_mapping.items():
-        print(f"{key} -> {value}")
-
-    return price_mapping
 
 def plot_3d_cost_matrix_with_mapping():
     """
@@ -2184,6 +2132,91 @@ def main():
     print("\nScenario comparison plotting completed!")
 
 
-if __name__ == "__main__":
-    main()
+# Keep the combined list for backward compatibility
+SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ + SCENARIO_COMBOS_LNG_PF
 
+def main_lng_nz():
+    """Main function to generate comparison plots for LNG_NZ scenarios only"""
+    print("Starting LNG_NZ scenario comparison plotting...")
+    print(f"Results base path: {RESULTS_BASE_PATH}")
+
+    # Check if base path exists
+    if not Path(RESULTS_BASE_PATH).exists():
+        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
+        return
+
+    # Temporarily switch to LNG_NZ scenarios
+    global SCENARIO_COMBOS_LNG
+    original_scenarios = SCENARIO_COMBOS_LNG.copy()
+    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ.copy()
+
+    # Generate plots using existing functions
+    print("\n1. Generating LNG_NZ Demand comparison...")
+    plot_lng_demand_comparison()
+    plot_lng_demand_yearly_scatter()
+    plot_lng_demand_yearly_barplot()
+    lng_lineplot_horizons()
+    plot_lng_demand_rolling_horizon_boxplots()
+
+    print("\n2. Generating LNG_NZ Cost Matrix...")
+    plot_total_system_cost_matrix_2024_2040()
+    plot_3d_cost_matrix_grid_style_fixed()
+
+    print("\n3. Generating LNG_NZ Pareto Plots...")
+    plot_pareto_cost_vs_remanufacturing()
+    plot_pareto_cost_vs_lng()
+
+    print("\n4. Generating LNG_NZ Scrap Plots...")
+    generate_all_scrap_visualizations()
+
+    # Restore original scenarios
+    SCENARIO_COMBOS_LNG = original_scenarios
+    print("\nLNG_NZ scenario comparison plotting completed!")
+
+def main_lng_pf():
+    """Main function to generate comparison plots for LNG_PF scenarios only"""
+    print("Starting LNG_PF scenario comparison plotting...")
+    print(f"Results base path: {RESULTS_BASE_PATH}")
+
+    # Check if base path exists
+    if not Path(RESULTS_BASE_PATH).exists():
+        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
+        return
+
+    # Temporarily switch to LNG_PF scenarios
+    global SCENARIO_COMBOS_LNG
+    original_scenarios = SCENARIO_COMBOS_LNG.copy()
+    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_PF.copy()
+
+    # Generate plots using existing functions
+    print("\n1. Generating LNG_PF Demand comparison...")
+    plot_lng_demand_comparison()
+    plot_lng_demand_yearly_scatter()
+    plot_lng_demand_yearly_barplot()
+    lng_lineplot_horizons()
+    plot_lng_demand_rolling_horizon_boxplots()
+
+    print("\n2. Generating LNG_PF Cost Matrix...")
+    plot_total_system_cost_matrix_2024_2040()
+    plot_3d_cost_matrix_grid_style_fixed()
+
+    print("\n3. Generating LNG_PF Pareto Plots...")
+    plot_pareto_cost_vs_remanufacturing()
+    plot_pareto_cost_vs_lng()
+
+    print("\n4. Generating LNG_PF Scrap Plots...")
+    generate_all_scrap_visualizations()
+
+    # Restore original scenarios
+    SCENARIO_COMBOS_LNG = original_scenarios
+    print("\nLNG_PF scenario comparison plotting completed!")
+
+
+# For LNG Net Zero scenarios only (27 scenarios)
+main_lng_nz()
+
+# For LNG Persisting Fossil scenarios only (27 scenarios)
+#main_lng_pf()
+
+# For all scenarios combined (54 scenarios)
+#main()
