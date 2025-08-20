@@ -71,6 +71,63 @@ SCENARIO_COMBOS = [
     "high_high_high",
 ]
 
+SCENARIO_COMBOS_LNG = [
+    "min_min_min_LNG_NZ",
+    "min_min_min_LNG_PF",
+    "min_min_avg_LNG_NZ",
+    "min_min_avg_LNG_PF",
+    "min_min_high_LNG_NZ",
+    "min_min_high_LNG_PF",
+    "min_avg_min_LNG_NZ",
+    "min_avg_min_LNG_PF",
+    "min_avg_avg_LNG_NZ",
+    "min_avg_avg_LNG_PF",
+    "min_avg_high_LNG_NZ",
+    "min_avg_high_LNG_PF",
+    "min_high_min_LNG_NZ",
+    "min_high_min_LNG_PF",
+    "min_high_avg_LNG_NZ",
+    "min_high_avg_LNG_PF",
+    "min_high_high_LNG_NZ",
+    "min_high_high_LNG_PF",
+    "avg_min_min_LNG_NZ",
+    "avg_min_min_LNG_PF",
+    "avg_min_avg_LNG_NZ",
+    "avg_min_avg_LNG_PF",
+    "avg_min_high_LNG_NZ",
+    "avg_min_high_LNG_PF",
+    "avg_avg_min_LNG_NZ",
+    "avg_avg_min_LNG_PF",
+    "avg_avg_avg_LNG_NZ",
+    "avg_avg_avg_LNG_PF",
+    "avg_avg_high_LNG_NZ",
+    "avg_avg_high_LNG_PF",
+    "avg_high_min_LNG_NZ",
+    "avg_high_min_LNG_PF",
+    "avg_high_avg_LNG_NZ",
+    "avg_high_avg_LNG_PF",
+    "avg_high_high_LNG_NZ",
+    "avg_high_high_LNG_PF",
+    "high_min_min_LNG_NZ",
+    "high_min_min_LNG_PF",
+    "high_min_avg_LNG_NZ",
+    "high_min_avg_LNG_PF",
+    "high_min_high_LNG_NZ",
+    "high_min_high_LNG_PF",
+    "high_avg_min_LNG_NZ",
+    "high_avg_min_LNG_PF",
+    "high_avg_avg_LNG_NZ",
+    "high_avg_avg_LNG_PF",
+    "high_avg_high_LNG_NZ",
+    "high_avg_high_LNG_PF",
+    "high_high_min_LNG_NZ",
+    "high_high_min_LNG_PF",
+    "high_high_avg_LNG_NZ",
+    "high_high_avg_LNG_PF",
+    "high_high_high_LNG_NZ",
+    "high_high_high_LNG_PF",
+]
+
 # Define rolling horizon results path
 ROLLING_HORIZON_BASE_PATH = r"C:\Users\maxoi\OneDrive\Desktop\results_crm_paper"
 
@@ -139,7 +196,7 @@ def plot_eu_secondary_additions_by_years():
             data_for_boxplot = []
             labels_for_boxplot = []
 
-            for scenario in PRICE_SCENARIOS:
+            for scenario in SCENARIO_COMBOS_LNG:
                 scenario_data = []
 
                 for lr_code, lr_name in LEARNING_RATES.items():
@@ -162,7 +219,7 @@ def plot_eu_secondary_additions_by_years():
                 labels_for_boxplot.append(scenario.replace('_', ' ').title())
 
             # Use seaborn's color palette to always get enough colors
-            colors_gradient = sns.color_palette("Blues", n_colors=len(PRICE_SCENARIOS))
+            colors_gradient = sns.color_palette("Blues", n_colors=len(SCENARIO_COMBOS_LNG))
             colors_gradient = [to_hex(c) for c in colors_gradient]
 
             # Create boxplot for this year
@@ -215,9 +272,9 @@ def plot_lng_demand_comparison():
     output_dir.mkdir(exist_ok=True)
 
     # Prepare the data matrix
-    lng_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+    lng_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-    for i, scenario in enumerate(PRICE_SCENARIOS):
+    for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
         for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
             df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
 
@@ -253,9 +310,9 @@ def plot_lng_demand_comparison():
 
     # Set axis labels and ticks
     ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
-    ax.set_yticks(np.arange(len(PRICE_SCENARIOS)) + 0.5)
+    ax.set_yticks(np.arange(len(SCENARIO_COMBOS_LNG)) + 0.5)
     ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
-    ax.set_yticklabels([s.replace('_', ' ').title() for s in PRICE_SCENARIOS], rotation=0)
+    ax.set_yticklabels([s.replace('_', ' ').title() for s in SCENARIO_COMBOS_LNG], rotation=0)
     ax.set_xlabel("Learning Rate Scenario")
     ax.set_ylabel("Price Scenario")
     ax.set_title("LNG Demand Matrix (2024-2040)")
@@ -269,7 +326,7 @@ def plot_lng_demand_comparison():
 
     # Also create a line plot with better separation using alpha and markers
     fig, ax = plt.subplots(figsize=(14, 8))
-    x_positions = np.arange(len(PRICE_SCENARIOS))
+    x_positions = np.arange(len(SCENARIO_COMBOS_LNG))
 
     # Use different markers and line styles for better distinction
     markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h']
@@ -293,7 +350,7 @@ def plot_lng_demand_comparison():
     ax.set_ylabel('LNG Demand 2024-2040 (BCM)')
     ax.set_title('LNG Demand Comparison Across Learning Rates and Price Scenarios (2024-2040)')
     ax.set_xticks(x_positions)
-    ax.set_xticklabels([scenario.replace('_', ' ').title() for scenario in PRICE_SCENARIOS], rotation=45, ha='right')
+    ax.set_xticklabels([scenario.replace('_', ' ').title() for scenario in SCENARIO_COMBOS_LNG], rotation=45, ha='right')
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', ncol=1)
     ax.grid(True, alpha=0.3)
 
@@ -318,7 +375,7 @@ def plot_lng_demand_yearly_scatter():
     yearly_data = []
 
     for lr_code, lr_name in LEARNING_RATES.items():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
 
             if df is not None:
@@ -345,13 +402,13 @@ def plot_lng_demand_yearly_scatter():
     # Create unique markers for price scenarios
     price_markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h', '+']
     price_scenario_map = {scenario: price_markers[i % len(price_markers)]
-                          for i, scenario in enumerate(PRICE_SCENARIOS)}
+                          for i, scenario in enumerate(SCENARIO_COMBOS_LNG)}
 
     colors = sns.color_palette("tab10", n_colors=len(LEARNING_RATES))
     lr_color_map = {lr_name: colors[i] for i, lr_name in enumerate(LEARNING_RATES.values())}
 
     for lr_name in LEARNING_RATES.values():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             scenario_title = scenario.replace('_', ' ').title()
             subset = df_yearly[(df_yearly['Learning_Rate'] == lr_name) &
                                (df_yearly['Price_Scenario'] == scenario_title)]
@@ -361,7 +418,7 @@ def plot_lng_demand_yearly_scatter():
                            color=lr_color_map[lr_name],
                            marker=price_scenario_map[scenario],
                            s=60, alpha=0.7,
-                           label=f"{lr_name}" if scenario == PRICE_SCENARIOS[0] else "")
+                           label=f"{lr_name}" if scenario == SCENARIO_COMBOS_LNG[0] else "")
 
     ax.set_xlabel('Year')
     ax.set_ylabel('LNG Demand (BCM)')
@@ -389,7 +446,7 @@ def plot_lng_demand_yearly_barplot():
     yearly_data = []
 
     for lr_code, lr_name in LEARNING_RATES.items():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
 
             if df is not None:
@@ -425,7 +482,7 @@ def plot_lng_demand_yearly_barplot():
         axes = axes.flatten()
 
     # Colors for price scenarios (use a colorful palette)
-    colors_price = sns.color_palette("Set3", n_colors=len(PRICE_SCENARIOS))
+    colors_price = sns.color_palette("Set3", n_colors=len(SCENARIO_COMBOS_LNG))
 
     # Bar width and positioning
     bar_width = 0.07  # Very slim bars as requested
@@ -437,7 +494,7 @@ def plot_lng_demand_yearly_barplot():
         for year_idx, year in enumerate(years):
             year_data = df_yearly[(df_yearly['LR_Code'] == lr_code) & (df_yearly['Year'] == year)]
 
-            for scenario_idx, scenario in enumerate(PRICE_SCENARIOS):
+            for scenario_idx, scenario in enumerate(SCENARIO_COMBOS_LNG):
                 scenario_title = scenario.replace('_', ' ').title()
                 scenario_data = year_data[year_data['Price_Scenario'] == scenario_title]
 
@@ -445,7 +502,7 @@ def plot_lng_demand_yearly_barplot():
                     lng_value = scenario_data['LNG_BCM'].iloc[0]
 
                     # Calculate bar position
-                    x_pos = year + (scenario_idx - len(PRICE_SCENARIOS) / 2) * bar_width
+                    x_pos = year + (scenario_idx - len(SCENARIO_COMBOS_LNG) / 2) * bar_width
 
                     ax.bar(x_pos, lng_value,
                            width=bar_width,
@@ -483,9 +540,9 @@ def plot_total_system_cost_matrix(): #TODO Disabled reenable if needed
     Cell value: sum of 'value' column for year 2040 in the 'Total_Cost' sheet
     """
     # Prepare the data matrix
-    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+    cost_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-    for i, scenario in enumerate(PRICE_SCENARIOS):
+    for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
         for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
             df = load_scenario_data(lr_code, scenario, "Total_Cost")
             if df is not None:
@@ -510,9 +567,9 @@ def plot_total_system_cost_matrix(): #TODO Disabled reenable if needed
 
     # Set axis labels and ticks
     ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
-    ax.set_yticks(np.arange(len(PRICE_SCENARIOS)) + 0.5)
+    ax.set_yticks(np.arange(len(SCENARIO_COMBOS_LNG)) + 0.5)
     ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
-    ax.set_yticklabels([s.replace('_', ' ').title() for s in PRICE_SCENARIOS], rotation=0)
+    ax.set_yticklabels([s.replace('_', ' ').title() for s in SCENARIO_COMBOS_LNG], rotation=0)
     ax.set_xlabel("Learning Rate Scenario")
     ax.set_ylabel("Price Scenario")
     ax.set_title("Total System Cost Matrix (2040)")
@@ -532,9 +589,9 @@ def plot_total_system_cost_matrix_2024_2040():
     Cell value: sum of 'value' column for years 2024 to 2040 in the 'Total_Cost' sheet
     """
     # Prepare the data matrix
-    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+    cost_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-    for i, scenario in enumerate(PRICE_SCENARIOS):
+    for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
         for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
             df = load_scenario_data(lr_code, scenario, "Total_Cost")
             if df is not None:
@@ -559,9 +616,9 @@ def plot_total_system_cost_matrix_2024_2040():
 
     # Set axis labels and ticks
     ax.set_xticks(np.arange(len(LEARNING_RATES)) + 0.5)
-    ax.set_yticks(np.arange(len(PRICE_SCENARIOS)) + 0.5)
+    ax.set_yticks(np.arange(len(SCENARIO_COMBOS_LNG)) + 0.5)
     ax.set_xticklabels([v for v in LEARNING_RATES.values()], rotation=45, ha='right')
-    ax.set_yticklabels([s.replace('_', ' ').title() for s in PRICE_SCENARIOS], rotation=0)
+    ax.set_yticklabels([s.replace('_', ' ').title() for s in SCENARIO_COMBOS_LNG], rotation=0)
     ax.set_xlabel("Learning Rate Scenario")
     ax.set_ylabel("Price Scenario")
     ax.set_title("Total System Cost Matrix (2024–2040)")
@@ -583,9 +640,9 @@ def plot_3d_cost_matrix_grid_style_fixed():
     output_dir.mkdir(exist_ok=True)
 
     # Prepare the data matrix
-    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+    cost_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-    for i, scenario in enumerate(PRICE_SCENARIOS):
+    for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
         for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
             df = load_scenario_data(lr_code, scenario, "Total_Cost")
             if df is not None:
@@ -595,9 +652,9 @@ def plot_3d_cost_matrix_grid_style_fixed():
             else:
                 cost_matrix[i, j] = np.nan
 
-    # DEBUG: Print the actual PRICE_SCENARIOS to see what we're working with
-    print("PRICE_SCENARIOS:")
-    for i, scenario in enumerate(PRICE_SCENARIOS):
+    # DEBUG: Print the actual SCENARIO_COMBOS_LNG to see what we're working with
+    print("SCENARIO_COMBOS_LNG:")
+    for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
         print(f"{i}: {scenario}")
 
     # Create 3D plot
@@ -606,7 +663,7 @@ def plot_3d_cost_matrix_grid_style_fixed():
 
     # Create meshgrid for 3D surface
     X = np.arange(len(LEARNING_RATES))
-    Y = np.arange(len(PRICE_SCENARIOS))
+    Y = np.arange(len(SCENARIO_COMBOS_LNG))
     X, Y = np.meshgrid(X, Y)
     Z = cost_matrix
 
@@ -628,14 +685,14 @@ def plot_3d_cost_matrix_grid_style_fixed():
 
     # Set ticks
     ax.set_xticks(range(len(LEARNING_RATES)))
-    ax.set_yticks(range(len(PRICE_SCENARIOS)))
+    ax.set_yticks(range(len(SCENARIO_COMBOS_LNG)))
 
     # Simple learning rate labels
     lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
 
     # FIXED price scenario labels - be more specific to avoid duplicates
     price_labels_fixed = []
-    for scenario in PRICE_SCENARIOS:
+    for scenario in SCENARIO_COMBOS_LNG:
         scenario_lower = scenario.lower()
         if 'extremely_low' in scenario_lower:
             price_labels_fixed.append('Ext Low')
@@ -666,7 +723,7 @@ def plot_3d_cost_matrix_grid_style_fixed():
     # DEBUG: Print the fixed labels
     print("\nFixed price labels:")
     for i, label in enumerate(price_labels_fixed):
-        print(f"{i}: {PRICE_SCENARIOS[i]} -> {label}")
+        print(f"{i}: {SCENARIO_COMBOS_LNG[i]} -> {label}")
 
     ax.set_xticklabels(lr_labels, fontsize=10)
     ax.set_yticklabels(price_labels_fixed, fontsize=9)
@@ -719,9 +776,9 @@ def plot_3d_cost_matrix_with_mapping():
     output_dir.mkdir(exist_ok=True)
 
     # Prepare the data matrix
-    cost_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+    cost_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-    for i, scenario in enumerate(PRICE_SCENARIOS):
+    for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
         for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
             df = load_scenario_data(lr_code, scenario, "Total_Cost")
             if df is not None:
@@ -736,7 +793,7 @@ def plot_3d_cost_matrix_with_mapping():
     ax = fig.add_subplot(111, projection='3d')
 
     X = np.arange(len(LEARNING_RATES))
-    Y = np.arange(len(PRICE_SCENARIOS))
+    Y = np.arange(len(SCENARIO_COMBOS_LNG))
     X, Y = np.meshgrid(X, Y)
     Z = cost_matrix
 
@@ -754,13 +811,13 @@ def plot_3d_cost_matrix_with_mapping():
     ax.set_zlabel('Cost [bEUR]')
 
     ax.set_xticks(range(len(LEARNING_RATES)))
-    ax.set_yticks(range(len(PRICE_SCENARIOS)))
+    ax.set_yticks(range(len(SCENARIO_COMBOS_LNG)))
 
     lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
 
     # Use the explicit mapping
     price_labels_mapped = []
-    for scenario in PRICE_SCENARIOS:
+    for scenario in SCENARIO_COMBOS_LNG:
         scenario_clean = scenario.lower().replace('_', ' ').strip()
         if scenario_clean in price_mapping:
             price_labels_mapped.append(price_mapping[scenario_clean])
@@ -818,7 +875,7 @@ def plot_pareto_cost_vs_lng():
     results = []
 
     for lr_code, lr_name in LEARNING_RATES.items():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             # Load cost data
             df_cost = load_scenario_data(lr_code, scenario, "Total_Cost")
             # Load LNG data
@@ -904,7 +961,7 @@ def plot_pareto_cost_vs_remanufacturing():
     results = []
 
     for lr_code, lr_name in LEARNING_RATES.items():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             # Load cost data
             df_cost = load_scenario_data(lr_code, scenario, "Total_Cost")
             # Load remanufacturing data
@@ -983,7 +1040,7 @@ def get_fixed_price_labels():
     """
     # FIXED price scenario labels - be more specific to avoid duplicates
     price_labels_fixed = []
-    for scenario in PRICE_SCENARIOS:
+    for scenario in SCENARIO_COMBOS_LNG:
         scenario_lower = scenario.lower()
         if 'extremely_low' in scenario_lower:
             price_labels_fixed.append('Ext Low')
@@ -1014,7 +1071,7 @@ def get_fixed_price_labels():
     # DEBUG: Print the fixed labels
     print("\nFixed price labels:")
     for i, label in enumerate(price_labels_fixed):
-        print(f"{i}: {PRICE_SCENARIOS[i]} -> {label}")
+        print(f"{i}: {SCENARIO_COMBOS_LNG[i]} -> {label}")
 
     return price_labels_fixed
 
@@ -1040,9 +1097,9 @@ def plot_3d_scrap_bars_cumulative():
         ax = fig.add_subplot(2, 2, tech_idx + 1, projection='3d')
 
         # Prepare data matrix
-        scrap_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+        scrap_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-        for i, scenario in enumerate(PRICE_SCENARIOS):
+        for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
             for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
                 # Load from "Total_Scrap" sheet, then filter by technology
                 df = load_scenario_data(lr_code, scenario, "Total_Scrap")
@@ -1060,7 +1117,7 @@ def plot_3d_scrap_bars_cumulative():
 
         # Create 3D bar plot
         X = np.arange(len(LEARNING_RATES))
-        Y = np.arange(len(PRICE_SCENARIOS))
+        Y = np.arange(len(SCENARIO_COMBOS_LNG))
         X, Y = np.meshgrid(X, Y)
 
         # Flatten for bar plot
@@ -1084,7 +1141,7 @@ def plot_3d_scrap_bars_cumulative():
 
         # Set ticks
         ax.set_xticks(range(len(LEARNING_RATES)))
-        ax.set_yticks(range(len(PRICE_SCENARIOS)))
+        ax.set_yticks(range(len(SCENARIO_COMBOS_LNG)))
 
         # Use fixed labels
         lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
@@ -1123,9 +1180,9 @@ def plot_3d_scrap_bars_2040():
         ax = fig.add_subplot(2, 2, tech_idx + 1, projection='3d')
 
         # Prepare data matrix for 2040
-        scrap_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+        scrap_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-        for i, scenario in enumerate(PRICE_SCENARIOS):
+        for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
             for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
                 # Load from "Total_Scrap" sheet, then filter by technology
                 df = load_scenario_data(lr_code, scenario, "Total_Scrap")
@@ -1145,7 +1202,7 @@ def plot_3d_scrap_bars_2040():
 
         # Create 3D bar plot
         X = np.arange(len(LEARNING_RATES))
-        Y = np.arange(len(PRICE_SCENARIOS))
+        Y = np.arange(len(SCENARIO_COMBOS_LNG))
         X, Y = np.meshgrid(X, Y)
 
         x_flat = X.flatten()
@@ -1168,7 +1225,7 @@ def plot_3d_scrap_bars_2040():
 
         # Set ticks and labels
         ax.set_xticks(range(len(LEARNING_RATES)))
-        ax.set_yticks(range(len(PRICE_SCENARIOS)))
+        ax.set_yticks(range(len(SCENARIO_COMBOS_LNG)))
 
         lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
 
@@ -1209,9 +1266,9 @@ def plot_scrap_time_evolution_3d():
         ax = fig.add_subplot(2, 2, year_idx + 1, projection='3d')
 
         # Prepare data matrix for this year
-        scrap_matrix = np.zeros((len(PRICE_SCENARIOS), len(LEARNING_RATES)))
+        scrap_matrix = np.zeros((len(SCENARIO_COMBOS_LNG), len(LEARNING_RATES)))
 
-        for i, scenario in enumerate(PRICE_SCENARIOS):
+        for i, scenario in enumerate(SCENARIO_COMBOS_LNG):
             for j, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
                 # Load from "Total_Scrap" sheet, then filter by technology
                 df = load_scenario_data(lr_code, scenario, "Total_Scrap")
@@ -1231,7 +1288,7 @@ def plot_scrap_time_evolution_3d():
 
         # Create 3D surface
         X = np.arange(len(LEARNING_RATES))
-        Y = np.arange(len(PRICE_SCENARIOS))
+        Y = np.arange(len(SCENARIO_COMBOS_LNG))
         X, Y = np.meshgrid(X, Y)
         Z = scrap_matrix
 
@@ -1248,7 +1305,7 @@ def plot_scrap_time_evolution_3d():
 
         # Set ticks
         ax.set_xticks(range(len(LEARNING_RATES)))
-        ax.set_yticks(range(len(PRICE_SCENARIOS)))
+        ax.set_yticks(range(len(SCENARIO_COMBOS_LNG)))
 
         lr_labels = [v.split('%')[0] for v in LEARNING_RATES.values()]
         # Use shorter labels for better fit in time evolution plots
@@ -1297,7 +1354,7 @@ def plot_lng_lines_by_learning_rate():
     lng_data = []
 
     for lr_code, lr_name in LEARNING_RATES.items():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
 
             if df is not None:
@@ -1321,15 +1378,15 @@ def plot_lng_lines_by_learning_rate():
 
     # Get fixed price labels
     price_labels_fixed = get_fixed_price_labels()
-    price_label_map = dict(zip(PRICE_SCENARIOS, price_labels_fixed))
+    price_label_map = dict(zip(SCENARIO_COMBOS_LNG, price_labels_fixed))
 
     # Split learning rates into groups of 4 for multiple PNGs
     lr_items = list(LEARNING_RATES.items())
     lr_groups = [lr_items[i:i + 4] for i in range(0, len(lr_items), 4)]
 
     # Colors for price scenarios
-    colors = sns.color_palette("tab10", len(PRICE_SCENARIOS))
-    color_map = dict(zip(PRICE_SCENARIOS, colors))
+    colors = sns.color_palette("tab10", len(SCENARIO_COMBOS_LNG))
+    color_map = dict(zip(SCENARIO_COMBOS_LNG, colors))
 
     for group_idx, lr_group in enumerate(lr_groups):
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -1339,7 +1396,7 @@ def plot_lng_lines_by_learning_rate():
             ax = axes[i]
 
             # Plot each price scenario as a separate line
-            for scenario in PRICE_SCENARIOS:
+            for scenario in SCENARIO_COMBOS_LNG:
                 scenario_data = df_lng[(df_lng['lr_code'] == lr_code) &
                                        (df_lng['scenario'] == scenario)]
 
@@ -1389,7 +1446,7 @@ def plot_lng_lines_by_price_scenario():
     lng_data = []
 
     for lr_code, lr_name in LEARNING_RATES.items():
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             df = load_scenario_data(lr_code, scenario, 'Commodities_Demand')
 
             if df is not None:
@@ -1413,10 +1470,10 @@ def plot_lng_lines_by_price_scenario():
 
     # Get fixed price labels
     price_labels_fixed = get_fixed_price_labels()
-    price_label_map = dict(zip(PRICE_SCENARIOS, price_labels_fixed))
+    price_label_map = dict(zip(SCENARIO_COMBOS_LNG, price_labels_fixed))
 
     # Split price scenarios into groups of 4 for multiple PNGs
-    scenario_groups = [PRICE_SCENARIOS[i:i + 4] for i in range(0, len(PRICE_SCENARIOS), 4)]
+    scenario_groups = [SCENARIO_COMBOS_LNG[i:i + 4] for i in range(0, len(SCENARIO_COMBOS_LNG), 4)]
 
     # Colors for learning rates
     colors = sns.color_palette("viridis", len(LEARNING_RATES))
@@ -1576,7 +1633,7 @@ def plot_lng_demand_rolling_horizon_boxplots():
         all_values = []  # Collect all values to calculate median
 
         # For each price scenario, collect data from all learning rates
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             scenario_data = []
 
             for lr_code, lr_name in LEARNING_RATES.items():
@@ -1624,7 +1681,7 @@ def plot_lng_demand_rolling_horizon_boxplots():
             data_for_boxplot_centered.append(centered_data)
 
         # Create boxplot colors
-        colors_gradient = sns.color_palette("Blues", n_colors=len(PRICE_SCENARIOS))
+        colors_gradient = sns.color_palette("Blues", n_colors=len(SCENARIO_COMBOS_LNG))
         colors_gradient = [to_hex(c) for c in colors_gradient]
 
         # Create boxplot
@@ -1678,7 +1735,7 @@ def plot_lng_demand_rolling_horizon_boxplots():
         all_values = []  # Collect all values to calculate median
 
         # For each price scenario, collect data from all learning rates
-        for scenario in PRICE_SCENARIOS:
+        for scenario in SCENARIO_COMBOS_LNG:
             scenario_data = []
 
             for lr_code, lr_name in LEARNING_RATES.items():
@@ -1726,7 +1783,7 @@ def plot_lng_demand_rolling_horizon_boxplots():
             data_for_boxplot_centered.append(centered_data)
 
         # Create boxplot colors
-        colors_gradient = sns.color_palette("Blues", n_colors=len(PRICE_SCENARIOS))
+        colors_gradient = sns.color_palette("Blues", n_colors=len(SCENARIO_COMBOS_LNG))
         colors_gradient = [to_hex(c) for c in colors_gradient]
 
         # Create boxplot
@@ -1805,7 +1862,7 @@ def plot_capacity_mix_stacked_bars():
             supply_composition = {tech: {source: [] for source in supply_order} for tech in renewable_technologies}
             scenario_labels = []
 
-            for price_scenario in PRICE_SCENARIOS:
+            for price_scenario in SCENARIO_COMBOS_LNG:
                 try:
                     file_path = Path(RESULTS_BASE_PATH) / f"{lr_key}" / "rolling_2024_to_2050" / f"scenario_{price_scenario}.xlsx"
                     if not file_path.exists():
@@ -1981,11 +2038,11 @@ def plot_stock_level_facet_per_technology():
     tech_colors = {tech: colors[i] for i, tech in enumerate(tech_stack_order)}
 
     # Use Set1 for scenarios (distinct lines)
-    scenario_colors = sns.color_palette("Set1", n_colors=len(PRICE_SCENARIOS))
-    scenario_color_map = {sc: scenario_colors[i] for i, sc in enumerate(PRICE_SCENARIOS)}
+    scenario_colors = sns.color_palette("Set1", n_colors=len(SCENARIO_COMBOS_LNG))
+    scenario_color_map = {sc: scenario_colors[i] for i, sc in enumerate(SCENARIO_COMBOS_LNG)}
 
     print(f"Processing stock levels for technologies: {tech_stack_order}")
-    print(f"Price scenarios: {PRICE_SCENARIOS}")
+    print(f"Price scenarios: {SCENARIO_COMBOS_LNG}")
     print(f"Results base path: {RESULTS_BASE_PATH}")
 
     for lr_key, lr_name in LEARNING_RATES.items():
@@ -2000,7 +2057,7 @@ def plot_stock_level_facet_per_technology():
 
             lines_plotted = 0
 
-            for sc in PRICE_SCENARIOS:
+            for sc in SCENARIO_COMBOS_LNG:
                 file_path = Path(RESULTS_BASE_PATH) / f"{lr_key}" / "rolling_2024_to_2050" / f"scenario_{sc}.xlsx"
                 if not file_path.exists():
                     print(f"    File not found: {file_path}")
@@ -2075,7 +2132,7 @@ def plot_stock_level_facet_per_technology():
             print(f"    Plotted {lines_plotted} lines for {tech}")
 
         # Add legend to the first subplot with better positioning
-        if len(PRICE_SCENARIOS) > 0:
+        if len(SCENARIO_COMBOS_LNG) > 0:
             axes[0].legend(title="Price Scenario", fontsize=9, title_fontsize=10,
                           bbox_to_anchor=(1.05, 1), loc='upper left')
 

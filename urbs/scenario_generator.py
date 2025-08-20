@@ -3,6 +3,7 @@ import re
 
 # Adjust as needed
 price_levels = ["min", "avg", "high"]
+lng_scenarios = ["LNG_NZ", "LNG_PF"]  # Net Zero and Persisting Fossil
 price_values = {
     "solarPV":   {"min": 685,   "avg": 1720,   "high": 5490},
     "windon":    {"min": 1000, "avg": 2500,  "high": 5000},
@@ -18,8 +19,8 @@ def get_cost_combo(solar_lvl, wind_lvl, batt_lvl):
         "Batteries": price_values["Batteries"][batt_lvl]
     }
 
-def generate_scenario_function(solar_lvl, wind_lvl, batt_lvl):
-    func_name = f"scenario_{solar_lvl}_{wind_lvl}_{batt_lvl}"
+def generate_scenario_function(solar_lvl, wind_lvl, batt_lvl, lng_scenario):
+    func_name = f"scenario_{solar_lvl}_{wind_lvl}_{batt_lvl}_{lng_scenario}"
     costs = get_cost_combo(solar_lvl, wind_lvl, batt_lvl)
     cost_str = ",\n            ".join([f'"{k}": {v}' for k, v in costs.items()])
     func = f'''
@@ -48,7 +49,22 @@ def {func_name}(data, data_urbsextensionv1):
 
     if "commodity" in data:
         co = data["commodity"]
+        
+        # LNG price data from 2024 to 2050
+        lng_prices_net_zero = [
+            19.15, 19.15, 19.15, 19.15, 19.15, 19.15, 19.48, 19.81, 20.14, 20.43,
+            20.76, 21.12, 21.45, 21.81, 22.18, 22.41, 22.77, 23.15, 23.51, 23.89,
+            24.27, 24.65, 25.07, 25.49, 25.87, 26.30
+        ]
+        
+        lng_prices_persisting_fossil = [
+            19.15, 19.15, 19.15, 19.15, 19.15, 19.15, 20.45, 21.87, 23.34, 24.93,
+            26.44, 28.39, 30.35, 32.33, 32.33, 32.33, 34.56, 36.93, 39.45, 42.12,
+            44.95, 47.94, 51.10, 54.45, 57.99, 61.74
+        ]
+        
         for stf in data["global_prop"].index.levels[0].tolist():
+            # ...existing piped gas logic...
             base_value = 319200000
             yearly_decrease_factor = 0.95948
             if stf == 2024:
@@ -57,6 +73,21 @@ def {func_name}(data, data_urbsextensionv1):
                 year_diff = stf - 2024
                 reduced_value = base_value * (yearly_decrease_factor ** year_diff)
                 co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = reduced_value
+            
+            # Set LNG prices based on year (2024-2050) and scenario type
+            if 2024 <= stf <= 2050:
+                year_index = stf - 2024
+                if "{lng_scenario}" == "LNG_NZ":
+                    lng_price = lng_prices_net_zero[year_index]
+                else:  # LNG_PF
+                    lng_price = lng_prices_persisting_fossil[year_index]
+                
+                # Set LNG commodity price
+                try:
+                    co.loc[(stf, "EU27", "LNG", "Buy"), "price"] = lng_price
+                except KeyError:
+                    # If the exact location doesn't exist, try alternative indexing
+                    pass
 
     if "process-commodity" in data:
         proco = data["process-commodity"]
@@ -101,7 +132,7 @@ try:
 except FileNotFoundError:
     existing_code = ""
 
-existing_scenarios = set(re.findall(r'def (scenario_[a-z]+_[a-z]+_[a-z]+)\(', existing_code))
+existing_scenarios = set(re.findall(r'def (scenario_[a-z]+_[a-z]+_[a-z]+_[a-z]+)\(', existing_code))
 
 # Generate all scenario function names and code
 all_combos = list(itertools.product(price_levels, repeat=3))
@@ -109,10 +140,11 @@ to_add = []
 scenario_list_entries = []
 
 for combo in all_combos:
-    name = f"scenario_{combo[0]}_{combo[1]}_{combo[2]}"
-    scenario_list_entries.append(f'    ("{name}", urbs.{name})')
-    if name not in existing_scenarios:
-        to_add.append(generate_scenario_function(*combo))
+    for lng_scenario in lng_scenarios:
+        name = f"scenario_{combo[0]}_{combo[1]}_{combo[2]}_{lng_scenario}"
+        scenario_list_entries.append(f'    ("{name}", urbs.{name})')
+        if name not in existing_scenarios:
+            to_add.append(generate_scenario_function(*combo, lng_scenario))
 
 # Append missing scenario functions to the file
 if to_add:
@@ -125,3 +157,4 @@ print("scenarios = [")
 for entry in scenario_list_entries:
     print(entry + ",")
 print("]")
+
