@@ -36,7 +36,7 @@ LEARNING_RATES = {
     "LR7": "7% Learning Rate",
     "LR8": "8% Learning Rate",
     "LR9": "9% Learning Rate",
-    "LR10": "10% Learning Rate"
+    #"LR10": "10% Learning Rate"
 }
 
 # Define price scenarios in order - split by LNG type
