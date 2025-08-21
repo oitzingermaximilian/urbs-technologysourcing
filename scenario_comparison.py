@@ -255,7 +255,7 @@ def plot_eu_secondary_additions_by_years():
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"Saved plot for {technology}: {output_path}")
 
-        plt.show()
+        #plt.show()
 
 def plot_eu_secondary_additions_2040():
     """Plot total EU secondary additions in 2040 across price scenarios and learning rates for each technology using boxplots"""
@@ -323,7 +323,7 @@ def plot_lng_demand_comparison():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved LNG demand matrix plot: {output_path}")
 
-    plt.show()
+    #plt.show()
 
     # Also create a line plot with better separation using alpha and markers
     fig, ax = plt.subplots(figsize=(14, 8))
@@ -360,7 +360,7 @@ def plot_lng_demand_comparison():
     plt.savefig(output_path_lines, dpi=300, bbox_inches='tight')
     print(f"Saved improved line plot: {output_path_lines}")
 
-    plt.show()
+    #()
 
 def plot_lng_demand_yearly_scatter():
     """Plot yearly LNG demand scatter plot - Option 1: Color by Learning Rate, markers for price scenarios"""
@@ -431,7 +431,7 @@ def plot_lng_demand_yearly_scatter():
     output_path = output_dir / "lng_yearly_scatter_by_lr.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved yearly scatter plot: {output_path}")
-    plt.show()
+    #plt.show()
 
 def plot_lng_demand_yearly_barplot():
     """Plot yearly LNG demand using grouped bar plots - separate bars for each price scenario, grouped by learning rate"""
@@ -531,7 +531,7 @@ def plot_lng_demand_yearly_barplot():
     output_path = output_dir / "lng_yearly_barplot_grouped.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved yearly bar plot: {output_path}")
-    plt.show()
+   # plt.show()
 
 def plot_total_system_cost_matrix(): #TODO Disabled reenable if needed
     """
@@ -580,7 +580,7 @@ def plot_total_system_cost_matrix(): #TODO Disabled reenable if needed
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved total system cost matrix plot: {output_path}")
 
-    plt.show()
+   # plt.show()
 
 def plot_total_system_cost_matrix_2024_2040():
     """
@@ -629,8 +629,7 @@ def plot_total_system_cost_matrix_2024_2040():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved total system cost matrix plot (2024–2040): {output_path}")
 
-    plt.show()
-
+#
 def plot_3d_cost_matrix_grid_style_fixed():
     """
     Create a 3D plot with corrected price scenario labels using the new compact labeling.
@@ -709,7 +708,7 @@ def plot_3d_cost_matrix_grid_style_fixed():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved fixed grid style 3D plot: {output_path}")
 
-    plt.show()
+   # plt.show()
 
 def plot_3d_cost_matrix_with_mapping():
     """
@@ -782,7 +781,7 @@ def plot_3d_cost_matrix_with_mapping():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved mapped labels 3D plot: {output_path}")
 
-    plt.show()
+   # plt.show()
 
 def mwh_to_bcm(mwh, energy_content_mj_per_m3=35.8):
     """Convert MWh to bcm for LNG"""
@@ -898,7 +897,7 @@ def plot_pareto_cost_vs_lng():
         print(f"  {row['Learning_Rate']} - {row['Price_Scenario']}: "
               f"Cost={row['Total_Cost_bEUR']:.1f}b€, LNG={row['LNG_Import_2030_BCM']:.1f}BCM")
 
-    plt.show()
+   # plt.show()
 
 def plot_pareto_cost_vs_remanufacturing():
     """Pareto plot: Total system cost (2024-2030) vs Remanufacturing share in 2030"""
@@ -980,7 +979,7 @@ def plot_pareto_cost_vs_remanufacturing():
         print(f"  {row['Learning_Rate']} - {row['Price_Scenario']}: "
               f"Cost={row['Total_Cost_bEUR']:.1f}b€, Reman={row['Remanufacturing_2030_GW']:.1f}GW")
 
-    plt.show()
+   # plt.show()
 
 
 def plot_3d_scrap_bars_cumulative():
@@ -1067,7 +1066,7 @@ def plot_3d_scrap_bars_cumulative():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved cumulative scrap 3D bars: {output_path}")
 
-    plt.show()
+   # plt.show()
 
 def plot_3d_scrap_bars_2040():
     """
@@ -1149,7 +1148,7 @@ def plot_3d_scrap_bars_2040():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved 2040 scrap 3D bars: {output_path}")
 
-    plt.show()
+   # plt.show()
 
 def plot_scrap_time_evolution_3d():
     """
@@ -1231,7 +1230,7 @@ def plot_scrap_time_evolution_3d():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     print(f"Saved time evolution plot: {output_path}")
 
-    plt.show()
+   # plt.show()
 
 def generate_all_scrap_visualizations():
     """
@@ -1338,7 +1337,7 @@ def plot_lng_lines_by_learning_rate():
         output_path = output_dir / f"lng_lines_by_lr_group_{group_idx + 1}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"Saved LNG lines by LR group {group_idx + 1}: {output_path}")
-        plt.show()
+      #  plt.show()
 
 
 def plot_lng_lines_by_price_scenario():
@@ -1429,7 +1428,7 @@ def plot_lng_lines_by_price_scenario():
         output_path = output_dir / f"lng_lines_by_scenario_group_{group_idx + 1}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"Saved LNG lines by scenario group {group_idx + 1}: {output_path}")
-        plt.show()
+       # plt.show()
 
 def lng_lineplot_horizons(lr_code="LR25", price_scenario="extremely_low"):
     """
@@ -1901,7 +1900,7 @@ def plot_capacity_mix_stacked_bars():
             safe_lr_name = lr_key
             output_path = output_dir / f"{safe_lr_name}_stacked_capacity_mix_{target_year}.png"
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
-            plt.show()
+           # plt.show()
             plt.close()
 
         print(f"✓ Completed stacked analysis for {lr_name}")
@@ -2030,7 +2029,7 @@ def plot_stock_level_facet_per_technology():
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"✓ Saved: {output_path}")
 
-        plt.show()
+       # plt.show()
         plt.close()
 
     print("✓ Stock level facet plots completed!")
