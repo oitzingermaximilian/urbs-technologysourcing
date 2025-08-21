@@ -2218,7 +2218,7 @@ def main():
 
     # Generate plots
     print("\n1. Generating EU Secondary Additions 2040 comparison...")
-    #plot_eu_secondary_additions_2040()
+    plot_eu_secondary_additions_2040()
     print("\n2. Generating LNG Demand comparison...")
     #generate_all_lng_line_plots()
     #plot_lng_demand_comparison()
@@ -2228,17 +2228,17 @@ def main():
     #plot_lng_demand_rolling_horizon_boxplots()
     lng_lineplot_range()
     print("\n3. Generating Cost Matrix...")
-    #plot_total_system_cost_matrix_2024_2040()
-    #plot_3d_cost_matrix_grid_style_fixed()
+    plot_total_system_cost_matrix_2024_2040()
+    plot_3d_cost_matrix_grid_style_fixed()
 
     print("\n4. Generating Pareto Plots...")
-    #plot_pareto_cost_vs_remanufacturing()
-    #plot_pareto_cost_vs_lng()
+    plot_pareto_cost_vs_remanufacturing()
+    plot_pareto_cost_vs_lng()
     print("\n5. Generating Scrap Plots...")
-    #generate_all_scrap_visualizations()
+    generate_all_scrap_visualizations()
     print("\n6. Generating Capacity Mix Stacked Bar Plots...")
-    #plot_capacity_mix_stacked_bars()
-    #plot_stock_level_facet_per_technology()
+    plot_capacity_mix_stacked_bars()
+    plot_stock_level_facet_per_technology()
 
     print("\nScenario comparison plotting completed!")
 
