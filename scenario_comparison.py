@@ -2094,7 +2094,7 @@ def main_lng_nz():
     #plot_lng_demand_comparison()
     #plot_lng_demand_yearly_scatter()
     #plot_lng_demand_yearly_barplot()
-    lng_lineplot_horizons()
+    #lng_lineplot_horizons()
     lng_lineplot_range()
     #plot_lng_demand_rolling_horizon_boxplots()
 
@@ -2131,11 +2131,12 @@ def main_lng_pf():
 
     # Generate plots using existing functions
     print("\n1. Generating LNG_PF Demand comparison...")
-    plot_lng_demand_comparison()
+    #plot_lng_demand_comparison()
     plot_lng_demand_yearly_scatter()
-    plot_lng_demand_yearly_barplot()
-    lng_lineplot_horizons()
-    plot_lng_demand_rolling_horizon_boxplots()
+    #plot_lng_demand_yearly_barplot()
+    #lng_lineplot_horizons()
+    #plot_lng_demand_rolling_horizon_boxplots()
+    lng_lineplot_range()
 
     print("\n2. Generating LNG_PF Cost Matrix...")
     plot_total_system_cost_matrix_2024_2040()
@@ -2154,13 +2155,13 @@ def main_lng_pf():
 
 
 # For LNG Net Zero scenarios only (27 scenarios)
-main_lng_nz()
+#main_lng_nz()
 
 # For LNG Persisting Fossil scenarios only (27 scenarios)
 #main_lng_pf()
 
 # For all scenarios combined (54 scenarios)
-#main()
+main()
 
 def lng_lineplot_range():
     """
