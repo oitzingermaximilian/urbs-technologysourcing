@@ -2034,135 +2034,6 @@ def plot_stock_level_facet_per_technology():
         plt.close()
 
     print("✓ Stock level facet plots completed!")
-
-def main():
-    """Main function to generate all comparison plots"""
-    print("Starting scenario comparison plotting...")
-    print(f"Results base path: {RESULTS_BASE_PATH}")
-
-    # Check if base path exists
-    if not Path(RESULTS_BASE_PATH).exists():
-        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
-        return
-
-    # Generate plots
-    print("\n1. Generating EU Secondary Additions 2040 comparison...")
-    #plot_eu_secondary_additions_2040()
-    print("\n2. Generating LNG Demand comparison...")
-    #generate_all_lng_line_plots()
-    plot_lng_demand_comparison()
-    plot_lng_demand_yearly_scatter()
-    plot_lng_demand_yearly_barplot()
-    lng_lineplot_horizons()
-    plot_lng_demand_rolling_horizon_boxplots()
-    print("\n3. Generating Cost Matrix...")
-    plot_total_system_cost_matrix_2024_2040()
-    plot_3d_cost_matrix_grid_style_fixed()
-
-    print("\n4. Generating Pareto Plots...")
-    plot_pareto_cost_vs_remanufacturing()
-    plot_pareto_cost_vs_lng()
-    print("\n5. Generating Scrap Plots...")
-    generate_all_scrap_visualizations()
-    print("\n6. Generating Capacity Mix Stacked Bar Plots...")
-    plot_capacity_mix_stacked_bars()
-    #plot_stock_level_facet_per_technology()
-
-    print("\nScenario comparison plotting completed!")
-
-
-# Keep the combined list for backward compatibility
-SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ + SCENARIO_COMBOS_LNG_PF
-
-def main_lng_nz():
-    """Main function to generate comparison plots for LNG_NZ scenarios only"""
-    print("Starting LNG_NZ scenario comparison plotting...")
-    print(f"Results base path: {RESULTS_BASE_PATH}")
-
-    # Check if base path exists
-    if not Path(RESULTS_BASE_PATH).exists():
-        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
-        return
-
-    # Temporarily switch to LNG_NZ scenarios
-    global SCENARIO_COMBOS_LNG
-    original_scenarios = SCENARIO_COMBOS_LNG.copy()
-    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ.copy()
-
-    # Generate plots using existing functions
-    print("\n1. Generating LNG_NZ Demand comparison...")
-    #plot_lng_demand_comparison()
-    #plot_lng_demand_yearly_scatter()
-    #plot_lng_demand_yearly_barplot()
-    #lng_lineplot_horizons()
-    lng_lineplot_range()
-    #plot_lng_demand_rolling_horizon_boxplots()
-
-
-    print("\n2. Generating LNG_NZ Cost Matrix...")
-    #plot_total_system_cost_matrix_2024_2040()
-    #plot_3d_cost_matrix_grid_style_fixed()
-
-    print("\n3. Generating LNG_NZ Pareto Plots...")
-    #plot_pareto_cost_vs_remanufacturing()
-    #plot_pareto_cost_vs_lng()
-
-    print("\n4. Generating LNG_NZ Scrap Plots...")
-    #generate_all_scrap_visualizations()
-
-    # Restore original scenarios
-    SCENARIO_COMBOS_LNG = original_scenarios
-    print("\nLNG_NZ scenario comparison plotting completed!")
-
-def main_lng_pf():
-    """Main function to generate comparison plots for LNG_PF scenarios only"""
-    print("Starting LNG_PF scenario comparison plotting...")
-    print(f"Results base path: {RESULTS_BASE_PATH}")
-
-    # Check if base path exists
-    if not Path(RESULTS_BASE_PATH).exists():
-        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
-        return
-
-    # Temporarily switch to LNG_PF scenarios
-    global SCENARIO_COMBOS_LNG
-    original_scenarios = SCENARIO_COMBOS_LNG.copy()
-    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_PF.copy()
-
-    # Generate plots using existing functions
-    print("\n1. Generating LNG_PF Demand comparison...")
-    #plot_lng_demand_comparison()
-    plot_lng_demand_yearly_scatter()
-    #plot_lng_demand_yearly_barplot()
-    #lng_lineplot_horizons()
-    #plot_lng_demand_rolling_horizon_boxplots()
-    lng_lineplot_range()
-
-    print("\n2. Generating LNG_PF Cost Matrix...")
-    plot_total_system_cost_matrix_2024_2040()
-    plot_3d_cost_matrix_grid_style_fixed()
-
-    print("\n3. Generating LNG_PF Pareto Plots...")
-    plot_pareto_cost_vs_remanufacturing()
-    plot_pareto_cost_vs_lng()
-
-    print("\n4. Generating LNG_PF Scrap Plots...")
-    generate_all_scrap_visualizations()
-
-    # Restore original scenarios
-    SCENARIO_COMBOS_LNG = original_scenarios
-    print("\nLNG_PF scenario comparison plotting completed!")
-
-
-# For LNG Net Zero scenarios only (27 scenarios)
-#main_lng_nz()
-
-# For LNG Persisting Fossil scenarios only (27 scenarios)
-#main_lng_pf()
-
-# For all scenarios combined (54 scenarios)
-main()
-
 def lng_lineplot_range():
     """
     Plot LNG demand range over time showing min/max envelope across all price scenarios.
@@ -2335,4 +2206,134 @@ def lng_lineplot_range():
         plt.close()
 
     print("✓ LNG range plot generation completed!")
+def main():
+    """Main function to generate all comparison plots"""
+    print("Starting scenario comparison plotting...")
+    print(f"Results base path: {RESULTS_BASE_PATH}")
+
+    # Check if base path exists
+    if not Path(RESULTS_BASE_PATH).exists():
+        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
+        return
+
+    # Generate plots
+    print("\n1. Generating EU Secondary Additions 2040 comparison...")
+    #plot_eu_secondary_additions_2040()
+    print("\n2. Generating LNG Demand comparison...")
+    #generate_all_lng_line_plots()
+    #plot_lng_demand_comparison()
+    #plot_lng_demand_yearly_scatter()
+    #plot_lng_demand_yearly_barplot()
+    #lng_lineplot_horizons()
+    #plot_lng_demand_rolling_horizon_boxplots()
+    lng_lineplot_range()
+    print("\n3. Generating Cost Matrix...")
+    #plot_total_system_cost_matrix_2024_2040()
+    #plot_3d_cost_matrix_grid_style_fixed()
+
+    print("\n4. Generating Pareto Plots...")
+    #plot_pareto_cost_vs_remanufacturing()
+    #plot_pareto_cost_vs_lng()
+    print("\n5. Generating Scrap Plots...")
+    #generate_all_scrap_visualizations()
+    print("\n6. Generating Capacity Mix Stacked Bar Plots...")
+    #plot_capacity_mix_stacked_bars()
+    #plot_stock_level_facet_per_technology()
+
+    print("\nScenario comparison plotting completed!")
+
+
+# Keep the combined list for backward compatibility
+SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ + SCENARIO_COMBOS_LNG_PF
+
+def main_lng_nz():
+    """Main function to generate comparison plots for LNG_NZ scenarios only"""
+    print("Starting LNG_NZ scenario comparison plotting...")
+    print(f"Results base path: {RESULTS_BASE_PATH}")
+
+    # Check if base path exists
+    if not Path(RESULTS_BASE_PATH).exists():
+        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
+        return
+
+    # Temporarily switch to LNG_NZ scenarios
+    global SCENARIO_COMBOS_LNG
+    original_scenarios = SCENARIO_COMBOS_LNG.copy()
+    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ.copy()
+
+    # Generate plots using existing functions
+    print("\n1. Generating LNG_NZ Demand comparison...")
+    #plot_lng_demand_comparison()
+    #plot_lng_demand_yearly_scatter()
+    #plot_lng_demand_yearly_barplot()
+    #lng_lineplot_horizons()
+    lng_lineplot_range()
+    #plot_lng_demand_rolling_horizon_boxplots()
+
+
+    print("\n2. Generating LNG_NZ Cost Matrix...")
+    #plot_total_system_cost_matrix_2024_2040()
+    #plot_3d_cost_matrix_grid_style_fixed()
+
+    print("\n3. Generating LNG_NZ Pareto Plots...")
+    #plot_pareto_cost_vs_remanufacturing()
+    #plot_pareto_cost_vs_lng()
+
+    print("\n4. Generating LNG_NZ Scrap Plots...")
+    #generate_all_scrap_visualizations()
+
+    # Restore original scenarios
+    SCENARIO_COMBOS_LNG = original_scenarios
+    print("\nLNG_NZ scenario comparison plotting completed!")
+
+def main_lng_pf():
+    """Main function to generate comparison plots for LNG_PF scenarios only"""
+    print("Starting LNG_PF scenario comparison plotting...")
+    print(f"Results base path: {RESULTS_BASE_PATH}")
+
+    # Check if base path exists
+    if not Path(RESULTS_BASE_PATH).exists():
+        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
+        return
+
+    # Temporarily switch to LNG_PF scenarios
+    global SCENARIO_COMBOS_LNG
+    original_scenarios = SCENARIO_COMBOS_LNG.copy()
+    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_PF.copy()
+
+    # Generate plots using existing functions
+    print("\n1. Generating LNG_PF Demand comparison...")
+    #plot_lng_demand_comparison()
+    plot_lng_demand_yearly_scatter()
+    #plot_lng_demand_yearly_barplot()
+    #lng_lineplot_horizons()
+    #plot_lng_demand_rolling_horizon_boxplots()
+    lng_lineplot_range()
+
+    print("\n2. Generating LNG_PF Cost Matrix...")
+    plot_total_system_cost_matrix_2024_2040()
+    plot_3d_cost_matrix_grid_style_fixed()
+
+    print("\n3. Generating LNG_PF Pareto Plots...")
+    plot_pareto_cost_vs_remanufacturing()
+    plot_pareto_cost_vs_lng()
+
+    print("\n4. Generating LNG_PF Scrap Plots...")
+    generate_all_scrap_visualizations()
+
+    # Restore original scenarios
+    SCENARIO_COMBOS_LNG = original_scenarios
+    print("\nLNG_PF scenario comparison plotting completed!")
+
+
+# For LNG Net Zero scenarios only (27 scenarios)
+#main_lng_nz()
+
+# For LNG Persisting Fossil scenarios only (27 scenarios)
+#main_lng_pf()
+
+# For all scenarios combined (54 scenarios)
+main()
+
+
 
