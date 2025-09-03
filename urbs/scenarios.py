@@ -108,10 +108,10 @@ def scenario_min_min_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 1508
+            "solarPV": 838.7,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -230,10 +230,10 @@ def scenario_min_min_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 1508
+            "solarPV": 838.7,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -352,10 +352,10 @@ def scenario_min_min_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 6743
+            "solarPV": 838.7,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -474,10 +474,10 @@ def scenario_min_min_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 6743
+            "solarPV": 838.7,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -596,10 +596,10 @@ def scenario_min_min_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 20608
+            "solarPV": 838.7,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -718,10 +718,10 @@ def scenario_min_min_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 20608
+            "solarPV": 838.7,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -840,10 +840,10 @@ def scenario_min_avg_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 1508
+            "solarPV": 838.7,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -962,10 +962,10 @@ def scenario_min_avg_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 1508
+            "solarPV": 838.7,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1084,10 +1084,10 @@ def scenario_min_avg_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 6743
+            "solarPV": 838.7,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1206,10 +1206,10 @@ def scenario_min_avg_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 6743
+            "solarPV": 838.7,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1328,10 +1328,10 @@ def scenario_min_avg_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 20608
+            "solarPV": 838.7,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1450,10 +1450,10 @@ def scenario_min_avg_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 20608
+            "solarPV": 838.7,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1572,10 +1572,10 @@ def scenario_min_high_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 1508
+            "solarPV": 838.7,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1694,10 +1694,10 @@ def scenario_min_high_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 1508
+            "solarPV": 838.7,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1816,10 +1816,10 @@ def scenario_min_high_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 6743
+            "solarPV": 838.7,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -1938,10 +1938,10 @@ def scenario_min_high_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 6743
+            "solarPV": 838.7,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2060,10 +2060,10 @@ def scenario_min_high_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 20608
+            "solarPV": 838.7,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2182,10 +2182,10 @@ def scenario_min_high_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 685,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 20608
+            "solarPV": 838.7,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2304,10 +2304,10 @@ def scenario_avg_min_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 1508
+            "solarPV": 1258.05,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2426,10 +2426,10 @@ def scenario_avg_min_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 1508
+            "solarPV": 1258.05,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2548,10 +2548,10 @@ def scenario_avg_min_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 6743
+            "solarPV": 1258.05,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2670,10 +2670,10 @@ def scenario_avg_min_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 6743
+            "solarPV": 1258.05,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2792,10 +2792,10 @@ def scenario_avg_min_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 20608
+            "solarPV": 1258.05,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -2914,10 +2914,10 @@ def scenario_avg_min_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 20608
+            "solarPV": 1258.05,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3036,10 +3036,10 @@ def scenario_avg_avg_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 1508
+            "solarPV": 1258.05,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3158,10 +3158,10 @@ def scenario_avg_avg_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 1508
+            "solarPV": 1258.05,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3280,10 +3280,10 @@ def scenario_avg_avg_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 6743
+            "solarPV": 1258.05,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3402,10 +3402,10 @@ def scenario_avg_avg_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 6743
+            "solarPV": 1258.05,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3524,10 +3524,10 @@ def scenario_avg_avg_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 20608
+            "solarPV": 1258.05,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3646,10 +3646,10 @@ def scenario_avg_avg_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 20608
+            "solarPV": 1258.05,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3768,10 +3768,10 @@ def scenario_avg_high_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 1508
+            "solarPV": 1258.05,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -3890,10 +3890,10 @@ def scenario_avg_high_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 1508
+            "solarPV": 1258.05,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4012,10 +4012,10 @@ def scenario_avg_high_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 6743
+            "solarPV": 1258.05,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4134,10 +4134,10 @@ def scenario_avg_high_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 6743
+            "solarPV": 1258.05,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4256,10 +4256,10 @@ def scenario_avg_high_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 20608
+            "solarPV": 1258.05,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4378,10 +4378,10 @@ def scenario_avg_high_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 1720,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 20608
+            "solarPV": 1258.05,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4500,10 +4500,10 @@ def scenario_high_min_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 1508
+            "solarPV": 1677.4,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4622,10 +4622,10 @@ def scenario_high_min_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 1508
+            "solarPV": 1677.4,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4744,10 +4744,10 @@ def scenario_high_min_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 6743
+            "solarPV": 1677.4,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4866,10 +4866,10 @@ def scenario_high_min_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 6743
+            "solarPV": 1677.4,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -4988,10 +4988,10 @@ def scenario_high_min_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 20608
+            "solarPV": 1677.4,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5110,10 +5110,10 @@ def scenario_high_min_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 1000,
-            "windoff": 1000,
-            "Batteries": 20608
+            "solarPV": 1677.4,
+            "windon": 4673.4,
+            "windoff": 5563.4,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5232,10 +5232,10 @@ def scenario_high_avg_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 1508
+            "solarPV": 1677.4,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5354,10 +5354,10 @@ def scenario_high_avg_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 1508
+            "solarPV": 1677.4,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5476,10 +5476,10 @@ def scenario_high_avg_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 6743
+            "solarPV": 1677.4,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5598,10 +5598,10 @@ def scenario_high_avg_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 6743
+            "solarPV": 1677.4,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5720,10 +5720,10 @@ def scenario_high_avg_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 20608
+            "solarPV": 1677.4,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5842,10 +5842,10 @@ def scenario_high_avg_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 2500,
-            "windoff": 2500,
-            "Batteries": 20608
+            "solarPV": 1677.4,
+            "windon": 7010.1,
+            "windoff": 8345.15,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -5964,10 +5964,10 @@ def scenario_high_high_min_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 1508
+            "solarPV": 1677.4,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -6086,10 +6086,10 @@ def scenario_high_high_min_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 1508
+            "solarPV": 1677.4,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 1344.3
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -6208,10 +6208,10 @@ def scenario_high_high_avg_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 6743
+            "solarPV": 1677.4,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -6330,10 +6330,10 @@ def scenario_high_high_avg_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 6743
+            "solarPV": 1677.4,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2016.45
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -6452,10 +6452,10 @@ def scenario_high_high_high_LNG_NZ(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 20608
+            "solarPV": 1677.4,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:
@@ -6574,10 +6574,10 @@ def scenario_high_high_high_LNG_PF(data, data_urbsextensionv1):
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
         location = "EU27"
         new_costs = {
-            "solarPV": 5490,
-            "windon": 5000,
-            "windoff": 5000,
-            "Batteries": 20608
+            "solarPV": 1677.4,
+            "windon": 9346.8,
+            "windoff": 11126.8,
+            "Batteries": 2688.6
         }
         for stf in range(2024, 2051):
             for tech in technologies:

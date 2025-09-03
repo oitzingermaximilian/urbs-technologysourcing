@@ -5,10 +5,10 @@ import re
 price_levels = ["min", "avg", "high"]
 lng_scenarios = ["LNG_NZ", "LNG_PF"]  # Net Zero and Persisting Fossil
 price_values = {
-    "solarPV":   {"min": 685,   "avg": 1720,   "high": 5490},
-    "windon":    {"min": 1000, "avg": 2500,  "high": 5000},
-    "windoff":   {"min": 1000,"avg": 2500,  "high": 5000},
-    "Batteries": {"min": 1508, "avg": 6743,   "high": 20608}
+    "solarPV":   {"min": 838.7,   "avg": 1258.05,   "high": 1677.4},
+    "windon":    {"min": 4673.4, "avg": 7010.1,  "high": 9346.8},
+    "windoff":   {"min": 5563.4,"avg": 8345.15,  "high": 11126.8},
+    "Batteries": {"min": 1344.3, "avg": 2016.45,   "high": 2688.6}
 }
 
 def get_cost_combo(solar_lvl, wind_lvl, batt_lvl):
