@@ -392,7 +392,7 @@ def create_model(
 
     apply_variables(m)
 
-    #apply_scenario_constraints(m)
+    apply_scenario_constraints(m)
 
     apply_stockpiling_constraints(m)
 
