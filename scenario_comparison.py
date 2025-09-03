@@ -2095,11 +2095,15 @@ def lng_lineplot_range():
                 for year in years_nz:
                     values = nz_scenario_data[year]
                     if values:
-                        min_values_nz.append(min(values))
-                        max_values_nz.append(max(values))
+                        min_v = min(values)
+                        max_v = max(values)
+                        if max_v > 0:
+                            any_nonzero = True
                     else:
-                        min_values_nz.append(0)
-                        max_values_nz.append(0)
+                        min_v = 0
+                        max_v = 0
+                    min_values_nz.append(min_v)
+                    max_values_nz.append(max_v)
 
                 if years_nz and any(max_values_nz):
                     # Plot NZ range
@@ -2205,6 +2209,120 @@ def lng_lineplot_range():
         plt.close()
 
     print("✓ LNG range plot generation completed!")
+
+def lng_lineplot_range_comp_basecase():
+    """Plot LNG demand range (min/max envelope) for 2024-2050 horizon only, displaying
+    four ranges in one plot per learning rate:
+      1. NZ with NZIA
+      2. NZ without NZIA
+      3. PF with NZIA
+      4. PF without NZIA
+    Data directory structure:
+      result/results_with_nzia/<LR>/<rolling_2024_to_2050>/scenario_<price_scenario>.xlsx
+      result/results_without_nzia/<LR>/<rolling_2024_to_2050>/scenario_<price_scenario>.xlsx
+    """
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+    rolling_horizon = "rolling_2024_to_2050"
+    years_full = list(range(2024, 2051))
+
+    # Styling for the four groups
+    group_definitions = [
+        {"label": "NZ with NZIA", "variant": "results_with_nzia", "scenarios": SCENARIO_COMBOS_LNG_NZ, "color": "#1f77b4", "alpha": 0.30, "hatch": None},
+        {"label": "NZ without NZIA", "variant": "results_without_nzia", "scenarios": SCENARIO_COMBOS_LNG_NZ, "color": "#6baed6", "alpha": 0.30, "hatch": ".."},
+        {"label": "PF with NZIA", "variant": "results_with_nzia", "scenarios": SCENARIO_COMBOS_LNG_PF, "color": "#d62728", "alpha": 0.30, "hatch": None},
+        {"label": "PF without NZIA", "variant": "results_without_nzia", "scenarios": SCENARIO_COMBOS_LNG_PF, "color": "#ff9896", "alpha": 0.30, "hatch": "//"},
+    ]
+
+    def load_group_data(base_variant, lr_code, scenarios):
+        """Load LNG yearly BCM values for all scenarios in a group for a given LR.
+        Returns dict: year -> list of bcm values across scenarios"""
+        data_by_year = {y: [] for y in years_full}
+        for scenario in scenarios:
+            file_path = Path(RESULTS_BASE_PATH) / base_variant / lr_code / rolling_horizon / f"scenario_{scenario}.xlsx"
+            if not file_path.exists():
+                print(f"  Missing file: {file_path}")
+                continue
+            try:
+                df = pd.read_excel(file_path, sheet_name="e_pro_in")
+            except Exception as e:
+                print(f"  Error reading {file_path}: {e}")
+                continue
+            if 'com' not in df.columns or 'stf' not in df.columns or 'e_pro_in' not in df.columns:
+                print(f"  Columns missing in {file_path}")
+                continue
+            df['com'] = df['com'].astype(str).str.strip()
+            lng_df = df[(df['com'] == 'LNG') & (df['stf'] >= 2024) & (df['stf'] <= 2050)]
+            if lng_df.empty:
+                continue
+            yearly = lng_df.groupby('stf')['e_pro_in'].sum().reset_index()
+            yearly['lng_bcm'] = yearly['e_pro_in'].apply(mwh_to_bcm)
+            for _, row in yearly.iterrows():
+                year = int(row['stf'])
+                if year in data_by_year:
+                    data_by_year[year].append(row['lng_bcm'])
+        return data_by_year
+
+    print("Creating 2024-2050 NZIA comparison LNG range plots...")
+    for lr_code, lr_name in LEARNING_RATES.items():
+        print(f"Processing LR {lr_code} ...")
+        plt.figure(figsize=(14, 8))
+        for group in group_definitions:
+            print(f"  Group: {group['label']}")
+            group_data = load_group_data(group['variant'], lr_code, group['scenarios'])
+            min_vals = []
+            max_vals = []
+            any_nonzero = False
+            for y in years_full:
+                vals = group_data.get(y, [])
+                if vals:
+                    min_v = min(vals)
+                    max_v = max(vals)
+                    if max_v > 0:
+                        any_nonzero = True
+                else:
+                    min_v = 0
+                    max_v = 0
+                min_vals.append(min_v)
+                max_vals.append(max_v)
+            if any_nonzero:
+                # Filled range
+                plt.fill_between(years_full, min_vals, max_vals,
+                                 color=group['color'], alpha=group['alpha'],
+                                 hatch=group['hatch'], edgecolor=group['color'],
+                                 label=f"{group['label']} (Range)")
+                # Min / Max lines
+                plt.plot(years_full, min_vals, color=group['color'], linestyle='--', linewidth=1.2,
+                         label=f"{group['label']} (Min)")
+                plt.plot(years_full, max_vals, color=group['color'], linestyle='-', linewidth=2,
+                         label=f"{group['label']} (Max)")
+                print(f"    {group['label']}: {min([v for v in min_vals if v>0] or [0]):.2f} - {max(max_vals):.2f} BCM")
+            else:
+                print(f"    Skipped (no non-zero data): {group['label']}")
+
+        plt.xlabel('Year')
+        plt.ylabel('LNG Demand (BCM)')
+        plt.title(f'LNG Demand Ranges 2024-2050 with/without NZIA\n{lr_name}')
+        plt.xlim(2024, 2050)
+        plt.grid(True, linestyle='--', alpha=0.6)
+        # Deduplicate legend entries
+        handles, labels = plt.gca().get_legend_handles_labels()
+        seen = set()
+        dedup_handles = []
+        dedup_labels = []
+        for h, l in zip(handles, labels):
+            if l not in seen:
+                seen.add(l)
+                dedup_handles.append(h)
+                dedup_labels.append(l)
+        plt.legend(dedup_handles, dedup_labels, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
+        plt.tight_layout()
+        out_path = output_dir / f"lng_range_plot_nzia_comparison_{lr_code}.png"
+        plt.savefig(out_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"✓ Saved: {out_path}")
+    print("✓ Completed 2024-2050 NZIA comparison LNG range plots!")
+
 def main():
     """Main function to generate all comparison plots"""
     print("Starting scenario comparison plotting...")
@@ -2217,7 +2335,7 @@ def main():
 
     # Generate plots
     print("\n1. Generating EU Secondary Additions 2040 comparison...")
-    plot_eu_secondary_additions_2040()
+    #plot_eu_secondary_additions_2040()
     print("\n2. Generating LNG Demand comparison...")
     #generate_all_lng_line_plots()
     #plot_lng_demand_comparison()
@@ -2225,123 +2343,20 @@ def main():
     #plot_lng_demand_yearly_barplot()
     #lng_lineplot_horizons()
     #plot_lng_demand_rolling_horizon_boxplots()
-    lng_lineplot_range()
+    #lng_lineplot_range()
+    lng_lineplot_range_comp_basecase()
     print("\n3. Generating Cost Matrix...")
-    plot_total_system_cost_matrix_2024_2040()
-    plot_3d_cost_matrix_grid_style_fixed()
+    #plot_total_system_cost_matrix_2024_2040()
+    #plot_3d_cost_matrix_grid_style_fixed()
 
     print("\n4. Generating Pareto Plots...")
-    plot_pareto_cost_vs_remanufacturing()
-    plot_pareto_cost_vs_lng()
+    #plot_pareto_cost_vs_remanufacturing()
+    #plot_pareto_cost_vs_lng()
     print("\n5. Generating Scrap Plots...")
     #generate_all_scrap_visualizations()
     print("\n6. Generating Capacity Mix Stacked Bar Plots...")
-    plot_capacity_mix_stacked_bars()
-    plot_stock_level_facet_per_technology()
+    #plot_capacity_mix_stacked_bars()
+    #plot_stock_level_facet_per_technology()
 
     print("\nScenario comparison plotting completed!")
-
-
-# Keep the combined list for backward compatibility
-SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ #+ SCENARIO_COMBOS_LNG_PF
-
-def main_lng_nz():
-    """Main function to generate comparison plots for LNG_NZ scenarios only"""
-    print("Starting LNG_NZ scenario comparison plotting...")
-    print(f"Results base path: {RESULTS_BASE_PATH}")
-
-    # Check if base path exists
-    if not Path(RESULTS_BASE_PATH).exists():
-        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
-        return
-
-    # Temporarily switch to LNG_NZ scenarios
-    global SCENARIO_COMBOS_LNG
-    original_scenarios = SCENARIO_COMBOS_LNG.copy()
-    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_NZ.copy()
-
-    print("\n1. Generating EU Secondary Additions 2040 comparison...")
-    plot_eu_secondary_additions_2040()
-    print("\n2. Generating LNG Demand comparison...")
-    #generate_all_lng_line_plots()
-    #plot_lng_demand_comparison()
-    #plot_lng_demand_yearly_scatter()
-    #plot_lng_demand_yearly_barplot()
-    #lng_lineplot_horizons()
-    #plot_lng_demand_rolling_horizon_boxplots()
-    lng_lineplot_range()
-    print("\n3. Generating Cost Matrix...")
-    plot_total_system_cost_matrix_2024_2040()
-    plot_3d_cost_matrix_grid_style_fixed()
-
-    print("\n4. Generating Pareto Plots...")
-    plot_pareto_cost_vs_remanufacturing()
-    plot_pareto_cost_vs_lng()
-    print("\n5. Generating Scrap Plots...")
-    #generate_all_scrap_visualizations()
-    print("\n6. Generating Capacity Mix Stacked Bar Plots...")
-    plot_capacity_mix_stacked_bars()
-    plot_stock_level_facet_per_technology()
-
-    print("\nScenario comparison plotting completed!")
-
-    # Restore original scenarios
-    SCENARIO_COMBOS_LNG = original_scenarios
-    print("\nLNG_NZ scenario comparison plotting completed!")
-
-def main_lng_pf():
-    """Main function to generate comparison plots for LNG_PF scenarios only"""
-    print("Starting LNG_PF scenario comparison plotting...")
-    print(f"Results base path: {RESULTS_BASE_PATH}")
-
-    # Check if base path exists
-    if not Path(RESULTS_BASE_PATH).exists():
-        print(f"Error: Results path does not exist: {RESULTS_BASE_PATH}")
-        return
-
-    # Temporarily switch to LNG_PF scenarios
-    global SCENARIO_COMBOS_LNG
-    original_scenarios = SCENARIO_COMBOS_LNG.copy()
-    SCENARIO_COMBOS_LNG = SCENARIO_COMBOS_LNG_PF.copy()
-
-    print("\n1. Generating EU Secondary Additions 2040 comparison...")
-    plot_eu_secondary_additions_2040()
-    print("\n2. Generating LNG Demand comparison...")
-    # generate_all_lng_line_plots()
-    # plot_lng_demand_comparison()
-    # plot_lng_demand_yearly_scatter()
-    # plot_lng_demand_yearly_barplot()
-    # lng_lineplot_horizons()
-    # plot_lng_demand_rolling_horizon_boxplots()
-    lng_lineplot_range()
-    print("\n3. Generating Cost Matrix...")
-    plot_total_system_cost_matrix_2024_2040()
-    plot_3d_cost_matrix_grid_style_fixed()
-
-    print("\n4. Generating Pareto Plots...")
-    plot_pareto_cost_vs_remanufacturing()
-    plot_pareto_cost_vs_lng()
-    print("\n5. Generating Scrap Plots...")
-    # generate_all_scrap_visualizations()
-    print("\n6. Generating Capacity Mix Stacked Bar Plots...")
-    plot_capacity_mix_stacked_bars()
-    plot_stock_level_facet_per_technology()
-
-    print("\nScenario comparison plotting completed!")
-
-    # Restore original scenarios
-    SCENARIO_COMBOS_LNG = original_scenarios
-    print("\nLNG_PF scenario comparison plotting completed!")
-
-
-# For LNG Net Zero scenarios only (27 scenarios)
-#main_lng_nz()
-
-# For LNG Persisting Fossil scenarios only (27 scenarios)
-#main_lng_pf()
-
-# For all scenarios combined (54 scenarios)
-main()
-
-
 
