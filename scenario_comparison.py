@@ -3047,6 +3047,221 @@ def plot_pareto_cost_vs_total_domestic_additions():
         f"\n✓ Completed cumulative domestic additions Pareto analysis for both {target_years[0]} and {target_years[1]}")
 
 
+def plot_domestic_percentage_heatmap():
+    """Create sophisticated heatmap showing domestic additions percentage over time
+
+    Creates 8 figures total:
+    - 4 technologies × 2 scenario types (NZ vs PF)
+    - Each figure has ~27 subplots (one per price scenario)
+    - Uses colored dots for yearly additions (not cumulative) in 2-year steps
+    """
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Technologies to analyze
+    technologies = ['solarPV', 'windon', 'windoff', 'Batteries']
+
+    # Years to analyze (2-year steps)
+    years = list(range(2024, 2041, 2))  # [2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040]
+
+    # Domestic vs all sources
+    domestic_sources = ['capacity_ext_eusecondary', 'capacity_ext_euprimary', 'capacity_ext_stockout']
+    all_sources = ['capacity_ext_eusecondary', 'capacity_ext_euprimary', 'capacity_ext_stockout',
+                   'capacity_ext_imported']
+
+    # Scenario configurations
+    scenario_types = [
+        {"name": "NZ", "scenarios": SCENARIO_COMBOS_LNG_NZ, "title": "Net Zero"},
+        {"name": "PF", "scenarios": SCENARIO_COMBOS_LNG_PF, "title": "Persistent Fossil"}
+    ]
+
+    # NZIA variants
+    nzia_variants = [
+        {"variant": "results_with_nzia", "label": "with NZIA", "marker": 'o'},
+        {"variant": "results_without_nzia", "label": "without NZIA", "marker": 's'}
+    ]
+
+    # Color map for percentages (0-100%)
+    from matplotlib.colors import LinearSegmentedColormap, Normalize
+    colors_list = ['#d73027', '#f46d43', '#fdae61', '#fee08b', '#e6f598', '#abdda4', '#66c2a5', '#3288bd']
+    cmap = LinearSegmentedColormap.from_list('custom_RdYlGn', colors_list, N=100)
+    norm = Normalize(vmin=0, vmax=100)
+
+    for technology in technologies:
+        for scenario_type in scenario_types:
+            print(f"\nProcessing {technology} - {scenario_type['title']}...")
+
+            # Get all price scenarios for this scenario type
+            price_scenarios = scenario_type['scenarios']
+            n_scenarios = len(price_scenarios)
+
+            # Calculate grid dimensions
+            if n_scenarios <= 12:
+                n_cols = min(4, n_scenarios)
+                n_rows = (n_scenarios + n_cols - 1) // n_cols
+            elif n_scenarios <= 20:
+                n_cols = 5
+                n_rows = (n_scenarios + n_cols - 1) // n_cols
+            else:
+                n_cols = 6
+                n_rows = (n_scenarios + n_cols - 1) // n_cols
+
+            # Create figure for this technology-scenario combination
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 3 * n_rows))
+
+            # Flatten axes array for easy indexing
+            if n_rows == 1 and n_cols == 1:
+                axes = np.array([axes])
+            elif n_rows == 1 or n_cols == 1:
+                axes = axes.flatten()
+            else:
+                axes = axes.flatten()
+
+            # Process each price scenario as a subplot
+            for scenario_idx, price_scenario in enumerate(price_scenarios):
+                if scenario_idx >= len(axes):
+                    break
+
+                ax = axes[scenario_idx]
+                print(f"  Processing price scenario: {price_scenario}")
+
+                # Process both NZIA variants for this subplot
+                for nzia_idx, nzia_config in enumerate(nzia_variants):
+
+                    for lr_idx, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+
+                        # Load data file
+                        file_path = Path(RESULTS_BASE_PATH) / nzia_config[
+                            'variant'] / lr_code / "rolling_2024_to_2050" / f"scenario_{price_scenario}.xlsx"
+
+                        if not file_path.exists():
+                            continue
+
+                        try:
+                            # Load capacity data from extension_only_caps sheet
+                            extension_df = pd.read_excel(file_path, sheet_name='extension_only_caps')
+                            extension_df['stf'] = extension_df['stf'].fillna(method='ffill')
+                            extension_df['stf'] = pd.to_numeric(extension_df['stf'], errors='coerce')
+                            extension_df = extension_df.dropna(subset=['stf'])
+
+                            # Filter for this specific technology
+                            tech_data = extension_df[extension_df['tech'] == technology]
+
+                            if tech_data.empty:
+                                continue
+
+                            # Calculate domestic percentage for each year (YEARLY ADDITIONS, not cumulative)
+                            for year in years:
+                                tech_year_data = tech_data[tech_data['stf'] == year]
+
+                                if tech_year_data.empty:
+                                    continue
+
+                                # Calculate yearly domestic additions
+                                domestic_yearly = 0
+                                total_yearly = 0
+
+                                # Sum domestic sources for THIS YEAR ONLY
+                                for source in domestic_sources:
+                                    if source in tech_year_data.columns:
+                                        domestic_yearly += tech_year_data[source].sum()
+
+                                # Sum all sources for THIS YEAR ONLY (domestic + imported)
+                                for source in all_sources:
+                                    if source in tech_year_data.columns:
+                                        total_yearly += tech_year_data[source].sum()
+
+                                # Calculate percentage for this year's additions
+                                if total_yearly > 0:
+                                    domestic_percentage = (domestic_yearly / total_yearly) * 100
+
+                                    # Create dot position
+                                    y_position = lr_idx + (nzia_idx * len(LEARNING_RATES))
+                                    x_position = years.index(year)
+
+                                    # Plot colored dot
+                                    color = cmap(norm(domestic_percentage))
+                                    ax.scatter(x_position, y_position,
+                                               c=[color], s=80, marker=nzia_config['marker'],
+                                               alpha=0.8, edgecolors='black', linewidth=0.5)
+
+                        except Exception as e:
+                            print(f"    Error processing {lr_code} - {price_scenario}: {e}")
+                            continue
+
+                # Customize subplot
+                ax.set_xlim(-0.5, len(years) - 0.5)
+                ax.set_ylim(-0.5, len(LEARNING_RATES) * 2 - 0.5)
+
+                # Set ticks and labels
+                ax.set_xticks(range(len(years)))
+                ax.set_xticklabels([str(year) for year in years], rotation=45, fontsize=8)
+
+                # Y-axis: Learning rates + NZIA variants
+                y_labels = []
+                y_positions = []
+                for nzia_idx, nzia_config in enumerate(nzia_variants):
+                    for lr_idx, lr_name in enumerate(LEARNING_RATES.values()):
+                        y_labels.append(f"{lr_name} {nzia_config['label']}")
+                        y_positions.append(lr_idx + (nzia_idx * len(LEARNING_RATES)))
+
+                ax.set_yticks(y_positions)
+                ax.set_yticklabels(y_labels, fontsize=7)
+
+                # Title for each subplot (price scenario)
+                price_clean = price_scenario.replace('_', ' ').title()
+                ax.set_title(price_clean, fontsize=10, fontweight='bold', pad=10)
+
+                # Add grid for better readability
+                ax.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
+
+                # Only show axis labels on outer subplots
+                if scenario_idx >= (n_rows - 1) * n_cols:  # Bottom row
+                    ax.set_xlabel('Year', fontsize=9)
+                else:
+                    ax.set_xticklabels([])
+
+                if scenario_idx % n_cols == 0:  # Left column
+                    ax.set_ylabel('Learning Rate & NZIA', fontsize=9)
+                else:
+                    ax.set_yticklabels([])
+
+            # Hide empty subplots
+            for empty_idx in range(n_scenarios, len(axes)):
+                axes[empty_idx].set_visible(False)
+
+            # Add colorbar
+            if n_scenarios > 0:
+                sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+                sm.set_array([])
+                cbar = fig.colorbar(sm, ax=axes[:n_scenarios].tolist() if n_scenarios > 1 else [axes[0]],
+                                    shrink=0.8, pad=0.02, aspect=30)
+                cbar.set_label('Domestic Additions (% of yearly total)', rotation=270, labelpad=20, fontsize=11)
+                cbar.ax.tick_params(labelsize=9)
+
+            # Add legend for markers
+            legend_elements = [plt.Line2D([0], [0], marker=nzia_config['marker'], color='gray',
+                                          label=nzia_config['label'], markersize=8, linestyle='None')
+                               for nzia_config in nzia_variants]
+            fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.98))
+
+            # Main title
+            fig.suptitle(f'Domestic Yearly Additions Percentage: {technology} - {scenario_type["title"]}',
+                         fontsize=14, fontweight='bold', y=0.96)
+
+            # Adjust layout
+            plt.tight_layout(rect=[0, 0, 0.95, 0.94])
+
+            # Save plot
+            output_path = output_dir / f"domestic_yearly_percentage_dots_{technology}_{scenario_type['name']}.png"
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f"✓ Saved: {output_path}")
+
+    print("\n✓ Completed all domestic yearly percentage dot plots!")
+    print(f"Created 8 figures total: 4 technologies × 2 scenario types")
+
 def main():
     """
     Main entry point for scenario_comparison.py.
@@ -3054,8 +3269,9 @@ def main():
     """
     # Example: Uncomment the plots you want to generate
     #plot_capacity_additions_by_technology_and_lr_nzia_split()
-    lng_lineplot_range_comp_basecase_3x3()
-    plot_pareto_cost_vs_total_domestic_additions()
+    #lng_lineplot_range_comp_basecase_3x3()
+    #plot_pareto_cost_vs_total_domestic_additions()
+    plot_domestic_percentage_heatmap()
     pass
 
 if __name__ == "__main__":
