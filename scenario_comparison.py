@@ -2479,9 +2479,10 @@ def lng_lineplot_range_comp_basecase_3x3():
 
     print("✓ Completed 2024-2040 NZIA comparison LNG range plots in 3x3 grid!")
 
+
 def co2_lineplot_range_comp_basecase():
-    """Plot CO2 emissions range (min/max envelope) for 2024-2050 horizon only, displaying
-    four ranges in one plot per learning rate:
+    """Plot CO2 emissions range (min/max envelope) for 2024-2050 horizon in a 3x3 grid.
+    Each subplot shows one learning rate with four ranges:
       1. NZ with NZIA
       2. NZ without NZIA
       3. PF with NZIA
@@ -2496,10 +2497,14 @@ def co2_lineplot_range_comp_basecase():
 
     # Styling for the four groups
     group_definitions = [
-        {"label": "NZ with NZIA", "variant": "results_with_nzia", "scenarios": SCENARIO_COMBOS_LNG_NZ, "color": "#1f77b4", "alpha": 0.30, "hatch": None},
-        {"label": "NZ without NZIA", "variant": "results_without_nzia", "scenarios": SCENARIO_COMBOS_LNG_NZ, "color": "#6baed6", "alpha": 0.30, "hatch": ".."},
-        {"label": "PF with NZIA", "variant": "results_with_nzia", "scenarios": SCENARIO_COMBOS_LNG_PF, "color": "#d62728", "alpha": 0.30, "hatch": None},
-        {"label": "PF without NZIA", "variant": "results_without_nzia", "scenarios": SCENARIO_COMBOS_LNG_PF, "color": "#ff9896", "alpha": 0.30, "hatch": "//"},
+        {"label": "NZ with NZIA", "variant": "results_with_nzia", "scenarios": SCENARIO_COMBOS_LNG_NZ,
+         "color": "#1f77b4", "alpha": 0.30, "hatch": None},
+        {"label": "NZ without NZIA", "variant": "results_without_nzia", "scenarios": SCENARIO_COMBOS_LNG_NZ,
+         "color": "#6baed6", "alpha": 0.30, "hatch": ".."},
+        {"label": "PF with NZIA", "variant": "results_with_nzia", "scenarios": SCENARIO_COMBOS_LNG_PF,
+         "color": "#d62728", "alpha": 0.30, "hatch": None},
+        {"label": "PF without NZIA", "variant": "results_without_nzia", "scenarios": SCENARIO_COMBOS_LNG_PF,
+         "color": "#ff9896", "alpha": 0.30, "hatch": "//"},
     ]
 
     def load_co2_group_data(base_variant, lr_code, scenarios):
@@ -2509,19 +2514,16 @@ def co2_lineplot_range_comp_basecase():
         for scenario in scenarios:
             file_path = Path(RESULTS_BASE_PATH) / base_variant / lr_code / rolling_horizon / f"scenario_{scenario}.xlsx"
             if not file_path.exists():
-                print(f"  Missing file: {file_path}")
                 continue
             try:
                 df = pd.read_excel(file_path, sheet_name="us_co2")
             except Exception as e:
-                print(f"  Error reading {file_path}: {e}")
                 continue
             if 'stf' not in df.columns or 'value' not in df.columns:
-                print(f"  Columns missing in {file_path}")
                 continue
 
             # Filter for years 2024-2050 and sum CO2 emissions per year
-            co2_df = df[(df['stf'] >= 2024) & (df['stf'] <= 2040)]
+            co2_df = df[(df['stf'] >= 2024) & (df['stf'] <= 2050)]
             if co2_df.empty:
                 continue
 
@@ -2536,13 +2538,23 @@ def co2_lineplot_range_comp_basecase():
                     data_by_year[year].append(co2_mt)
         return data_by_year
 
-    print("Creating 2024-2040 NZIA comparison CO2 emissions range plots...")
-    for lr_code, lr_name in LEARNING_RATES.items():
-        print(f"Processing LR {lr_code} ...")
-        plt.figure(figsize=(14, 8))
+    print("Creating 3×3 CO2 emissions range plots with NZIA comparison...")
+
+    # Create 3×3 subplot grid
+    fig, axes = plt.subplots(3, 3, figsize=(20, 16), sharex=True, sharey=True)
+    axes = axes.flatten()
+
+    # Process each learning rate as a subplot
+    for lr_idx, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+        if lr_idx >= 9:  # Maximum 9 subplots in 3×3 grid
+            break
+
+        ax = axes[lr_idx]
+        print(f"Processing LR {lr_code} (subplot {lr_idx + 1}/9)...")
+
+        subplot_has_data = False
 
         for group in group_definitions:
-            print(f"  Group: {group['label']}")
             group_data = load_co2_group_data(group['variant'], lr_code, group['scenarios'])
             min_vals = []
             max_vals = []
@@ -2562,29 +2574,57 @@ def co2_lineplot_range_comp_basecase():
                 max_vals.append(max_v)
 
             if any_nonzero:
+                subplot_has_data = True
                 # Filled range
-                plt.fill_between(years_full, min_vals, max_vals,
-                                 color=group['color'], alpha=group['alpha'],
-                                 hatch=group['hatch'], edgecolor=group['color'],
-                                 label=f"{group['label']} (Range)")
+                ax.fill_between(years_full, min_vals, max_vals,
+                                color=group['color'], alpha=group['alpha'],
+                                hatch=group['hatch'], edgecolor=group['color'],
+                                label=f"{group['label']} (Range)")
                 # Min / Max lines
-                plt.plot(years_full, min_vals, color=group['color'], linestyle='--', linewidth=1.2,
-                         label=f"{group['label']} (Min)")
-                plt.plot(years_full, max_vals, color=group['color'], linestyle='-', linewidth=2,
-                         label=f"{group['label']} (Max)")
+                ax.plot(years_full, min_vals, color=group['color'], linestyle='--', linewidth=1.2,
+                        label=f"{group['label']} (Min)")
+                ax.plot(years_full, max_vals, color=group['color'], linestyle='-', linewidth=2,
+                        label=f"{group['label']} (Max)")
 
-                print(f"    {group['label']}: {min([v for v in min_vals if v>0] or [0]):.2f} - {max(max_vals):.2f} Mt CO2")
-            else:
-                print(f"    Skipped (no non-zero data): {group['label']}")
+        # Customize subplot
+        lr_short = lr_name.split('%')[0].replace('Learning Rate', '').strip() + '%'
+        ax.set_title(f'{lr_short}', fontsize=12, fontweight='bold')
+        ax.grid(True, linestyle='--', alpha=0.4)
+        ax.set_xlim(2024, 2050)
 
-        plt.xlabel('Year')
-        plt.ylabel('CO2 Emissions (Mt)')
-        plt.title(f'CO2 Emissions Ranges 2024-2040 with/without NZIA\n{lr_name} (Non-Scenario Driven)')
-        plt.xlim(2024, 2051)
-        plt.grid(True, linestyle='--', alpha=0.6)
+        # Only show x-axis labels on bottom row
+        if lr_idx >= 6:  # Bottom row (indices 6, 7, 8)
+            ax.set_xlabel('Year', fontsize=11)
+            ax.tick_params(axis='x', rotation=45)
 
+        # Only show y-axis labels on left column
+        if lr_idx % 3 == 0:  # Left column (indices 0, 3, 6)
+            ax.set_ylabel('CO2 Emissions (Mt)', fontsize=11)
+
+        # Show "No Data" if no data was plotted
+        if not subplot_has_data:
+            ax.text(0.5, 0.5, 'No Data', transform=ax.transAxes,
+                    ha='center', va='center', fontsize=12, alpha=0.6, color='gray')
+
+    # Hide empty subplots if there are fewer than 9 learning rates
+    for empty_idx in range(len(LEARNING_RATES), 9):
+        axes[empty_idx].set_visible(False)
+
+    # Add overall title
+    fig.suptitle('CO2 Emissions Ranges 2024-2050: NZIA Policy Comparison Across Learning Rates',
+                 fontsize=18, fontweight='bold', y=0.98)
+
+    # Create legend using the first subplot that has data
+    legend_ax = None
+    for ax in axes:
+        handles, labels = ax.get_legend_handles_labels()
+        if handles:  # If this subplot has legend data
+            legend_ax = ax
+            break
+
+    if legend_ax is not None:
         # Deduplicate legend entries
-        handles, labels = plt.gca().get_legend_handles_labels()
+        handles, labels = legend_ax.get_legend_handles_labels()
         seen = set()
         dedup_handles = []
         dedup_labels = []
@@ -2594,15 +2634,20 @@ def co2_lineplot_range_comp_basecase():
                 dedup_handles.append(h)
                 dedup_labels.append(l)
 
-        plt.legend(dedup_handles, dedup_labels, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
-        plt.tight_layout()
+        # Place legend outside the plot area
+        fig.legend(dedup_handles, dedup_labels,
+                   bbox_to_anchor=(1.02, 0.5), loc='center left', fontsize=10)
 
-        out_path = output_dir / f"co2_range_plot_nzia_comparison_{lr_code}.png"
-        plt.savefig(out_path, dpi=300, bbox_inches='tight')
-        plt.close()
-        print(f"✓ Saved: {out_path}")
+    # Adjust layout to accommodate legend
+    plt.tight_layout(rect=[0, 0, 0.85, 0.96])
 
-    print("✓ Completed 2024-2050 NZIA comparison CO2 emissions range plots!")
+    # Save the combined plot
+    output_path = output_dir / "co2_range_plot_nzia_comparison_3x3_grid.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"✓ Saved: {output_path}")
+
+    print("✓ Completed 3×3 CO2 emissions range plots with NZIA comparison!")
 
 def plot_capacity_additions_by_technology_and_lr():
     """
@@ -3787,12 +3832,13 @@ def main():
     Uncomment the desired plot functions to generate the corresponding plots.
     """
     # Example: Uncomment the plots you want to generate
-    plot_capacity_additions_by_technology_and_lr_nzia_split()
-    lng_lineplot_range_comp_basecase_3x3()
+    #plot_capacity_additions_by_technology_and_lr_nzia_split()
+    #lng_lineplot_range_comp_basecase_3x3()
     #plot_pareto_cost_vs_total_domestic_additions()
-    plot_domestic_percentage_heatmap()
+    #plot_domestic_percentage_heatmap()
     #plot_domestic_percentage_heatmap_scenario_driven()
     #plot_combined_domestic_percentage_heatmap()
+    co2_lineplot_range_comp_basecase()
     pass
 
 if __name__ == "__main__":
