@@ -2377,7 +2377,7 @@ def lng_lineplot_range_comp_basecase_3x3():
                 print(f"  Error reading {file_path}: {e}")
                 continue
             df['com'] = df['com'].astype(str).str.strip()
-            lng_df = df[(df['com'] == 'LNG') & (df['stf'] >= 2024) & (df['stf'] <= 2050)]
+            lng_df = df[(df['com'] == 'LNG') & (df['stf'] >= 2024) & (df['stf'] <= 2040)]
             if lng_df.empty:
                 continue
             yearly = lng_df.groupby('stf')['e_pro_in'].sum().reset_index()
@@ -2443,7 +2443,7 @@ def lng_lineplot_range_comp_basecase_3x3():
         ax.set_xlabel('Year', fontsize=10)
         ax.set_ylabel('LNG Demand (BCM)', fontsize=10)
         ax.set_title(f'{lr_name}', fontsize=12, fontweight='bold')
-        ax.set_xlim(2024, 2050)
+        ax.set_xlim(2024, 2040)
         ax.grid(True, linestyle='--', alpha=0.6)
         ax.tick_params(axis='both', which='major', labelsize=9)
 
