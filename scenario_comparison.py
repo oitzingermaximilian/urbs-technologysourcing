@@ -3264,6 +3264,231 @@ def plot_domestic_percentage_heatmap():
     print("\n✓ Completed all domestic yearly percentage square plots!")
     print(f"Created 16 figures total: 4 technologies × 2 scenario types × 2 NZIA variants")
 
+
+def plot_domestic_percentage_heatmap_scenario_driven():
+    """Create scenario-driven heatmap showing domestic additions percentage over time
+
+    Creates 16 figures total:
+    - 4 technologies × 2 scenario types × 2 NZIA variants
+    - Each figure has ~27 subplots (one per price scenario) in 3×9 grid
+    - Uses squares for yearly additions in 2-year steps
+    - Better color contrast and horizontal legend below plots
+
+    Data structure: Uses result_scenario_ files with separate sheets for each supply option
+    """
+
+    output_dir = Path("scenario_comparison")
+    output_dir.mkdir(exist_ok=True)
+
+    # Technologies to analyze
+    technologies = ['solarPV', 'windon', 'windoff', 'Batteries']
+
+    # Years to analyze (2-year steps)
+    years = list(range(2024, 2041, 2))  # [2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040]
+
+    # Domestic vs all sources (now separate sheets)
+    domestic_sources = ['capacity_ext_eusecondary', 'capacity_ext_euprimary', 'capacity_ext_stockout']
+    all_sources = ['capacity_ext_eusecondary', 'capacity_ext_euprimary', 'capacity_ext_stockout',
+                   'capacity_ext_imported']
+
+    # Scenario configurations
+    scenario_types = [
+        {"name": "NZ", "scenarios": SCENARIO_COMBOS_LNG_NZ, "title": "Net Zero"},
+        {"name": "PF", "scenarios": SCENARIO_COMBOS_LNG_PF, "title": "Persistent Fossil"}
+    ]
+
+    # NZIA variants (now separate)
+    nzia_variants = [
+        {"variant": "results_with_nzia", "label": "with_NZIA", "title": "with NZIA"},
+        {"variant": "results_without_nzia", "label": "without_NZIA", "title": "without NZIA"}
+    ]
+
+    # Better color scheme: Blue to Red gradient for better contrast
+    from matplotlib.colors import LinearSegmentedColormap, Normalize
+    # Blue (low %) to Red (high %) - much easier to distinguish
+    contrast_colors = [
+        '#08519c',  # Dark blue (0%)
+        '#3182bd',  # Medium blue
+        '#6baed6',  # Light blue
+        '#bdd7e7',  # Very light blue
+        '#f7fbff',  # White/neutral (50%)
+        '#fee5d9',  # Very light red
+        '#fcae91',  # Light red
+        '#fb6a4a',  # Medium red
+        '#de2d26',  # Dark red
+        '#a50f15'  # Very dark red (100%)
+    ]
+
+    cmap = LinearSegmentedColormap.from_list('blue_to_red', contrast_colors, N=256)
+    norm = Normalize(vmin=0, vmax=100)
+
+    for technology in technologies:
+        for scenario_type in scenario_types:
+            for nzia_config in nzia_variants:
+                print(f"\nProcessing {technology} - {scenario_type['title']} - {nzia_config['title']}...")
+
+                # Get all price scenarios for this scenario type
+                price_scenarios = scenario_type['scenarios']
+                n_scenarios = len(price_scenarios)
+
+                # Use 3×9 grid layout (3 rows, 9 columns)
+                n_rows = 3
+                n_cols = 9
+
+                # Create figure with extra space for horizontal legend below
+                fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 10))  # Wider figure
+
+                # Flatten axes array for easy indexing
+                axes = axes.flatten()
+
+                # Process each price scenario as a subplot
+                for scenario_idx, price_scenario in enumerate(price_scenarios):
+                    if scenario_idx >= len(axes):
+                        break
+
+                    ax = axes[scenario_idx]
+                    print(f"  Processing price scenario: {price_scenario}")
+
+                    # Track if any data was plotted
+                    data_plotted = False
+
+                    for lr_idx, (lr_code, lr_name) in enumerate(LEARNING_RATES.items()):
+
+                        # Load data file (scenario-driven structure)
+                        file_path = Path(RESULTS_BASE_PATH) / nzia_config[
+                            'variant'] / lr_code / f"result_scenario_{price_scenario}.xlsx"
+
+                        if not file_path.exists():
+                            print(f"    Missing file: {file_path}")
+                            continue
+
+                        try:
+                            # Load data from separate sheets for each supply option
+                            supply_data = {}
+
+                            # Read each supply option sheet
+                            for source in all_sources:
+                                try:
+                                    sheet_df = pd.read_excel(file_path, sheet_name=source)
+                                    # Structure: window_index | year | key_0 | key_1 | value
+                                    # Filter for this technology (assuming key_0 or key_1 contains technology info)
+                                    tech_df = sheet_df[
+                                        (sheet_df['key_0'] == technology) |
+                                        (sheet_df['key_1'] == technology)
+                                        ]
+                                    supply_data[source] = tech_df
+                                except Exception as e:
+                                    print(f"    Could not read sheet {source}: {e}")
+                                    supply_data[source] = pd.DataFrame()
+
+                            # Calculate domestic percentage for each year (YEARLY VALUES, already yearly)
+                            for year in years:
+                                domestic_yearly = 0
+                                total_yearly = 0
+
+                                # Sum domestic sources for THIS YEAR
+                                for source in domestic_sources:
+                                    if source in supply_data and not supply_data[source].empty:
+                                        year_data = supply_data[source][supply_data[source]['year'] == year]
+                                        if not year_data.empty:
+                                            domestic_yearly += year_data['value'].sum()
+
+                                # Sum all sources for THIS YEAR (domestic + imported)
+                                for source in all_sources:
+                                    if source in supply_data and not supply_data[source].empty:
+                                        year_data = supply_data[source][supply_data[source]['year'] == year]
+                                        if not year_data.empty:
+                                            total_yearly += year_data['value'].sum()
+
+                                # Calculate percentage for this year's additions
+                                if total_yearly > 0:
+                                    domestic_percentage = (domestic_yearly / total_yearly) * 100
+
+                                    # Create square position
+                                    y_position = lr_idx
+                                    x_position = years.index(year)
+
+                                    # Plot colored square (looks like bars)
+                                    color = cmap(norm(domestic_percentage))
+                                    ax.scatter(x_position, y_position,
+                                               c=[color], s=200, marker='s',  # 's' = square
+                                               alpha=0.9, edgecolors='black', linewidth=0.5)
+                                    data_plotted = True
+
+                        except Exception as e:
+                            print(f"    Error processing {lr_code} - {price_scenario}: {e}")
+                            continue
+
+                    # Customize subplot
+                    ax.set_xlim(-0.5, len(years) - 0.5)
+                    ax.set_ylim(-0.5, len(LEARNING_RATES) - 0.5)
+
+                    # Set ticks
+                    ax.set_xticks(range(len(years)))
+                    ax.set_yticks(range(len(LEARNING_RATES)))
+                    ax.set_yticklabels(list(LEARNING_RATES.values()), fontsize=8)
+
+                    # Only show x-axis labels on bottom row
+                    if scenario_idx >= (n_rows - 1) * n_cols:  # Bottom row
+                        ax.set_xticklabels([str(year) for year in years], rotation=45, fontsize=9)
+                        ax.set_xlabel('Year', fontsize=10)
+                    else:
+                        ax.set_xticklabels([])
+
+                    # Only show y-axis label on left column
+                    if scenario_idx % n_cols == 0:  # Left column
+                        ax.set_ylabel('Learning Rate', fontsize=10)
+                    else:
+                        ax.set_yticklabels([])
+
+                    # Clean title: remove LNG_NZ/LNG_PF, just show price combination
+                    price_clean = price_scenario.replace('LNG_NZ_', '').replace('LNG_PF_', '').replace('_', ' ').title()
+                    ax.set_title(price_clean, fontsize=9, fontweight='bold', pad=8)
+
+                    # Add subtle grid for better readability
+                    ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.5, color='gray')
+
+                    # Show "No Data" message if no data was plotted
+                    if not data_plotted:
+                        ax.text(0.5, 0.5, 'No Data', transform=ax.transAxes,
+                                ha='center', va='center', fontsize=10, alpha=0.5, color='gray')
+
+                # Hide empty subplots
+                for empty_idx in range(n_scenarios, len(axes)):
+                    axes[empty_idx].set_visible(False)
+
+                # Add horizontal colorbar below the plots
+                if n_scenarios > 0:
+                    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+                    sm.set_array([])
+
+                    # Create horizontal colorbar at the bottom
+                    cbar_ax = fig.add_axes([0.15, 0.02, 0.7, 0.03])  # [left, bottom, width, height]
+                    cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
+                    cbar.set_label('Domestic Additions (% of yearly total)', fontsize=12, labelpad=10)
+                    cbar.ax.tick_params(labelsize=10)
+
+                    # Add percentage markers on colorbar
+                    cbar.set_ticks([0, 25, 50, 75, 100])
+                    cbar.set_ticklabels(['0%', '25%', '50%', '75%', '100%'])
+
+                # Main title
+                fig.suptitle(
+                    f'Domestic Yearly Additions: {technology} - {scenario_type["title"]} - {nzia_config["title"]} (Scenario Driven)',
+                    fontsize=16, fontweight='bold', y=0.95)
+
+                # Adjust layout with space for horizontal colorbar
+                plt.tight_layout(rect=[0, 0.08, 1, 0.93])  # Leave space at bottom for colorbar
+
+                # Save plot
+                output_path = output_dir / f"domestic_yearly_squares_scenario_{technology}_{scenario_type['name']}_{nzia_config['label']}.png"
+                plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"✓ Saved: {output_path}")
+
+    print("\n✓ Completed all scenario-driven domestic yearly percentage square plots!")
+    print(f"Created 16 figures total: 4 technologies × 2 scenario types × 2 NZIA variants")
+
 def main():
     """
     Main entry point for scenario_comparison.py.
@@ -3273,7 +3498,8 @@ def main():
     #plot_capacity_additions_by_technology_and_lr_nzia_split()
     #lng_lineplot_range_comp_basecase_3x3()
     #plot_pareto_cost_vs_total_domestic_additions()
-    plot_domestic_percentage_heatmap()
+    #plot_domestic_percentage_heatmap()
+    plot_domestic_percentage_heatmap_scenario_driven()
     pass
 
 if __name__ == "__main__":
