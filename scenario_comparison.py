@@ -2907,7 +2907,7 @@ def main():
     Uncomment the desired plot functions to generate the corresponding plots.
     """
     # Example: Uncomment the plots you want to generate
-    plot_capacity_additions_by_technology_and_lr_nzia_split()
+    #plot_capacity_additions_by_technology_and_lr_nzia_split()
     plot_pareto_cost_vs_domestic_additions_by_technology()
     pass
 
