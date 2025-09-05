@@ -3729,9 +3729,9 @@ def main():
     #plot_capacity_additions_by_technology_and_lr_nzia_split()
     #lng_lineplot_range_comp_basecase_3x3()
     #plot_pareto_cost_vs_total_domestic_additions()
-    #plot_domestic_percentage_heatmap()
+    plot_domestic_percentage_heatmap()
     #plot_domestic_percentage_heatmap_scenario_driven()
-    plot_combined_domestic_percentage_heatmap()
+    #plot_combined_domestic_percentage_heatmap()
     pass
 
 if __name__ == "__main__":
