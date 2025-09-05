@@ -3053,8 +3053,8 @@ def plot_domestic_percentage_heatmap():
     Creates 16 figures total:
     - 4 technologies × 2 scenario types × 2 NZIA variants
     - Each figure has ~27 subplots (one per price scenario) in 3×9 grid
-    - Uses colored dots for yearly additions in 2-year steps
-    - Green color scheme: light pastel green (0%) to vibrant green (100%)
+    - Uses squares for yearly additions in 2-year steps
+    - Better color contrast and horizontal legend below plots
     """
 
     output_dir = Path("scenario_comparison")
@@ -3083,20 +3083,23 @@ def plot_domestic_percentage_heatmap():
         {"variant": "results_without_nzia", "label": "without_NZIA", "title": "without NZIA"}
     ]
 
-    # Custom green color scheme: pastel light green (0%) to vibrant green (100%)
+    # Better color scheme: Blue to Red gradient for better contrast
     from matplotlib.colors import LinearSegmentedColormap, Normalize
-    green_colors = [
-        '#f7fcf5',  # Very light pastel green (0%)
-        '#e5f5e0',  # Light pastel green
-        '#c7e9c0',  # Soft green
-        '#a1d99b',  # Medium light green
-        '#74c476',  # Medium green
-        '#41ab5d',  # Medium dark green
-        '#238b45',  # Dark green
-        '#006d2c',  # Very dark green
-        '#00441b'  # Vibrant dark green (100%)
+    # Blue (low %) to Red (high %) - much easier to distinguish
+    contrast_colors = [
+        '#08519c',  # Dark blue (0%)
+        '#3182bd',  # Medium blue
+        '#6baed6',  # Light blue
+        '#bdd7e7',  # Very light blue
+        '#f7fbff',  # White/neutral (50%)
+        '#fee5d9',  # Very light red
+        '#fcae91',  # Light red
+        '#fb6a4a',  # Medium red
+        '#de2d26',  # Dark red
+        '#a50f15'  # Very dark red (100%)
     ]
-    cmap = LinearSegmentedColormap.from_list('green_gradient', green_colors, N=256)
+
+    cmap = LinearSegmentedColormap.from_list('blue_to_red', contrast_colors, N=256)
     norm = Normalize(vmin=0, vmax=100)
 
     for technology in technologies:
@@ -3112,8 +3115,8 @@ def plot_domestic_percentage_heatmap():
                 n_rows = 3
                 n_cols = 9
 
-                # Create figure for this technology-scenario-nzia combination
-                fig, axes = plt.subplots(n_rows, n_cols, figsize=(18, 9))  # 3×9 layout
+                # Create figure with extra space for horizontal legend below
+                fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 10))  # Wider figure
 
                 # Flatten axes array for easy indexing
                 axes = axes.flatten()
@@ -3176,15 +3179,15 @@ def plot_domestic_percentage_heatmap():
                                 if total_yearly > 0:
                                     domestic_percentage = (domestic_yearly / total_yearly) * 100
 
-                                    # Create dot position
+                                    # Create square position
                                     y_position = lr_idx
                                     x_position = years.index(year)
 
-                                    # Plot colored dot with green gradient
+                                    # Plot colored square (looks like bars)
                                     color = cmap(norm(domestic_percentage))
                                     ax.scatter(x_position, y_position,
-                                               c=[color], s=120, marker='o',
-                                               alpha=0.9, edgecolors='darkgreen', linewidth=0.8)
+                                               c=[color], s=200, marker='s',  # 's' = square
+                                               alpha=0.9, edgecolors='black', linewidth=0.5)
                                     data_plotted = True
 
                         except Exception as e:
@@ -3213,8 +3216,8 @@ def plot_domestic_percentage_heatmap():
                     else:
                         ax.set_yticklabels([])
 
-                    # Title for each subplot (price scenario)
-                    price_clean = price_scenario.replace('_', ' ').title()
+                    # Clean title: remove LNG_NZ/LNG_PF, just show price combination
+                    price_clean = price_scenario.replace('LNG_NZ_', '').replace('LNG_PF_', '').replace('_', ' ').title()
                     ax.set_title(price_clean, fontsize=9, fontweight='bold', pad=8)
 
                     # Add subtle grid for better readability
@@ -3229,13 +3232,15 @@ def plot_domestic_percentage_heatmap():
                 for empty_idx in range(n_scenarios, len(axes)):
                     axes[empty_idx].set_visible(False)
 
-                # Add colorbar with green gradient
+                # Add horizontal colorbar below the plots
                 if n_scenarios > 0:
                     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
                     sm.set_array([])
-                    cbar = fig.colorbar(sm, ax=axes[:n_scenarios].tolist() if n_scenarios > 1 else [axes[0]],
-                                        shrink=0.6, pad=0.02, aspect=40)
-                    cbar.set_label('Domestic Additions (% of yearly total)', rotation=270, labelpad=20, fontsize=12)
+
+                    # Create horizontal colorbar at the bottom
+                    cbar_ax = fig.add_axes([0.15, 0.02, 0.7, 0.03])  # [left, bottom, width, height]
+                    cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
+                    cbar.set_label('Domestic Additions (% of yearly total)', fontsize=12, labelpad=10)
                     cbar.ax.tick_params(labelsize=10)
 
                     # Add percentage markers on colorbar
@@ -3245,18 +3250,18 @@ def plot_domestic_percentage_heatmap():
                 # Main title
                 fig.suptitle(
                     f'Domestic Yearly Additions: {technology} - {scenario_type["title"]} - {nzia_config["title"]}',
-                    fontsize=16, fontweight='bold', y=0.98)
+                    fontsize=16, fontweight='bold', y=0.95)
 
-                # Adjust layout
-                plt.tight_layout(rect=[0, 0, 0.95, 0.96])
+                # Adjust layout with space for horizontal colorbar
+                plt.tight_layout(rect=[0, 0.08, 1, 0.93])  # Leave space at bottom for colorbar
 
                 # Save plot
-                output_path = output_dir / f"domestic_yearly_dots_{technology}_{scenario_type['name']}_{nzia_config['label']}.png"
+                output_path = output_dir / f"domestic_yearly_squares_{technology}_{scenario_type['name']}_{nzia_config['label']}.png"
                 plt.savefig(output_path, dpi=300, bbox_inches='tight')
                 plt.close()
                 print(f"✓ Saved: {output_path}")
 
-    print("\n✓ Completed all domestic yearly percentage dot plots!")
+    print("\n✓ Completed all domestic yearly percentage square plots!")
     print(f"Created 16 figures total: 4 technologies × 2 scenario types × 2 NZIA variants")
 
 def main():
