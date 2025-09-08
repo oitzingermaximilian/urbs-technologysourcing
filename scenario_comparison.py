@@ -3990,6 +3990,112 @@ def plot_capacity_and_stock_separately():
 
     print("✓ All US capacity and stock stacked bar plots completed!")
 
+def summarize_capacity_and_stock_all_LRs():
+    # Define your mappings and constants here
+    years_of_interest = [2024, 2030, 2035, 2040]
+    max_year = 2040
+
+    colors = {
+        'Biomass Plant': '#FFB347',
+        'Wind (onshore)': '#77DD77',
+        'Wind (offshore)': '#006400',
+        'Nuclear Plant': '#FFB6C1',
+        'Hydro (run-of-river)': '#A0C4E1',
+        'Hydro (reservoir)': '#74B3D6',
+        'Solar PV': '#FDFD96',
+        'Gas Plant (CCGT)': '#FF6961',
+        'Coal Plant': '#B0B0B0',
+        'Coal Lignite': '#808080',
+        'Gas Plant (CCGT) CCUS': 'black',
+        'Coal CCUS': 'black',
+        'Coal Lignite CCUS': 'black'
+    }
+    techs_exclude = ['Batteries']
+
+    TECH_NAME_MAP = {
+        "Biomass Plant": "Biomass Plant",
+        "Coal CCUS": "Coal CCUS",
+        "Coal Lignite": "Coal Lignite",
+        "Coal Lignite CCUS": "Coal Lignite CCUS",
+        "Coal Plant": "Coal Plant",
+        "Gas Plant (CCGT)": "Gas Plant (CCGT)",
+        "Gas Plant (CCGT) CCUS": "Gas Plant (CCGT) CCUS",
+        "Gas Plant (CCGT) LNG": "Gas Plant (CCGT)",
+        "Hydro (reservoir)": "Hydro (reservoir)",
+        "Hydro (run-of-river)": "Hydro (run-of-river)",
+        "Nuclear Plant": "Nuclear Plant",
+        "solarPV": "Solar PV",
+        "windoff": "Wind (offshore)",
+        "windon": "Wind (onshore)",
+    }
+    STOCK_TECHS = ["solarPV", "windon", "windoff"]
+    STOCK_PLOT_NAMES = [TECH_NAME_MAP[t] for t in STOCK_TECHS]
+
+    # You must define these in your script or pass as arguments:
+    # LEARNING_RATES, nzia_variants, SCENARIO_COMBOS_LNG, RESULTS_BASE_PATH
+
+    cap_records = []
+    stock_records = []
+
+    for lr_code, lr_name in LEARNING_RATES.items():
+        for nzia in nzia_variants:
+            for scenario in nzia['scenarios']:
+                file_path = Path(RESULTS_BASE_PATH) / nzia['variant'] / lr_code / "rolling_2024_to_2050" / f"scenario_{scenario}.xlsx"
+                if not file_path.exists():
+                    continue
+
+                # --- CAPACITY ---
+                try:
+                    df_caps = pd.read_excel(file_path, sheet_name="extension_total_caps")
+                except Exception:
+                    continue
+                df_caps['stf'] = pd.to_numeric(df_caps['stf'], errors='coerce').astype(int)
+                df_caps = df_caps[df_caps['stf'] <= max_year]
+                df_caps = df_caps[~df_caps['pro'].isin(techs_exclude)]
+                df_caps['PlotTech'] = df_caps['pro'].map(TECH_NAME_MAP)
+                df_caps = df_caps[~df_caps['PlotTech'].isna()]
+                grouped = df_caps.groupby(['stf', 'PlotTech'])['cap_pro'].sum().reset_index()
+                grouped['cap_pro_GW'] = grouped['cap_pro'] / 1e3
+                grouped['LearningRate'] = lr_code
+                cap_records.append(grouped[['stf', 'PlotTech', 'LearningRate', 'cap_pro_GW']])
+
+                # --- STOCK ---
+                try:
+                    df_stock = pd.read_excel(file_path, sheet_name="extension_only_caps")
+                except Exception:
+                    continue
+                df_stock['stf'] = pd.to_numeric(df_stock['stf'], errors='coerce').astype(int)
+                df_stock = df_stock[df_stock['stf'] <= max_year]
+                df_stock = df_stock[df_stock['tech'].isin(STOCK_TECHS)]
+                stock_grouped = df_stock.groupby(['stf', 'tech'])['capacity_ext_stock'].sum().reset_index()
+                stock_grouped['PlotTech'] = stock_grouped['tech'].map(TECH_NAME_MAP)
+                stock_grouped = stock_grouped[~stock_grouped['PlotTech'].isna()]
+                stock_grouped['LearningRate'] = lr_code
+                stock_grouped['stock_GW'] = stock_grouped['capacity_ext_stock'] / 1e3
+                stock_records.append(stock_grouped[['stf', 'PlotTech', 'LearningRate', 'stock_GW']])
+
+    # ---- Capacity summary ----
+    if cap_records:
+        cap_df = pd.concat(cap_records, ignore_index=True)
+        cap_summary = cap_df.groupby(['stf', 'PlotTech', 'LearningRate']).agg(
+            min_capacity_GW=('cap_pro_GW', 'min'),
+            max_capacity_GW=('cap_pro_GW', 'max'),
+            mean_capacity_GW=('cap_pro_GW', 'mean')
+        ).reset_index()
+        cap_summary.to_csv('capacity_summary_all_LRs.csv', index=False)
+        print('Saved: capacity_summary_all_LRs.csv')
+
+    # ---- Stock summary ----
+    if stock_records:
+        stock_df = pd.concat(stock_records, ignore_index=True)
+        stock_summary = stock_df.groupby(['stf', 'PlotTech', 'LearningRate']).agg(
+            min_stock_GW=('stock_GW', 'min'),
+            max_stock_GW=('stock_GW', 'max'),
+            mean_stock_GW=('stock_GW', 'mean')
+        ).reset_index()
+        stock_summary.to_csv('stocklevel_summary_all_LRs.csv', index=False)
+        print('Saved: stocklevel_summary_all_LRs.csv')
+
 def main():
     """
     Main entry point for scenario_comparison.py.
@@ -4004,6 +4110,7 @@ def main():
     #plot_combined_domestic_percentage_heatmap()
     #co2_lineplot_range_comp_basecase()
     plot_capacity_and_stock_separately()
+    summarize_capacity_and_stock_all_LRs()
     pass
 
 if __name__ == "__main__":
