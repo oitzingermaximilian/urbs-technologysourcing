@@ -623,13 +623,13 @@ def plot_total_system_cost_matrix_2024_2040():
                     if not file_path.exists():
                         continue
                     try:
-                        df = pd.read_excel(file_path, sheet_name="Total_Cost")
+                        df = pd.read_excel(file_path, sheet_name="extension_cost")
                     except Exception:
                         continue
-                    if "year" not in df or "value" not in df:
+                    if "stf" not in df or "Total_Cost" not in df:
                         continue
-                    df_period = df[(df['year'] >= 2024) & (df['year'] <= 2040)]
-                    total_cost = df_period['value'].sum() / 1e9  # Convert to bEUR if value in EUR
+                    df_period = df[(df['stf'] >= 2024) & (df['stf'] <= 2040)]
+                    total_cost = df_period['Total_Cost'].sum() / 1e9  # Convert to bEUR if value in EUR
                     cost_matrix[i, j] = total_cost
             matrices.append(cost_matrix)
 
@@ -664,7 +664,7 @@ def plot_total_system_cost_matrix_2024_2040():
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
         print(f"Saved total system cost matrix plot (2024–2040) for {scenario_type['title']}: {output_path}")
-        
+
 def plot_3d_cost_matrix_grid_style_fixed():
     """
     Create a 3D plot with corrected price scenario labels using the new compact labeling.
