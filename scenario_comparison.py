@@ -4052,7 +4052,10 @@ def summarize_capacity_and_stock_all_LRs():
                     df_caps = pd.read_excel(file_path, sheet_name="extension_total_caps")
                 except Exception:
                     continue
-                df_caps['stf'] = pd.to_numeric(df_caps['stf'], errors='coerce').astype(int)
+                df_caps['stf'] = pd.to_numeric(df_caps['stf'], errors='coerce')
+                df_caps['stf'] = df_caps['stf'].fillna(method='ffill')
+                df_caps = df_caps[df_caps['stf'].notna()]
+                df_caps['stf'] = df_caps['stf'].astype(int)
                 df_caps = df_caps[df_caps['stf'] <= max_year]
                 df_caps = df_caps[~df_caps['pro'].isin(techs_exclude)]
                 df_caps['PlotTech'] = df_caps['pro'].map(TECH_NAME_MAP)
