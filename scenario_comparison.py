@@ -4109,7 +4109,7 @@ def main():
     #plot_domestic_percentage_heatmap_scenario_driven()
     #plot_combined_domestic_percentage_heatmap()
     #co2_lineplot_range_comp_basecase()
-    plot_capacity_and_stock_separately()
+    #plot_capacity_and_stock_separately()
     summarize_capacity_and_stock_all_LRs()
     pass
 
