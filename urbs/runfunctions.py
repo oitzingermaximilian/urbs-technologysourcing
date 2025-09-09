@@ -329,6 +329,7 @@ def run_scenario(
          """
         block_limits_dict = {}
         block_price_dict = {}
+        block_emissions_dict = {}
 
         # Check required columns
         required_cols = ["block", "limit", "price"]
@@ -340,12 +341,15 @@ def run_scenario(
             block = int(row["block"])
             limit_value = float(row["limit"])  # directly read, dot is decimal
             price_value = float(row["price"])  # directly read, dot is decimal
+            emissions_value = float(row["emissions"])  # directly read, dot is decimal
             block_limits_dict[block] = limit_value
             block_price_dict[block] = price_value
+            block_emissions_dict[block] = emissions_value
         print("Block limits dict:", block_limits_dict)
         print("Block price dict:", block_price_dict)
+        print("Block emissions dict:", block_emissions_dict)
 
-        return block_limits_dict, block_price_dict
+        return block_limits_dict, block_price_dict, block_emissions_dict
 
 
     def load_data_from_excel(file_path):
@@ -363,7 +367,7 @@ def run_scenario(
         )
         lng_block_data = pd.read_excel(file_path, sheet_name="lng_block")
         # Process lng_blocks sheet
-        block_limits_dict, block_price_dict = process_lng_block_sheet(lng_block_data)
+        block_limits_dict, block_price_dict, block_emissions_dict = process_lng_block_sheet(lng_block_data)
 
         # Process Technologies sheet
         technologies_dict = process_technology_sheet(technologies_data)
@@ -414,7 +418,8 @@ def run_scenario(
             "installable_capacity_dict": installable_capacity_dict,
             # LNG block info
             "lng_block_limits": block_limits_dict,
-            "lng_block_price": block_price_dict
+            "lng_block_price": block_price_dict,
+            "lng_block_emissions": block_emissions_dict
         }
 
         return data_urbsextensionv1
