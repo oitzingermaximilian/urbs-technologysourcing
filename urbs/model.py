@@ -1007,7 +1007,10 @@ def def_costs_rule(m, cost_type):
             cost += storage_cost(m, cost_type)
         return m.costs[cost_type] == cost
 
+
     elif cost_type == "Fuel":
+        print("m.com_stock contains:", sorted(list(m.com_stock)))
+        print("m.com_tuples contains:", sorted(list(m.com_tuples)))
         return m.costs[cost_type] == sum(
             m.e_co_stock[(tm,) + c]
             * m.weight
@@ -1015,7 +1018,7 @@ def def_costs_rule(m, cost_type):
             * m.commodity_dict["cost_factor"][c]
             for tm in m.tm
             for c in m.com_tuples
-            if c[2] in m.com_stock
+            if c[2] in m.com_stock and c[2] != "LNG"
         )
 
     elif cost_type == "Environmental":
@@ -1090,6 +1093,7 @@ def def_specific_process_costs_rule(m, stf, sit, pro, cost_type):
             if st == stf
             if si == sit
             if ((stf, sit, pro, co) in m.pro_input_tuples) and co_type == "Stock"
+            if co != "LNG"
         )
 
     elif cost_type == "Environmental":

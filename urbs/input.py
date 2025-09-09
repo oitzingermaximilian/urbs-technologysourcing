@@ -61,7 +61,12 @@ def read_input(input_files, year):
                 [site], keys=[support_timeframe], names=["support_timeframe"]
             )
             sit.append(site)
-            commodity = xls.parse("Commodity").set_index(["Site", "Commodity", "Type"])
+            commodity = xls.parse("Commodity")
+            # Strip only the Commodity column
+            commodity["Commodity"] = commodity["Commodity"].str.strip()
+            # Set the index after cleaning
+            commodity = commodity.set_index(["Site", "Commodity", "Type"])
+
             commodity = pd.concat(
                 [commodity], keys=[support_timeframe], names=["support_timeframe"]
             )
@@ -71,13 +76,11 @@ def read_input(input_files, year):
                 [process], keys=[support_timeframe], names=["support_timeframe"]
             )
             pro.append(process)
-
-            # solar_param = xls.parse('urbs_solar_params').set_index(['Key', 'Param'])
-            # solar_param = pd.concat([solar_param], keys=[support_timeframe])
-
-            # sol_param.append(solar_param)
-
-            process_commodity = xls.parse("Process-Commodity").set_index(
+            process_commodity = xls.parse("Process-Commodity")
+            # Strip only the Commodity column
+            process_commodity["Commodity"] = process_commodity["Commodity"].str.strip()
+            # Now set the index
+            process_commodity = process_commodity.set_index(
                 ["Process", "Commodity", "Direction"]
             )
             process_commodity = pd.concat(
