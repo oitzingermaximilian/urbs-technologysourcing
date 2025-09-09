@@ -1132,7 +1132,7 @@ def cost_rule(m):  # urbs_solar Extension
     # Calculate total base costs from m.costs
     total_base_costs = pyomo.summation(m.costs)
     total_ext_costs = pyomo.summation(m.costs_new)
-    total_lng_costs = pyomo.summation(m.lng_costs)  # NEW: Add LNG costs
+    total_lng_costs = pyomo.summation(m.lng_total_costs )  # NEW: Add LNG costs
     # For debugging: print symbolic expression
     print("Cost expression before solving:")
     print("Base costs:", total_base_costs)

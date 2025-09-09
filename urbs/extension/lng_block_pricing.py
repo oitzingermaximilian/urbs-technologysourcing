@@ -59,11 +59,49 @@ class LNGCostConstraint(AbstractConstraint):
 
         return m.lng_costs[stf] == yearly_lng_cost
 
+class LNGEmissionsCostConstraint(AbstractConstraint):
+    def apply_rule(self, m, stf):
+        """Calculate CO2 emissions costs for LNG for a specific year (stf)"""
+        # Filter LNG tuples for this specific year
+        tuples_this_year = [c for c in m.LNG_tuples if c[0] == stf]
+
+        if not tuples_this_year:
+            return m.lng_emissions_costs[stf] == 0
+
+        # Get CO2 price for this year (assuming CO2 commodity exists)
+        # This follows the pattern from your environmental cost calculation
+        co2_price = 0
+        try:
+            # Look for CO2 price in commodity_dict
+            for (st, si, co, co_type) in m.com_tuples:
+                if st == stf and co == "CO2" and co_type == "Env":
+                    co2_price = m.commodity_dict["price"][st, si, co, co_type]
+                    break
+        except:
+            co2_price = 0
+
+        # Calculate CO2 emissions cost for this year
+        yearly_upstream_emissions_cost = sum(
+            m.block_emissions[b] * m.e_co_stock_block[c, b] * co2_price
+            for c in tuples_this_year
+            for b in m.blocks
+        )
+
+        # Debug print
+        print(f"[LNG Emissions Cost] Year {stf}, CO2 price = {co2_price}, emissions cost = {yearly_upstream_emissions_cost}")
+
+        return m.lng_emissions_costs[stf] == yearly_upstream_emissions_cost
+
+class LNGTotalCostConstraint(AbstractConstraint):
+    def apply_rule(self, m, stf):
+        """Calculate total LNG costs (fuel + emissions) for a specific year (stf)"""
+        return m.lng_total_costs[stf] == m.lng_costs[stf] + m.lng_emissions_costs[stf]
+
 
 def apply_lng_block_pricing(m, data):
     # --- Sets and Params ---
     m.years_lng = pyomo.Set(initialize=list(range(2024, 2051)))
-    m.blocks = pyomo.Set(initialize=list(range(1, 9)))
+    m.blocks = pyomo.Set(initialize=list(range(1, 15)))  # Updated to include all 14 blocks
     m.LNG_tuples = pyomo.Set(
         within=m.years_lng * m.sit * m.com * m.com_type,
         initialize=[(y, "EU27", "LNG", "Stock") for y in m.years_lng
@@ -77,7 +115,14 @@ def apply_lng_block_pricing(m, data):
         doc="Max LNG volume per block (same for all years)"
     )
     m.block_price = pyomo.Param(
-        m.blocks, initialize=data["lng_block_price"], doc="LNG block price €/MWh"
+        m.blocks,
+        initialize=data["lng_block_price"],
+        doc="LNG block price €/MWh"
+    )
+    m.block_emissions = pyomo.Param(
+        m.blocks,
+        initialize=data["lng_block_emissions"],
+        doc="LNG block emissions tCO2/MWh"
     )
 
     # --- Variables ---
@@ -85,9 +130,15 @@ def apply_lng_block_pricing(m, data):
         m.LNG_tuples, m.blocks, within=pyomo.NonNegativeReals, doc="LNG usage per block per year"
     )
 
-    # NEW: Separate LNG cost variable for each year
+    # LNG cost variables for each year
     m.lng_costs = pyomo.Var(
-        m.stf, within=pyomo.NonNegativeReals, doc="LNG costs per year"
+        m.stf, within=pyomo.NonNegativeReals, doc="LNG fuel costs per year"
+    )
+    m.lng_emissions_costs = pyomo.Var(
+        m.stf, within=pyomo.NonNegativeReals, doc="LNG CO2 emissions costs per year"
+    )
+    m.lng_total_costs = pyomo.Var(
+        m.stf, within=pyomo.NonNegativeReals, doc="Total LNG costs (fuel + emissions) per year"
     )
 
     # --- Constraints ---
@@ -102,10 +153,22 @@ def apply_lng_block_pricing(m, data):
         rule=lambda m, y, b: LNGBlockCapConstraint().apply_rule(m, y, b)
     )
 
-    # NEW: LNG cost constraint using abstract function
+    # LNG fuel cost constraint
     m.lng_cost_constraint = pyomo.Constraint(
         m.stf,
         rule=lambda m, stf: LNGCostConstraint().apply_rule(m, stf)
     )
 
-    print("✅ LNG block pricing applied successfully.")
+    # LNG emissions cost constraint
+    m.lng_emissions_cost_constraint = pyomo.Constraint(
+        m.stf,
+        rule=lambda m, stf: LNGEmissionsCostConstraint().apply_rule(m, stf)
+    )
+
+    # Total LNG cost constraint
+    m.lng_total_cost_constraint = pyomo.Constraint(
+        m.stf,
+        rule=lambda m, stf: LNGTotalCostConstraint().apply_rule(m, stf)
+    )
+
+    print("✅ LNG block pricing with emissions costs applied successfully.")
