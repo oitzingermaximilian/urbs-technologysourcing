@@ -38,9 +38,9 @@ def {func_name}(data, data_urbsextensionv1):
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "min-fraction"] = 0
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 60000
             else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 999999
+                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 60000
                 pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
                 pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
                 pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
@@ -119,14 +119,14 @@ def {func_name}(data, data_urbsextensionv1):
                 proco.loc[(stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"] = 1
                 proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0.0205
                 proco.loc[(stf, "Gas Plant (CCGT) LNG", "LNG", "In"), "ratio-min"] = 1
-                proco.loc[(stf, "Gas Plant (CCGT) LNG", "CO2", "Out"), "ratio-min"] = 0.205
+                proco.loc[(stf, "Gas Plant (CCGT) LNG", "CO2", "Out"), "ratio-min"] = 0.231
             else:
                 proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio-min"] = 1
                 proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio-min"] = 0.205
                 proco.loc[(stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio-min"] = 1
                 proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio-min"] = 0.0205
                 proco.loc[(stf, "Gas Plant (CCGT) LNG", "LNG", "In"), "ratio-min"] = 1
-                proco.loc[(stf, "Gas Plant (CCGT) LNG", "CO2", "Out"), "ratio-min"] = 0.205
+                proco.loc[(stf, "Gas Plant (CCGT) LNG", "CO2", "Out"), "ratio-min"] = 0.231
 
     if "recyclingcost_dict" in data_urbsextensionv1:
         recyclingcost = data_urbsextensionv1["recyclingcost_dict"]

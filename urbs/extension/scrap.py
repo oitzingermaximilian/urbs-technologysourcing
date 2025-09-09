@@ -25,7 +25,7 @@ class decommissioned_capacity_rule(AbstractConstraint):
         elif tech == "windon":
             _exogenous = 2 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
         elif tech == "windoff":
-            _exogenous = 0.5 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
+            _exogenous = 0.2 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
         else:
             _exogenous = 2 * 1000
 

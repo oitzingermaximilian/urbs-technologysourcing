@@ -637,7 +637,14 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
     # print(power_surplus)
     # if com is a stock commodity, the commodity source term e_co_stock
     # can supply a possibly negative power_surplus
-    if com in m.com_stock:
+    # Add extra modelled LNG usage to power_surplus for "LNG"
+    if com == "LNG":
+        power_surplus +=sum(
+        m.e_co_stock_block[tm, stf, sit, com, com_type, b]
+        for b in m.blocks
+    )
+
+    elif com in m.com_stock:
         power_surplus += m.e_co_stock[tm, stf, sit, com, com_type]
 
     # if Buy and sell prices are enabled
@@ -660,6 +667,11 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
 
     if m.mode["dsm"]:
         power_surplus += dsm_surplus(m, tm, stf, sit, com)
+
+    # --- DEBUG PRINT ---
+    print(f"tm={tm}, stf={stf}, sit={sit}, com={com}, type={com_type}")
+    print(f"Power surplus: {power_surplus}")
+    print("-" * 60)
 
     return power_surplus == 0
 
@@ -1020,6 +1032,7 @@ def def_costs_rule(m, cost_type):
         #print("m.com_stock contains:", sorted(list(m.com_stock)))
         #print("m.com_tuples contains:", sorted(list(m.com_tuples)))
         #print("m.e_pro_in contains:", sorted(list(m.e_pro_in.index_set())))
+        #print("m.e_co_stock contains:", sorted(list(m.e_co_stock.index_set())))
         return m.costs[cost_type] == sum(
             m.e_co_stock[(tm,) + c]
             * m.weight
@@ -1027,7 +1040,7 @@ def def_costs_rule(m, cost_type):
             * m.commodity_dict["cost_factor"][c]
             for tm in m.tm
             for c in m.com_tuples
-            if c[2] in m.com_stock and c[2] != "LNG"
+            if c[2] in m.com_stock if c[2]!="LNG"
         )
 
     elif cost_type == "Environmental":
@@ -1128,23 +1141,27 @@ def def_specific_process_costs_rule(m, stf, sit, pro, cost_type):
         raise NotImplementedError("Unknown cost type.")
 
 
-def cost_rule(m):  # urbs_solar Extension
-    # Calculate total base costs from m.costs
-    total_base_costs = pyomo.summation(m.costs)
-    total_ext_costs = pyomo.summation(m.costs_new)
-    total_lng_costs = pyomo.summation(m.lng_total_costs )  # NEW: Add LNG costs
-    # For debugging: print symbolic expression
-    print("Cost expression before solving:")
-    print("Base costs:", total_base_costs)
-    print("External costs:", total_ext_costs)
-    print("LNG costs:", total_lng_costs)
+def cost_rule(m):
+    # --- Base model costs ---
+    total_base_costs = pyomo.summation(m.costs)      # existing costs
+    total_ext_costs = pyomo.summation(m.costs_new)  # extension costs
 
+    # --- LNG block costs ---
+    # m.lng_total_costs is a scalar representing total LNG cost over all years
+    total_lng_costs = m.lng_total_costs
 
-    # Calculate total combined costs
+    # --- Total objective ---
     total_costs = total_base_costs + total_ext_costs + total_lng_costs
-    print("Total cost expression:", total_costs)
+
+    # Optional debug print
+    print("Objective breakdown:")
+    print("Base costs:", total_base_costs)
+    print("Extension costs:", total_ext_costs)
+    print("LNG costs:", total_lng_costs)
+    print("Total costs:", total_costs)
 
     return total_costs
+
 
 
 # CO2 output in entire period <= Global CO2 budget

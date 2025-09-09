@@ -345,9 +345,9 @@ def run_scenario(
             block_limits_dict[block] = limit_value
             block_price_dict[block] = price_value
             block_emissions_dict[block] = emissions_value
-        print("Block limits dict:", block_limits_dict)
-        print("Block price dict:", block_price_dict)
-        print("Block emissions dict:", block_emissions_dict)
+        #print("Block limits dict:", block_limits_dict)
+        #print("Block price dict:", block_price_dict)
+        #print("Block emissions dict:", block_emissions_dict)
 
         return block_limits_dict, block_price_dict, block_emissions_dict
 
