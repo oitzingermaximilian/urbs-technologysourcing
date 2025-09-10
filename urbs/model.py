@@ -47,7 +47,7 @@ def create_model(
     # Optional
     if not timesteps:
         timesteps = data["demand"].index.tolist()
-        print("timesteps:", timesteps)
+        #print("timesteps:", timesteps)
 
     m = pyomo_model_prep(
         data, timesteps, window_start, window_end
@@ -121,9 +121,9 @@ def create_model(
         doc="Set of modeled support timeframes (e.g. years)",
     )
 
-    print("\n--- Debugging m.stf ---")
-    print("m.stf (support timeframes):", list(m.stf))
-    print("--------------------------\n")
+    #print("\n--- Debugging m.stf ---")
+    #print("m.stf (support timeframes):", list(m.stf))
+    #print("--------------------------\n")
 
     # site (e.g. north, middle, south...)
 
@@ -223,12 +223,12 @@ def create_model(
         initialize=tuple(m.proc_area_dict.keys()),
         doc="Processes and Sites with area Restriction",
     )
-    print("--- Debugging Pyomo Sets ---")
-    print(f"stf (timeframes): {list(m.stf)}")
-    print(f"sit (sites): {list(m.sit)}")
-    print(f"pro (processes): {list(m.pro)}")
-    print(f"com (commodities): {list(m.com)}")
-    print("----------------------------")
+    #print("--- Debugging Pyomo Sets ---")
+    #print(f"stf (timeframes): {list(m.stf)}")
+    #print(f"sit (sites): {list(m.sit)}")
+    #print(f"pro (processes): {list(m.pro)}")
+    #print(f"com (commodities): {list(m.com)}")
+    #print("----------------------------")
     # process input/output
     m.pro_input_tuples = pyomo.Set(
         within=m.stf * m.sit * m.pro * m.com,
@@ -638,11 +638,11 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
     # if com is a stock commodity, the commodity source term e_co_stock
     # can supply a possibly negative power_surplus
     # Add extra modelled LNG usage to power_surplus for "LNG"
-    if com == "LNG":
-        power_surplus +=sum(
-        m.e_co_stock_block[tm, stf, sit, com, com_type, b]
-        for b in m.blocks
-    )
+    #if com == "LNG":
+    #    power_surplus +=sum(
+    #    m.e_co_stock_block[tm, stf, sit, com, com_type, b]
+    #    for b in m.blocks
+    #)
 
     elif com in m.com_stock:
         power_surplus += m.e_co_stock[tm, stf, sit, com, com_type]
@@ -669,9 +669,9 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
         power_surplus += dsm_surplus(m, tm, stf, sit, com)
 
     # --- DEBUG PRINT ---
-    print(f"tm={tm}, stf={stf}, sit={sit}, com={com}, type={com_type}")
-    print(f"Power surplus: {power_surplus}")
-    print("-" * 60)
+    #print(f"tm={tm}, stf={stf}, sit={sit}, com={com}, type={com_type}")
+    #print(f"Power surplus: {power_surplus}")
+    #print("-" * 60)
 
     return power_surplus == 0
 
@@ -1033,7 +1033,7 @@ def def_costs_rule(m, cost_type):
         #print("m.com_tuples contains:", sorted(list(m.com_tuples)))
         #print("m.e_pro_in contains:", sorted(list(m.e_pro_in.index_set())))
         #print("m.e_co_stock contains:", sorted(list(m.e_co_stock.index_set())))
-        return m.costs[cost_type] == sum(
+        calc = (sum(
             m.e_co_stock[(tm,) + c]
             * m.weight
             * m.commodity_dict["price"][c]
@@ -1042,6 +1042,13 @@ def def_costs_rule(m, cost_type):
             for c in m.com_tuples
             if c[2] in m.com_stock if c[2]!="LNG"
         )
+        # LNG: block-priced
+        + m.lng_total_costs)
+
+        #print("Calculated Fuel Cost:", calc)
+        return m.costs[cost_type] == calc
+
+
 
     elif cost_type == "Environmental":
         return m.costs[cost_type] == sum(
@@ -1148,17 +1155,17 @@ def cost_rule(m):
 
     # --- LNG block costs ---
     # m.lng_total_costs is a scalar representing total LNG cost over all years
-    total_lng_costs = m.lng_total_costs
+    #total_lng_costs = m.lng_total_costs
 
     # --- Total objective ---
-    total_costs = total_base_costs + total_ext_costs + total_lng_costs
+    total_costs = total_base_costs + total_ext_costs #+ total_lng_costs
 
     # Optional debug print
-    print("Objective breakdown:")
+    #print("Objective breakdown:")
     print("Base costs:", total_base_costs)
-    print("Extension costs:", total_ext_costs)
-    print("LNG costs:", total_lng_costs)
-    print("Total costs:", total_costs)
+    #print("Extension costs:", total_ext_costs)
+    #print("LNG costs:", total_lng_costs)
+    #print("Total costs:", total_costs)
 
     return total_costs
 

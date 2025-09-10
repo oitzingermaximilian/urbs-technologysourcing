@@ -41,7 +41,8 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
         secondary_cumulative_capacity_df,
         facilitiesdf,
         facility_cumulative_capacity_df,
-        fuel_lng_costs
+        lng_demand,
+        lng_demand_per_block
     ) = get_constants(instance)
 
     # create spreadsheet writer object
@@ -70,7 +71,8 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
         facility_cumulative_capacity_df.to_excel(
             writer, sheet_name="Facility_Cumulative_Capacity"
         )
-        fuel_lng_costs.to_excel(writer, sheet_name="Fuel_lng_costs")
+        lng_demand.to_excel(writer, sheet_name="lng demand")
+        lng_demand_per_block.to_excel(writer, sheet_name="lng demand per block")
 
         #################################################################################
 

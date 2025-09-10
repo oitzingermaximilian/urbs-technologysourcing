@@ -66,7 +66,8 @@ def get_constants(instance):
     process_cost = get_entity(instance, "process_costs")
     # print("process cost", process_cost)
     ext_costs = get_entity(instance, "costs_new")
-    fuel_lng_costs = get_entity(instance, "lng_costs")
+    lng_demand = get_entity(instance, "lng_usage_total")
+    lng_demand_per_block = get_entity(instance, "lng_usage_block")
     # print("ext_cost", ext_costs)
     cext = get_entities(
         instance,
@@ -339,7 +340,8 @@ def get_constants(instance):
         secondary_cumulative_capacity_df,
         facilitiesdf,
         facility_cumulative_capacity_df,
-        fuel_lng_costs
+        lng_demand,
+        lng_demand_per_block
     )
 
 
