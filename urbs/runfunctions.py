@@ -140,6 +140,7 @@ def run_scenario(
         manufacturingcost_dict = {}  # Dictionary to store manufacturing costs
         remanufacturingcost_dict = {}  # Dictionary to store remanufacturing costs
         recyclingcost_dict = {}
+        o_and_m_dict = {} # Dictionary to store o&m costs
 
         # Extract the 'Stf' column (year)
         years = cost_sheet[
@@ -178,12 +179,15 @@ def run_scenario(
                     remanufacturingcost_dict[key] = value
                 elif costtype == "recycling":
                     recyclingcost_dict[key] = value
+                elif costtype == "oandm":
+                    o_and_m_dict[key] = value
 
         return (
             importcost_dict,
             manufacturingcost_dict,
             remanufacturingcost_dict,
             recyclingcost_dict,
+            o_and_m_dict
         )
 
     def process_technology_sheet(technologies_data):
@@ -401,6 +405,7 @@ def run_scenario(
             manufacturingcost_dict,
             remanufacturingcost_dict,
             recyclingcost_dict,
+            o_and_m_dict
         ) = process_cost_sheet(cost_sheet)
 
         # Now we create the 'data_urbsextensionv1' dictionary to return all data
@@ -410,6 +415,7 @@ def run_scenario(
             "manufacturingcost_dict": manufacturingcost_dict,
             "remanufacturingcost_dict": remanufacturingcost_dict,
             "recyclingcost_dict": recyclingcost_dict,
+            "o_and_m_dict": o_and_m_dict,
             "locations_list": locations_list,
             "loadfactors_dict": loadfactors_dict,
             "technologies": technologies_dict,  # techs stored as dict

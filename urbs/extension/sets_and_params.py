@@ -126,6 +126,13 @@ def apply_sets_and_params(m, data_urbsextensionv1):
         m.tech,
         initialize=data_urbsextensionv1["remanufacturingcost_dict"],
     )
+    m.O_and_M_costs = pyomo.Param(
+        m.stf,
+        m.location,
+        m.tech,
+        initialize=data_urbsextensionv1["o_and_m_dict"],
+    )
+
 
     # instalable_capacity_sheet read in
     m.Q_ext_new = pyomo.Param(
@@ -294,6 +301,8 @@ def apply_sets_and_params(m, data_urbsextensionv1):
     # Get the cost data for absolute value calculations
     remanufacturing_costs = data_urbsextensionv1["remanufacturingcost_dict"]
     recycling_costs = data_urbsextensionv1["recyclingcost_dict"]
+
+
 
     # Create absolute value dictionaries for investment costs (EU_secondary_costs)
     def create_absolute_investment_dict(reduction_percentages):

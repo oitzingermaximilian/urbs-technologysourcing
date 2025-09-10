@@ -18,39 +18,58 @@ def debug_print(*args, **kwargs):
 
 
 class decommissioned_capacity_rule(AbstractConstraint):
+    def __init__(self, use_lifetime=True):
+        """
+        use_lifetime: If True, apply the lifetime-based decommissioning (default behavior).
+                      If False, ignore lifetimes and use exogenous + 15% for all years.
+        """
+        self.use_lifetime = use_lifetime
+
     def apply_rule(self, m, stf, location, tech):
-        # determine exogenous
+        # --- determine exogenous ---
         if tech == "solarPV":
             _exogenous = 7.5 * 1000
         elif tech == "windon":
-            _exogenous = 2 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
+            _exogenous = 2 * 1000
         elif tech == "windoff":
-            _exogenous = 0.2 * 1000 #file:///C:/Users/maxoi/OneDrive/Desktop/urbs_crm_data/WindEurope-European-Stats-2024.pdf
+            _exogenous = 0.2 * 1000
         else:
             _exogenous = 2 * 1000
 
-        # decide which branch - for wind technologies, we need to consider their 20-year lifetime
-        if (
-            stf >= value(m.y0) + m.l[location, tech]
-        ):  # Changed condition to properly handle lifetime
-            expr = (
-                m.capacity_dec[stf, location, tech]
-                == m.capacity_ext_new[stf - m.l[location, tech], location, tech]
-            )
-            debug_print(
-                f"[decommissioned] STF={stf}, loc={location}, tech={tech}  ➞ "
-                f"DEC == EXT_NEW[{stf - m.l[location, tech]}]\n    expr: {expr}"
-            )
+        # --- apply rule ---
+        if self.use_lifetime:
+            # lifetime logic
+            if stf >= value(m.y0) + m.l[location, tech]:
+                expr = (
+                    m.capacity_dec[stf, location, tech]
+                    == m.capacity_ext_new[stf - m.l[location, tech], location, tech]
+                )
+                debug_print(
+                    f"[decommissioned, lifetime] STF={stf}, loc={location}, tech={tech} ➞ "
+                    f"DEC == EXT_NEW[{stf - m.l[location, tech]}]\n    expr: {expr}"
+                )
+            else:
+                expr = (
+                    m.capacity_dec[stf, location, tech]
+                    == _exogenous + 0.15 * m.capacity_ext_new[stf, location, tech]
+                )
+                debug_print(
+                    f"[decommissioned, lifetime] STF={stf}, loc={location}, tech={tech} ➞ "
+                    f"DEC == {_exogenous} + 0.15·EXT_NEW[{stf}]\n    expr: {expr}"
+                )
         else:
+            # lifetime disabled → always use exogenous + 15%
             expr = (
                 m.capacity_dec[stf, location, tech]
                 == _exogenous + 0.15 * m.capacity_ext_new[stf, location, tech]
             )
             debug_print(
-                f"[decommissioned] STF={stf}, loc={location}, tech={tech}  ➞ "
+                f"[decommissioned, no lifetime] STF={stf}, loc={location}, tech={tech} ➞ "
                 f"DEC == {_exogenous} + 0.15·EXT_NEW[{stf}]\n    expr: {expr}"
             )
+
         return expr
+
 
 
 class capacity_scrap_dec_rule(AbstractConstraint):

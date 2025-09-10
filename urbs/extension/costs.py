@@ -73,6 +73,18 @@ class DefCostsNew(AbstractConstraint):
             )
             expr = m.costs_new[cost_type_new] == total_eu_cost_secondary
             return expr
+
+        elif cost_type_new == "O_and_M":
+            total_o_and_m_cost = sum(
+                (
+                m.O_and_M_costs[stf, site, tech] * m.capacity_ext[stf, site, tech]
+                )
+                for stf in m.stf
+                for site in m.location
+                for tech in m.tech
+            )
+            expr = m.costs_new[cost_type_new] == total_o_and_m_cost
+            return expr
         else:
             raise NotImplementedError(f"Unknown cost type: {cost_type_new}")
 
