@@ -121,7 +121,7 @@ class CapacityExtNewLimitRule(AbstractConstraint):
         cap_val = m.capacity_ext_new[stf, location, tech]
         if tech == "windoff":
             if stf <= 2030:
-                ext_val = m.Q_ext_new[stf, location, tech] * 3
+                ext_val = m.Q_ext_new[stf, location, tech] * 10#3
                 return cap_val <= ext_val
             else:
                 ext_val = m.Q_ext_new[stf, location, tech] * 2

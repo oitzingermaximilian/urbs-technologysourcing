@@ -30,7 +30,7 @@ def scenario_min_min_min(data, data_urbsextensionv1):
 
         # Piped Gas logic
         base_value = 319200000
-        yearly_decrease_factor = 0.95948 #TEst with stable Gas supply
+        yearly_decrease_factor = 1#0.95948 #Test with stable Gas supply
 
         # CO2 prices per year (€/t)
         co2_prices = {}
@@ -44,7 +44,7 @@ def scenario_min_min_min(data, data_urbsextensionv1):
             2031: 81.3, 2032: 87.6, 2033: 93.9, 2034: 100.2, 2035: 106.5,
             2036: 112.8, 2037: 119.1, 2038: 125.4, 2039: 131.7, 2040: 138,
             2041: 228.5, 2042: 364.25, 2043: 466.0625, 2044: 500,
-            2045: 500, 2046: 500, 2047: 500, 2048: 500, 2049: 500, 2050: 500
+            2045: 600, 2046: 750, 2047: 900, 2048: 1000, 2049: 1000, 2050: 1000
         }
         co2_prices.update(fixed_co2_prices)
 
