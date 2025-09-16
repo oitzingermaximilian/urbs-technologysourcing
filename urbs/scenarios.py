@@ -1909,24 +1909,30 @@ def scenario_high_high_high(data, data_urbsextensionv1):
             pro.loc[(stf, "EU27", "Biomass Plant"), "var-cost"] = 2.2255
 
             # Min-fractions (capacity factors)
-            pro.loc[(stf, "EU27", "Coal Plant"), "min-fraction"] = 0.50
-            pro.loc[(stf, "EU27", "Lignite Plant"), "min-fraction"] = 0.6
-            pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0.5
-            pro.loc[(stf, "EU27", "Other non-res"), "min-fraction"] = 0.20
-            pro.loc[(stf, "EU27", "Oil Plant"), "min-fraction"] = 0.15
-            pro.loc[(stf, "EU27", "Coal Plant CCUS"), "min-fraction"] = 0.5
-            pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "min-fraction"] = 0.6
-            pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0.50
-            pro.loc[(stf, "EU27", "Nuclear Plant"), "min-fraction"] = 0.8
+            pro.loc[(stf, "EU27", "Coal Plant"), "min-fraction"] = 0.221
+            pro.loc[(stf, "EU27", "Lignite Plant"), "min-fraction"] = 0.431
+            pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0.207
+            pro.loc[(stf, "EU27", "Other non-res"), "min-fraction"] = 0
+            pro.loc[(stf, "EU27", "Oil Plant"), "min-fraction"] = 0.053
+            pro.loc[(stf, "EU27", "Coal Plant CCUS"), "min-fraction"] = 0.221
+            pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "min-fraction"] = 0.431
+            pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0.207
+            pro.loc[(stf, "EU27", "Nuclear Plant"), "min-fraction"] = 0.75
             pro.loc[(stf, "EU27", "Hydro (run-of-river)"), "min-fraction"] = 0
             pro.loc[(stf, "EU27", "Hydro (reservoir)"), "min-fraction"] = 0
-            pro.loc[(stf, "EU27", "Biomass Plant"), "min-fraction"] = 0.7
+            pro.loc[(stf, "EU27", "Biomass Plant"), "min-fraction"] = 0.513
 
     if "process_commodity" in data:
         proco = data["process_commodity"]
+
+        # get the 2024 subset
+        proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
+
+        # repeat 2024 values for all support_timeframes
         for stf in data["global_prop"].index.levels[0].tolist():
             mask = proco.index.get_level_values("support_timeframe") == stf
-            proco.loc[mask, "ratio-min"] = proco.loc[mask, "ratio"]
-            print("✅ proco - ratio-min updated from 2024–2050")
+            proco.loc[mask, ["ratio-min"]] = proco_2024["ratio"].values
+
+        print("✅ All support_timeframes set to 2024 ratio values")
 
     return data, data_urbsextensionv1
