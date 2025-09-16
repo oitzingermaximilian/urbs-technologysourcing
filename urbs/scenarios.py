@@ -1785,7 +1785,7 @@ def scenario_high_high_high(data, data_urbsextensionv1):
             2031: 81.3, 2032: 87.6, 2033: 93.9, 2034: 100.2, 2035: 106.5,
             2036: 112.8, 2037: 119.1, 2038: 125.4, 2039: 131.7, 2040: 138,
             2041: 228.5, 2042: 364.25, 2043: 466.0625, 2044: 500,
-            2045: 600, 2046: 750, 2047: 900, 2048: 1000, 2049: 1000, 2050: 1000
+            2045: 500, 2046: 500, 2047: 500, 2048: 500, 2049: 500, 2050: 500
         }
 
         fixed_co2_prices_tyndp = {
@@ -1817,12 +1817,65 @@ def scenario_high_high_high(data, data_urbsextensionv1):
             2049: 165.9,
             2050: 168.0
         }
-        co2_prices.update(fixed_co2_prices_tyndp)
+        co2_prices.update(fixed_co2_prices_seb)
         for stf in data["global_prop"].index.levels[0].tolist():
             # CO2 price update
             if stf in co2_prices:
                 co.loc[(stf, "EU27", "CO2", "Env"), "price"] = co2_prices[stf]
                 print(f"Year {stf}: CO2 price set to {co2_prices[stf]:.2f} €/t")
+    if "demand" in data:
+        demand = data["demand"]
+        print("✅ Demand Columns",demand.columns)
+
+        yearly_profile = [
+            207658333.3, 218766666.7, 229875000, 240983333.3,
+            252091666.7, 263208333.3, 255236445.9, 262008333.3,
+            268783333.3, 275558333.3, 282333333.3, 289108333.3,
+            295891666.7, 302666666.7, 309441666.7, 316216666.7,
+            294534045.3, 304233333.3, 313933333.3, 323633333.3,
+            333333333.3, 343033333.3, 352733333.3, 362433333.3,
+            372133333.3, 381858333.3, 338580792.8,
+        ]
+
+        yearly_profile_with_electrolyser = [
+            207658333.3,
+            218941666.7,
+            230225000,
+            241500000,
+            252775000,
+            264058333.3,
+            289000000,
+            308500000,
+            328000000,
+            347500000,
+            367000000,
+            386500000,
+            406000000,
+            425500000,
+            445000000,
+            464583333.3,
+            397916666.7,
+            423166666.7,
+            448416666.7,
+            473666666.7,
+            498916666.7,
+            524166666.7,
+            549416666.7,
+            574666666.7,
+            599916666.7,
+            610166666.7,
+            537083333.3
+        ]
+
+        years = range(2024, 2051)  # 2024–2050 inclusive
+        for year, per_timestep in zip(years, yearly_profile_with_electrolyser):
+            # update t = 1..12, leave t=0 untouched
+            #demand.loc[(float(year), slice(1, 12)), ("EU27", "Elec")] = per_timestep
+            print("hi")
+
+
+        #print("✅ Demand updated for EU27 Elec from 2024–2050")
+
     if "supim" in data:
         supim = data["supim"]
         for t in data["global_prop"].index.levels[0].tolist():
@@ -1845,5 +1898,15 @@ def scenario_high_high_high(data, data_urbsextensionv1):
                 key = (stf, location, tech)
                 if key in recyclingcost:
                     recyclingcost[key] = new_costs[tech]
+
+    if "process" in data:
+        pro = data["process"]
+        for stf in data["global_prop"].index.levels[0].tolist():
+            pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "cap-up"] = 0
+            pro.loc[(stf, "EU27", "Coal Plant CCUS"), "cap-up"] = 0
+            pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "cap-up"] = 0
+            pro.loc[(stf, "EU27", "Biomass Plant"), "inv-cost"] = 3487.6605 * 1000
+            pro.loc[(stf, "EU27", "Biomass Plant"), "var-cost"] = 2.2255
+
 
     return data, data_urbsextensionv1
