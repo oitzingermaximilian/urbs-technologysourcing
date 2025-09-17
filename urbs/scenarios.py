@@ -2028,9 +2028,9 @@ def scenario_high_high_high(data, data_urbsextensionv1):
         ]
 
         years = range(2024, 2051)  # 2024–2050 inclusive
-        for year, per_timestep in zip(years, yearly_profile_with_electrolyser):
+        for year, per_timestep in zip(years, yearly_profile):
             # update t = 1..12, leave t=0 untouched
-            # demand.loc[(float(year), slice(1, 12)), ("EU27", "Elec")] = per_timestep
+            demand.loc[(float(year), slice(1, 12)), ("EU27", "Elec")] = per_timestep
             print("hi")
 
         # print("✅ Demand updated for EU27 Elec from 2024–2050")
@@ -2061,25 +2061,33 @@ def scenario_high_high_high(data, data_urbsextensionv1):
     if "process" in data:
         pro = data["process"]
         for stf in data["global_prop"].index.levels[0].tolist():
-            pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "cap-up"] = 0
-            pro.loc[(stf, "EU27", "Coal Plant CCUS"), "cap-up"] = 0
-            pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "cap-up"] = 0
-            pro.loc[(stf, "EU27", "Biomass Plant"), "inv-cost"] = 3487.6605 * 1000
-            pro.loc[(stf, "EU27", "Biomass Plant"), "var-cost"] = 2.2255
 
-            # Min-fractions (capacity factors)
-            pro.loc[(stf, "EU27", "Coal Plant"), "min-fraction"] = 0.221
-            pro.loc[(stf, "EU27", "Lignite Plant"), "min-fraction"] = 0.431
-            pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0.207
-            pro.loc[(stf, "EU27", "Other non-res"), "min-fraction"] = 0
-            pro.loc[(stf, "EU27", "Oil Plant"), "min-fraction"] = 0.053
-            pro.loc[(stf, "EU27", "Coal Plant CCUS"), "min-fraction"] = 0.221
-            pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "min-fraction"] = 0.431
-            pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0.207
-            pro.loc[(stf, "EU27", "Nuclear Plant"), "min-fraction"] = 0.75
-            pro.loc[(stf, "EU27", "Hydro (run-of-river)"), "min-fraction"] = 0
-            pro.loc[(stf, "EU27", "Hydro (reservoir)"), "min-fraction"] = 0
-            pro.loc[(stf, "EU27", "Biomass Plant"), "min-fraction"] = 0.513
+            if stf >= 2029:
+                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Lignite Plant"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Coal Plant CCUS"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "cap-up"] = 0
+            else:
+                pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Coal Plant CCUS"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "cap-up"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "inv-cost"] = 3487.6605 * 1000
+                pro.loc[(stf, "EU27", "Biomass Plant"), "var-cost"] = 2.2255
+
+                # Min-fractions (capacity factors)
+                pro.loc[(stf, "EU27", "Coal Plant"), "min-fraction"] = 0.221
+                pro.loc[(stf, "EU27", "Lignite Plant"), "min-fraction"] = 0.431
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0.207
+                pro.loc[(stf, "EU27", "Other non-res"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Oil Plant"), "min-fraction"] = 0.053
+                pro.loc[(stf, "EU27", "Coal Plant CCUS"), "min-fraction"] = 0.221
+                pro.loc[(stf, "EU27", "Lignite Plant CCUS"), "min-fraction"] = 0.431
+                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0.207
+                pro.loc[(stf, "EU27", "Nuclear Plant"), "min-fraction"] = 0.75
+                pro.loc[(stf, "EU27", "Hydro (run-of-river)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Hydro (reservoir)"), "min-fraction"] = 0
+                pro.loc[(stf, "EU27", "Biomass Plant"), "min-fraction"] = 0.513
 
     if "process_commodity" in data:
         proco = data["process_commodity"]
