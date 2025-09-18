@@ -8,9 +8,8 @@ price_values = {
     "solarPV": {"min": 838.7, "avg": 1258.05, "high": 1677.4},
     "windon": {"min": 4673.4, "avg": 7010.1, "high": 9346.8},
     "windoff": {"min": 5563.4, "avg": 8345.15, "high": 11126.8},
-    "Batteries": {"min": 1344.3, "avg": 2016.45, "high": 2688.6},
+    "Batteries": {"min": 1344.3, "avg": 2016.45, "high": 2688.6},  # can be fixed if you want
 }
-
 
 def get_cost_combo(solar_lvl, wind_lvl, batt_lvl):
     return {
@@ -20,7 +19,6 @@ def get_cost_combo(solar_lvl, wind_lvl, batt_lvl):
         "Batteries": price_values["Batteries"][batt_lvl],
     }
 
-
 def generate_scenario_function(solar_lvl, wind_lvl, batt_lvl):
     func_name = f"scenario_{solar_lvl}_{wind_lvl}_{batt_lvl}"
     costs = get_cost_combo(solar_lvl, wind_lvl, batt_lvl)
@@ -29,53 +27,61 @@ def generate_scenario_function(solar_lvl, wind_lvl, batt_lvl):
     func = f"""
 def {func_name}(data, data_urbsextensionv1):
     import pandas as pd
-    # Process updates
-    if "process" in data:
-        pro = data["process"]
-        for stf in data["global_prop"].index.levels[0].tolist():
-            if stf == 2024:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "inst-cap"] = 20420
-                pro.loc[(stf, "EU27", "Coal Plant"), "inst-cap"] = 53560
-                pro.loc[(stf, "EU27", "Coal Lignite"), "inst-cap"] = 43590
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "inst-cap"] = 132230
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "inst-cap"] = 56670
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "min-fraction"] = 0
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 60000
-            else:
-                pro.loc[(stf, "EU27", "Biomass Plant"), "cap-up"] = 60000
-                pro.loc[(stf, "EU27", "Coal Plant"), "cap-up"] = 53560
-                pro.loc[(stf, "EU27", "Coal Lignite"), "cap-up"] = 43590
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "cap-up"] = 132230
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT)"), "min-fraction"] = 0
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT) LNG"), "min-fraction"] = 0
-                pro.loc[(stf, "EU27", "Gas Plant (CCGT) CCUS"), "min-fraction"] = 0
 
-    # Commodity updates
+    # ---------------- CO2 prices ----------------
     if "commodity" in data:
         co = data["commodity"]
-        base_value = 319200000
-        yearly_decrease_factor = 0.95948
-        for stf in data["global_prop"].index.levels[0].tolist():
-            if stf == 2024:
-                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value
-            else:
-                year_diff = stf - 2024
-                co.loc[(stf, "EU27", "Piped Gas", "Stock"), "max"] = base_value * (yearly_decrease_factor ** year_diff)
+        co2_prices = {{}}
+        for stf in range(2024, 2031):
+            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
 
-    # Process-commodity ratios
-    if "process-commodity" in data:
-        proco = data["process-commodity"]
-        for stf in data["global_prop"].index.levels[0].tolist():
-            proco.loc[(stf, "Gas Plant (CCGT)", "Piped Gas", "In"), "ratio"] = 1
-            proco.loc[(stf, "Gas Plant (CCGT)", "CO2", "Out"), "ratio"] = 0.205
-            proco.loc[(stf, "Gas Plant (CCGT) CCUS", "Piped Gas", "In"), "ratio"] = 1
-            proco.loc[(stf, "Gas Plant (CCGT) CCUS", "CO2", "Out"), "ratio"] = 0.0205
-            proco.loc[(stf, "Gas Plant (CCGT) LNG", "LNG", "In"), "ratio"] = 1
-            proco.loc[(stf, "Gas Plant (CCGT) LNG", "CO2", "Out"), "ratio"] = 0.231
+        fixed_co2_prices_tyndp = {{
+            2031: 115.9, 2032: 118.4, 2033: 120.9, 2034: 123.4, 2035: 125.9,
+            2036: 128.4, 2037: 130.9, 2038: 133.4, 2039: 135.9, 2040: 147.0,
+            2041: 149.1, 2042: 151.2, 2043: 153.3, 2044: 155.4, 2045: 157.5,
+            2046: 159.6, 2047: 161.7, 2048: 163.8, 2049: 165.9, 2050: 168.0
+        }}
+        co2_prices.update(fixed_co2_prices_tyndp)
 
-    # Recycling cost updates
+        for stf in data["global_prop"].index.levels[0].tolist():
+            if stf in co2_prices:
+                co.loc[(stf, "EU27", "CO2", "Env"), "price"] = co2_prices[stf]
+
+    # ---------------- Demand ----------------
+    if "demand" in data:
+        demand = data["demand"]
+        yearly_profile = [
+            207658333.3, 218766666.7, 229875000, 240983333.3, 252091666.7, 263208333.3,
+            255236445.9, 262008333.3, 268783333.3, 275558333.3, 282333333.3, 289108333.3,
+            295891666.7, 302666666.7, 309441666.7, 316216666.7, 294534045.3, 304233333.3,
+            313933333.3, 323633333.3, 333333333.3, 343033333.3, 352733333.3, 362433333.3,
+            372133333.3, 381858333.3, 338580792.8
+        ]
+        years = range(2024, 2051)
+        for year, per_timestep in zip(years, yearly_profile):
+            demand.loc[(float(year), slice(1, 12)), ("EU27", "Elec")] = per_timestep
+
+    # ---------------- SUPIM ----------------
+    if "supim" in data:
+        supim = data["supim"]
+        for t in data["global_prop"].index.levels[0].tolist():
+            if t > 0:
+                supim.loc[t, ("EU27", "Hydro")] = 0.3375
+
+    # ---------------- PROCESS ----------------
+    if "process" in data:
+        pro = data["process"]
+        # Copy all process logic from high_high_high scenario here
+
+    # ---------------- PROCESS_COMMODITY ----------------
+    if "process_commodity" in data:
+        proco = data["process_commodity"]
+        proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
+        for stf in data["global_prop"].index.levels[0].tolist():
+            mask = proco.index.get_level_values("support_timeframe") == stf
+            proco.loc[mask, ["ratio-min"]] = proco_2024["ratio"].values
+
+    # ---------------- RECYCLING COST ----------------
     if "recyclingcost_dict" in data_urbsextensionv1:
         recyclingcost = data_urbsextensionv1["recyclingcost_dict"]
         technologies = ["solarPV", "windon", "windoff", "Batteries"]
@@ -91,39 +97,34 @@ def {func_name}(data, data_urbsextensionv1):
 
     return data, data_urbsextensionv1
 """
-    return func
+    return func_name, func
 
 
-# Read existing scenario function names from scenarios.py
+# ---------------- WRITE ALL SCENARIOS ----------------
 scenarios_file = "scenarios.py"
+
 try:
     with open(scenarios_file, "r") as f:
         existing_code = f.read()
 except FileNotFoundError:
     existing_code = ""
 
-existing_scenarios = set(
-    re.findall(r"def (scenario_[a-z]+_[a-z]+_[a-z]+)\(", existing_code)
-)
-
-# Generate all scenario function names and code
-all_combos = list(itertools.product(price_levels, repeat=3))
-to_add = []
+all_combos = list(itertools.product(price_levels, repeat=3))  # 3 techs: solarPV, windon, windoff
+to_write = []
 scenario_list_entries = []
 
 for combo in all_combos:
-    name = f"scenario_{combo[0]}_{combo[1]}_{combo[2]}"
-    scenario_list_entries.append(f'    ("{name}", urbs.{name})')
-    if name not in existing_scenarios:
-        to_add.append(generate_scenario_function(*combo))
+    func_name, func_code = generate_scenario_function(*combo)
+    scenario_list_entries.append(f'    ("{func_name}", urbs.{func_name})')
+    if func_name not in existing_code:
+        to_write.append(func_code)
 
-# Append missing scenario functions to the file
-if to_add:
+if to_write:
     with open(scenarios_file, "a") as f:
-        for func in to_add:
+        for func in to_write:
             f.write(func)
 
-print("\nAdd this to your scenario list:")
+# Print scenario list
 print("scenarios = [")
 for entry in scenario_list_entries:
     print(entry + ",")
