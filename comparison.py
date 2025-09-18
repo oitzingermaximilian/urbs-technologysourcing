@@ -9,6 +9,19 @@ from scipy.spatial import ConvexHull
 import matplotlib.patches as mpatches
 import seaborn as sns
 
+# Define learning rate scenarios - updated with all your LRs including LR6
+LEARNING_RATES = {
+    "LR1": "1% Learning Rate",
+    "LR3_5": "3.5% Learning Rate",
+    "LR4": "4% Learning Rate",
+    "LR5": "5% Learning Rate",
+    "LR6": "6% Learning Rate",
+    "LR7": "7% Learning Rate",
+    "LR8": "8% Learning Rate",
+    "LR9": "9% Learning Rate",
+    "LR10": "10% Learning Rate",
+}
+
 def mwh_to_bcm(mwh):
     """
     Convert MWh to BCM using same basis as EU demand conversion in Sebs Paper:
