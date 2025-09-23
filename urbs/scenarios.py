@@ -1,4 +1,6 @@
 
+
+
 def scenario_min_min_min(data, data_urbsextensionv1):
     import pandas as pd
 
@@ -1971,6 +1973,30 @@ def scenario_high_high_high(data, data_urbsextensionv1):
             if stf in co2_prices:
                 co.loc[(stf, "EU27", "CO2", "Env"), "price"] = co2_prices[stf]
 
+        # Extract 2024 slice for "max" column
+        co_2024 = co.xs(2024, level="support_timeframe", drop_level=False)
+
+        # List of all support timeframes
+        stfs = data["global_prop"].index.levels[0].tolist()
+
+        for stf in stfs:
+            mask = co.index.get_level_values("support_timeframe") == stf
+
+            # Align 2024 "max" values to the current year slice
+            aligned_max = (
+                co_2024["max"]
+                .droplevel("support_timeframe")
+                .reindex(co.loc[mask].droplevel("support_timeframe").index)
+            )
+
+            # Assignment
+            co.loc[mask, "max"] = aligned_max.values
+
+            # Optional debug print
+            print(f"\n[COMMODITY MAX] Timeframe={stf}")
+            print("Target slice after update:")
+            print(co.loc[mask, "max"].head())
+
     # ---------------- Demand ----------------
     if "demand" in data:
         demand = data["demand"]
@@ -1995,15 +2021,59 @@ def scenario_high_high_high(data, data_urbsextensionv1):
     # ---------------- PROCESS ----------------
     if "process" in data:
         pro = data["process"]
-        # Copy all process logic from high_high_high scenario here
+        pro_2024 = pro.xs(2024, level="support_timeframe", drop_level=False)
+
+        for stf in data["global_prop"].index.levels[0]:
+            mask = pro.index.get_level_values("support_timeframe") == stf
+
+            # Align by dropping timeframe level
+            aligned = (
+                pro_2024["min-fraction"]
+                .droplevel("support_timeframe")
+                .reindex(pro.loc[mask].droplevel("support_timeframe").index)
+            )
+
+            # Debug info
+            print(f"\n[PROCESS] Timeframe={stf}")
+            print("Target slice before:")
+            print(pro.loc[mask, "min-fraction"].head())
+            print("Source aligned values:")
+            print(aligned.head())
+
+            # Assignment
+            pro.loc[mask, "min-fraction"] = aligned.values
+
+            print("Target slice after:")
+            print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
     if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-        for stf in data["global_prop"].index.levels[0].tolist():
+
+        for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-            proco.loc[mask, ["ratio-min"]] = proco_2024["ratio"].values
+
+            aligned = (
+                proco_2024["ratio"]
+                .droplevel("support_timeframe")
+                .reindex(proco.loc[mask].droplevel("support_timeframe").index)
+            )
+
+            # Debug info
+            print(f"\n[PROCESS_COMMODITY] Timeframe={stf}")
+            print("Target slice before:")
+            print(proco.loc[mask, "ratio-min"].head())
+            print("Source aligned values:")
+            print(aligned.head())
+
+            # Assignment
+            proco.loc[mask, "ratio-min"] = aligned.values
+
+            print("Target slice after:")
+            print(proco.loc[mask, "ratio-min"].head())
+            print("#"*60)
+            print(proco.loc[proco.index.get_level_values("Process") == "Nuclear Plant", ["ratio", "ratio-min"]])
 
     # ---------------- RECYCLING COST ----------------
     if "recyclingcost_dict" in data_urbsextensionv1:

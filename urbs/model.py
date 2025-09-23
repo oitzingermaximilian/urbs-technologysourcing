@@ -525,6 +525,7 @@ def create_model(
     #        rule=res_global_co2_limit_rule,
     #        doc='total co2 commodity output <= global.prop CO2 limit')
 
+
     # costs
     m.def_costs = pyomo.Constraint(
         m.cost_type, rule=def_costs_rule, doc="main cost function by cost type"
@@ -1272,3 +1273,10 @@ def minimum_stock_level_rule(m, stf, location, tech):
     )
 
     return lhs <= rhs
+
+##################################
+#Nuclear minimum 80% activity
+
+
+
+
