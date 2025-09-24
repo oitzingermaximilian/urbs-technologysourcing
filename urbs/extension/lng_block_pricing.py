@@ -1,5 +1,5 @@
 import pyomo.core as pyomo
-
+from .costs import discount_factor
 
 def apply_gas_block_pricing(m, data):
     """
@@ -86,7 +86,7 @@ def apply_gas_block_pricing(m, data):
         m.tm, m.stf, m.sit, m.com, m.com_type, rule=link_block_to_original_rule
     )
 
-    # 3) Yearly cost per block
+    # 3) Yearly cost per block with discount
     def yearly_cost_rule(m, stf):
         yearly_gas_cost = sum(
             m.block_prices[stf, blk]
@@ -95,11 +95,12 @@ def apply_gas_block_pricing(m, data):
             for sit in m.sit
             for blk in m.blocks
         )
-        return m.gas_cost[stf] == yearly_gas_cost
+        # Apply discount factor per year
+        return m.gas_cost[stf] == yearly_gas_cost * discount_factor(stf)
 
     m.yearly_cost_constraint = pyomo.Constraint(m.stf, rule=yearly_cost_rule)
 
-    # 4) Total cost across all years and blocks
+    # 4) Total discounted cost across all years
     def total_cost_rule(m):
         return m.gas_total_cost == sum(m.gas_cost[stf] for stf in m.stf)
 

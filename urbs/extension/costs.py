@@ -2,153 +2,193 @@ from abc import ABC, abstractmethod
 import pyomo.core as pyomo
 
 
+def calc_invcost_factor(dep_prd, wacc, discount=None, year_built=None, stf_min=None):
+    """
+    Annualized investment cost factor for a process.
+    - dep_prd: process lifetime (years)
+    - wacc: interest rate / WACC (e.g., 0.06)
+    - discount: discount rate for intertemporal planning (same for all processes)
+    - year_built: year process is built (required if discount is given)
+    - stf_min: first year in model (required if discount is given)
+    """
+    i = wacc
+    d = discount
+
+    if discount is None:
+        if i == 0:
+            return 1 / dep_prd
+        else:
+            return ( (1 + i) ** dep_prd * i ) / ( (1 + i) ** dep_prd - 1 )
+    elif discount == 0:
+        if i == 0:
+            return 1
+        else:
+            return dep_prd * ( (1 + i) ** dep_prd * i ) / ( (1 + i) ** dep_prd - 1 )
+    else:
+        if i == 0:
+            return ((1 + d) ** (1 - (year_built - stf_min)) * ((1 + d) ** dep_prd - 1)) / (dep_prd * d * (1 + d) ** dep_prd)
+        else:
+            return ((1 + d) ** (1 - (year_built - stf_min)) *
+                    (i * (1 + i) ** dep_prd * ((1 + d) ** dep_prd - 1))) / \
+                   (d * (1 + d) ** dep_prd * ((1 + i) ** dep_prd - 1))
+
+
+def calc_overpay_factor(dep_prd, wacc, discount, year_built, stf_min, stf_end):
+    """
+    Factor to account for the part of CAPEX beyond the model horizon.
+    - dep_prd: lifetime of process
+    - wacc: interest rate / WACC
+    - discount: discount rate
+    - year_built: year process is built
+    - stf_min: first year
+    - stf_end: last year of optimization horizon
+    """
+    op_time = (year_built + dep_prd) - stf_end - 1
+    i = wacc
+    d = discount
+
+    if d == 0:
+        if i == 0:
+            return op_time / dep_prd
+        else:
+            return op_time * ((1 + i) ** dep_prd * i) / ((1 + i) ** dep_prd - 1)
+    else:
+        if i == 0:
+            return ((1 + d) ** (1 - (year_built - stf_min)) * ((1 + d) ** op_time - 1)) / (dep_prd * d * (1 + d) ** dep_prd)
+        else:
+            return ((1 + d) ** (1 - (year_built - stf_min)) *
+                    (i * (1 + i) ** dep_prd * ((1 + d) ** op_time - 1))) / \
+                   (d * (1 + d) ** dep_prd * ((1 + i) ** dep_prd - 1))
+
+
+def calc_discount_factor(stf, discount, stf_min):
+    """
+    Discount factor for a payment in year stf.
+    - stf: year of payment
+    - discount: discount rate
+    - stf_min: first year in the model
+    """
+    return (1 + discount) ** (1 - (stf - stf_min))
+
+# -----------------------------
+# Hardcoded financial parameters
+# -----------------------------
+WACC = 0
+DISCOUNT = 0.03
+STF_MIN = 2024
+STF_END = 2050
+
+
+# -----------------------------
+# Wrapper functions
+# -----------------------------
+def invcost_factor(dep_prd, year_built):
+    """Annualized CAPEX factor for a process."""
+    return calc_invcost_factor(dep_prd, WACC, DISCOUNT, year_built, STF_MIN)
+
+def overpay_factor(dep_prd, year_built):
+    """Fraction of CAPEX beyond model horizon."""
+    return calc_overpay_factor(dep_prd, WACC, DISCOUNT, year_built, STF_MIN, STF_END)
+
+def discount_factor(stf):
+    """Discount factor for any O&M, variable or fuel cost in year stf."""
+    return calc_discount_factor(stf, DISCOUNT, STF_MIN)
+
 class AbstractConstraint(ABC):
     @abstractmethod
     def apply_rule(self, m, stf, location, tech):
         pass
 
 
+# -----------------------------
+# New DefCosts integrating CAPEX / OPEX
+# -----------------------------
 class DefCostsNew(AbstractConstraint):
     def apply_rule(self, m, cost_type_new):
-        if cost_type_new == "Importcost":
-            total_import_cost = sum(
-                (
-                    m.IMPORTCOST[stf, site, tech]
-                    * (
-                        m.capacity_ext_imported[stf, site, tech]
-                        + m.capacity_ext_stock_imported[stf, site, tech]
-                    )
-                )
-                + (
-                    m.capacity_ext_stock_imported[stf, site, tech]
-                    * m.logisticcost[site, tech]
-                )
-                + m.anti_dumping_measures[stf, site, tech]
-                for stf in m.stf
-                for site in m.location
-                for tech in m.tech
-            )
-            expr = m.costs_new[cost_type_new] == total_import_cost
-            return expr
+        total_cost = 0
+        for stf in m.stf:
+            for location in m.location:
+                for tech in m.tech:
+                    lifetime = m.l[location, tech]
 
-        elif cost_type_new == "Storagecost":
-            total_storage_cost = sum(
-                m.STORAGECOST[site, tech] * m.capacity_ext_stock[stf, site, tech]
-                for stf in m.stf
-                for site in m.location
-                for tech in m.tech
-            )
-            expr = m.costs_new[cost_type_new] == total_storage_cost
-            return expr
+                    if cost_type_new in ["Importcost", "Eu Cost Primary", "Eu Cost Secondary"]:
+                        # CAPEX: annualized with invcost_factor, subtract overpay
+                        if cost_type_new == "Importcost":
+                            base = m.IMPORTCOST[stf, location, tech] * (
+                                m.capacity_ext_imported[stf, location, tech]
+                                + m.capacity_ext_stock_imported[stf, location, tech]
+                            ) + m.capacity_ext_stock_imported[stf, location, tech] * m.logisticcost[location, tech] \
+                                + m.anti_dumping_measures[stf, location, tech]
+                        elif cost_type_new == "Eu Cost Primary":
+                            base = m.EU_primary_costs[stf, location, tech] * m.capacity_ext_euprimary[stf, location, tech]
+                        elif cost_type_new == "Eu Cost Secondary":
+                            base = (m.EU_secondary_costs[stf, location, tech] * m.capacity_ext_eusecondary[stf, location, tech]
+                                    + m.capacity_facility_eusecondary[stf, location, tech]
+                                    + m.cost_scrap[stf, location, tech]
+                                    - m.PRICEREDUCTION_CAP_DEP_INV[stf, location, tech])
 
-        elif cost_type_new == "Eu Cost Primary":
-            total_eu_cost_primary = sum(
-                m.EU_primary_costs[stf, site, tech]
-                * m.capacity_ext_euprimary[stf, site, tech]
-                for stf in m.stf
-                for site in m.location
-                for tech in m.tech
-            )
-            expr = m.costs_new[cost_type_new] == total_eu_cost_primary
-            return expr
+                        total_cost += base * invcost_factor(lifetime, stf) \
+                                      - base * overpay_factor(lifetime, stf)
 
-        elif cost_type_new == "Eu Cost Secondary":
-            # ✅ PROPERLY LINEARIZED: Use auxiliary variable to avoid bilinear terms
-            # Original: (EU_secondary_costs - price_reduction_per_unit) * capacity
-            # But price_reduction_per_unit = sum(P_sec * BD_sec) which is bilinear
-            # So we use: EU_secondary_costs * capacity - pricereduction_sec_investment
-            # where pricereduction_sec_investment = sum(P_sec * auxiliary_product_BD_q)
-            total_eu_cost_secondary = sum(
-                (
-                    # Linear: base cost times capacity
-                    m.EU_secondary_costs[stf, site, tech]
-                    * m.capacity_ext_eusecondary[stf, site, tech]
-                    + 1 * m.capacity_facility_eusecondary[stf, site, tech]
-                    + m.cost_scrap[stf, site, tech]
-                    # Subtract the linearized price reduction (total absolute reduction)
-                    - m.PRICEREDUCTION_CAP_DEP_INV[stf, site, tech]
-                )
-                for stf in m.stf
-                for site in m.location
-                for tech in m.tech
-            )
-            expr = m.costs_new[cost_type_new] == total_eu_cost_secondary
-            return expr
+                    elif cost_type_new in ["O_and_M", "Storagecost"]:
+                        # OPEX: discount factor
+                        if cost_type_new == "O_and_M":
+                            base = m.O_and_M_costs[stf, location, tech] * m.capacity_ext[stf, location, tech]
+                        elif cost_type_new == "Storagecost":
+                            base = m.STORAGECOST[location, tech] * m.capacity_ext_stock[stf, location, tech]
+                        total_cost += base * discount_factor(stf)
+                    else:
+                        raise NotImplementedError(f"Unknown cost type: {cost_type_new}")
 
-        elif cost_type_new == "O_and_M":
-            total_o_and_m_cost = sum(
-                (m.O_and_M_costs[stf, site, tech] * m.capacity_ext[stf, site, tech])
-                for stf in m.stf
-                for site in m.location
-                for tech in m.tech
-            )
-            expr = m.costs_new[cost_type_new] == total_o_and_m_cost
-            return expr
-        else:
-            raise NotImplementedError(f"Unknown cost type: {cost_type_new}")
+        return m.costs_new[cost_type_new] == total_cost
 
 
 class CalculateYearlyImportCost(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
-        import_cost_value = (
+        lifetime = m.l[location, tech]
+        base = (
             m.IMPORTCOST[stf, location, tech]
-            * (
-                m.capacity_ext_imported[stf, location, tech]
-                + m.capacity_ext_stock_imported[stf, location, tech]
-            )
-            + (
-                m.capacity_ext_stock_imported[stf, location, tech]
-                * m.logisticcost[location, tech]
-            )
+            * (m.capacity_ext_imported[stf, location, tech] + m.capacity_ext_stock_imported[stf, location, tech])
+            + m.capacity_ext_stock_imported[stf, location, tech] * m.logisticcost[location, tech]
             + m.anti_dumping_measures[stf, location, tech]
         )
-        expr = m.costs_ext_import[stf, location, tech] == import_cost_value
+        expr = m.costs_ext_import[stf, location, tech] == base * invcost_factor(lifetime, stf) \
+               - base * overpay_factor(lifetime, stf)
         return expr
-
 
 class CalculateYearlyStorageCost(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
-        storage_cost_value = (
-            m.STORAGECOST[location, tech] * m.capacity_ext_stock[stf, location, tech]
-        )
-        expr = m.costs_ext_storage[stf, location, tech] == storage_cost_value
+        base = m.STORAGECOST[location, tech] * m.capacity_ext_stock[stf, location, tech]
+        expr = m.costs_ext_storage[stf, location, tech] == base * discount_factor(stf)
         return expr
-
 
 class CalculateYearlyEUPrimary(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
-        eu_primary_cost_value = (
-            m.EU_primary_costs[stf, location, tech]
-            * m.capacity_ext_euprimary[stf, location, tech]
-        )
-        expr = m.costs_EU_primary[stf, location, tech] == eu_primary_cost_value
+        lifetime = m.l[location, tech]
+        base = m.EU_primary_costs[stf, location, tech] * m.capacity_ext_euprimary[stf, location, tech]
+        expr = m.costs_EU_primary[stf, location, tech] == base * invcost_factor(lifetime, stf) \
+               - base * overpay_factor(lifetime, stf)
         return expr
-
 
 class CalculateYearlyEUSecondary(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
-        # ✅ PROPERLY LINEARIZED: Use the linearized price reduction variable
-        # Original bilinear: (EU_secondary_costs - sum(P_sec * BD_sec)) * capacity
-        # Linearized: EU_secondary_costs * capacity - pricereduction_sec_investment
-        eu_secondary_cost_value = (
-            # Linear: base cost times capacity
-            m.EU_secondary_costs[stf, location, tech]
-            * m.capacity_ext_eusecondary[stf, location, tech]
-            + 1 * m.capacity_facility_eusecondary[stf, location, tech]
+        lifetime = m.l[location, tech]
+        base = (
+            m.EU_secondary_costs[stf, location, tech] * m.capacity_ext_eusecondary[stf, location, tech]
+            + m.capacity_facility_eusecondary[stf, location, tech]
             + m.cost_scrap[stf, location, tech]
-            # Subtract the linearized price reduction (total absolute reduction)
             - m.PRICEREDUCTION_CAP_DEP_INV[stf, location, tech]
         )
-        expr = m.costs_EU_secondary[stf, location, tech] == eu_secondary_cost_value
+        expr = m.costs_EU_secondary[stf, location, tech] == base * invcost_factor(lifetime, stf) \
+               - base * overpay_factor(lifetime, stf)
         return expr
 
 class CalculateYearlyOMCost(AbstractConstraint):
     def apply_rule(self, m, stf, location, tech):
-        o_and_m_cost_value = (
-            m.O_and_M_costs[stf, location, tech] * m.capacity_ext[stf, location, tech]
-        )
-        expr = m.costs_O_and_M[stf, location, tech] == o_and_m_cost_value
+        base = m.O_and_M_costs[stf, location, tech] * m.capacity_ext[stf, location, tech]
+        expr = m.costs_O_and_M[stf, location, tech] == base * discount_factor(stf)
         return expr
+
 
 def apply_costs_constraints(m):
     constraints = [

@@ -2021,6 +2021,11 @@ def scenario_high_high_high(data, data_urbsextensionv1):
     # ---------------- PROCESS ----------------
     if "process" in data:
         pro = data["process"]
+
+        # ------------------ FIX ------------------
+        # Set WACC = 0 for all processes and all years
+        pro["WACC"] = 0
+
         pro_2024 = pro.xs(2024, level="support_timeframe", drop_level=False)
 
         for stf in data["global_prop"].index.levels[0]:
@@ -2042,7 +2047,6 @@ def scenario_high_high_high(data, data_urbsextensionv1):
 
             # Assignment
             pro.loc[mask, "min-fraction"] = aligned.values
-
             print("Target slice after:")
             print(pro.loc[mask, "min-fraction"].head())
 

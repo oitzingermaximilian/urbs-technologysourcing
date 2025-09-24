@@ -14,7 +14,7 @@ SCENARIOS = {
 }
 ROLLING_HORIZON = "rolling_2024_to_2050"
 YEARS = list(range(2024, 2041))
-SCENARIO_FILE = "scenario_high_high_high.xlsx"
+SCENARIO_FILE = "costsnew.xlsx"
 LINE_COLORS = {
     "With NZIA": "seagreen",
     "Without NZIA": "darkred"

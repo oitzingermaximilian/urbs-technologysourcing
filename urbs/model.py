@@ -395,7 +395,7 @@ def create_model(
 
     apply_gas_block_pricing(m, data_urbsextensionv1)
 
-    apply_scenario_constraints(m)
+    #apply_scenario_constraints(m)
 
     apply_stockpiling_constraints(m)
 
@@ -985,7 +985,7 @@ def def_costs_rule(m, cost_type):
                 * m.process_dict["overpay-factor"][p]
                 for p in m.pro_tuples
             )
-            # print('Invest Cost',cost)
+            #print('Invest Cost',cost)
         if m.mode["tra"]:
             # transmission_cost is defined in transmission.py
             cost += transmission_cost(m, cost_type)
