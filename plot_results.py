@@ -463,7 +463,7 @@ BASE_FILE = BASE_SCENARIO
 plot_scrap_with_nzia_range_from_dict(
     base_file=BASE_SCENARIO,
     nzia_scenarios_dict=NZIA_SCENARIOS,
-    sheet_name="Total_Scrap",     output_dir="plots/scrap_range",
+    sheet_name="scrap",     output_dir="plots/scrap_range",
     convert_to_mt=True,     include_mean=True
  )
 
