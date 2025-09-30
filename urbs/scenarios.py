@@ -1,38 +1,36 @@
-import pandas as pd
-
 
 def scenario_min_min_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -125,20 +123,17 @@ def scenario_min_min_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -164,34 +159,34 @@ def scenario_min_min_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -284,20 +279,17 @@ def scenario_min_min_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -323,34 +315,34 @@ def scenario_min_min_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -443,20 +435,17 @@ def scenario_min_min_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -482,34 +471,34 @@ def scenario_min_avg_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -602,20 +591,17 @@ def scenario_min_avg_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -641,34 +627,34 @@ def scenario_min_avg_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -761,20 +747,17 @@ def scenario_min_avg_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -800,34 +783,34 @@ def scenario_min_avg_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -920,20 +903,17 @@ def scenario_min_avg_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -959,34 +939,34 @@ def scenario_min_high_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -1079,20 +1059,17 @@ def scenario_min_high_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -1118,34 +1095,34 @@ def scenario_min_high_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -1238,20 +1215,17 @@ def scenario_min_high_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -1277,34 +1251,34 @@ def scenario_min_high_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -1397,20 +1371,17 @@ def scenario_min_high_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -1436,34 +1407,34 @@ def scenario_avg_min_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -1556,20 +1527,17 @@ def scenario_avg_min_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -1595,34 +1563,34 @@ def scenario_avg_min_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -1715,20 +1683,17 @@ def scenario_avg_min_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -1754,34 +1719,34 @@ def scenario_avg_min_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -1874,20 +1839,17 @@ def scenario_avg_min_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -1913,34 +1875,34 @@ def scenario_avg_avg_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2033,20 +1995,17 @@ def scenario_avg_avg_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -2072,34 +2031,34 @@ def scenario_avg_avg_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2192,20 +2151,17 @@ def scenario_avg_avg_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -2231,34 +2187,34 @@ def scenario_avg_avg_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2351,20 +2307,17 @@ def scenario_avg_avg_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -2390,34 +2343,34 @@ def scenario_avg_high_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2510,20 +2463,17 @@ def scenario_avg_high_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -2549,34 +2499,34 @@ def scenario_avg_high_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2669,20 +2619,17 @@ def scenario_avg_high_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -2708,34 +2655,34 @@ def scenario_avg_high_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2828,20 +2775,17 @@ def scenario_avg_high_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -2867,34 +2811,34 @@ def scenario_high_min_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -2987,20 +2931,17 @@ def scenario_high_min_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3026,34 +2967,34 @@ def scenario_high_min_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -3146,20 +3087,17 @@ def scenario_high_min_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3185,34 +3123,34 @@ def scenario_high_min_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -3305,20 +3243,17 @@ def scenario_high_min_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3344,34 +3279,34 @@ def scenario_high_avg_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -3464,20 +3399,17 @@ def scenario_high_avg_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3503,34 +3435,34 @@ def scenario_high_avg_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -3623,20 +3555,17 @@ def scenario_high_avg_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3662,34 +3591,34 @@ def scenario_high_avg_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -3782,20 +3711,17 @@ def scenario_high_avg_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3821,34 +3747,34 @@ def scenario_high_high_min(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -3941,20 +3867,17 @@ def scenario_high_high_min(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -3980,34 +3903,34 @@ def scenario_high_high_avg(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -4100,20 +4023,17 @@ def scenario_high_high_avg(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
@@ -4139,34 +4059,34 @@ def scenario_high_high_high(data, data_urbsextensionv1):
 
     # ---------------- CO2 prices ----------------
         if "commodity" in data:
-        co = data["commodity"]
-        co2_prices = {}
-        for stf in range(2024, 2031):
-            co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
-
-        fixed_co2_prices_tyndp = {
-            2031: 115.9,
-            2032: 118.4,
-            2033: 120.9,
-            2034: 123.4,
-            2035: 125.9,
-            2036: 128.4,
-            2037: 130.9,
-            2038: 133.4,
-            2039: 135.9,
-            2040: 147.0,
-            2041: 149.1,
-            2042: 151.2,
-            2043: 153.3,
-            2044: 155.4,
-            2045: 157.5,
-            2046: 159.6,
-            2047: 161.7,
-            2048: 163.8,
-            2049: 165.9,
-            2050: 168.0,
-        }
-        co2_prices.update(fixed_co2_prices_tyndp)
+            co = data["commodity"]
+            co2_prices = {}
+            for stf in range(2024, 2031):
+                co2_prices[stf] = 65 + (stf - 2024) * (75 - 65) / (2030 - 2024)
+    
+            fixed_co2_prices_tyndp = {
+                2031: 115.9,
+                2032: 118.4,
+                2033: 120.9,
+                2034: 123.4,
+                2035: 125.9,
+                2036: 128.4,
+                2037: 130.9,
+                2038: 133.4,
+                2039: 135.9,
+                2040: 147.0,
+                2041: 149.1,
+                2042: 151.2,
+                2043: 153.3,
+                2044: 155.4,
+                2045: 157.5,
+                2046: 159.6,
+                2047: 161.7,
+                2048: 163.8,
+                2049: 165.9,
+                2050: 168.0,
+            }
+            co2_prices.update(fixed_co2_prices_tyndp)
 
         for stf in data["global_prop"].index.levels[0].tolist():
             if stf in co2_prices:
@@ -4259,20 +4179,17 @@ def scenario_high_high_high(data, data_urbsextensionv1):
             print(pro.loc[mask, "min-fraction"].head())
 
     # ---------------- PROCESS_COMMODITY ----------------
-        if "process_commodity" in data:
+    if "process_commodity" in data:
         proco = data["process_commodity"]
         proco_2024 = proco.xs(2024, level="support_timeframe", drop_level=False)
-
+    
         for stf in data["global_prop"].index.levels[0]:
             mask = proco.index.get_level_values("support_timeframe") == stf
-
             aligned = (
                 proco_2024["ratio"]
                 .droplevel("support_timeframe")
                 .reindex(proco.loc[mask].droplevel("support_timeframe").index)
             )
-            
-            # Assignment
             proco.loc[mask, "ratio-min"] = aligned.values
 
     # ---------------- RECYCLING COST ----------------
