@@ -455,21 +455,71 @@ def plot_lng_spaghetti(base_file, nzia_files, years=range(2024, 2041), output_fi
     plt.show()
     print(f"✔ LNG spaghetti plot saved → {output_file}")
 
+def plot_system_costs_boxplot(base_file, nzia_files, years=range(2024, 2041), output_file="system_costs_boxplot.png"):
+    """
+    Plot total system costs over time:
+    - Boxplots for NZIA scenarios
+    - Base case as a line
+    """
+    # Load base scenario
+    base_df = pd.read_excel(base_file, sheet_name="extension_cost")
+    base_total = base_df.groupby("stf")["Total_Cost"].sum().reindex(years)
 
+    # Collect NZIA totals
+    nzia_totals = []
+    for file in nzia_files:
+        df = pd.read_excel(file, sheet_name="extension_cost")
+        yearly_total = df.groupby("stf")["Total_Cost"].sum().reindex(years)
+        nzia_totals.append(yearly_total.values)
+
+    # Convert to DataFrame for plotting
+    nzia_df = pd.DataFrame(nzia_totals, columns=years)
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.boxplot(nzia_df.values, positions=years, widths=0.6, patch_artist=True,
+               boxprops=dict(facecolor="lightblue", color="blue"),
+               medianprops=dict(color="darkblue"),
+               whiskerprops=dict(color="blue"),
+               capprops=dict(color="blue"),
+               flierprops=dict(markerfacecolor='blue', marker='o', alpha=0.5))
+
+    # Base case line
+    ax.plot(years, base_total.values, color="red", linewidth=2.5, label="Base Scenario")
+
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Total System Cost [€]")
+    ax.set_title("System Cost Comparison: NZIA Scenarios vs Base Case")
+    ax.legend()
+    ax.grid(True, linestyle="--", alpha=0.3)
+    plt.tight_layout()
+
+    # Save
+    output_path = Path(output_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path, dpi=300)
+    plt.show()
+    print(f"✔ System costs boxplot saved → {output_path}")
 
 nzia_files = list(NZIA_SCENARIOS.values())
 BASE_FILE = BASE_SCENARIO
 #plot_base_scenario(base_file=BASE_SCENARIO)
-plot_scrap_with_nzia_range_from_dict(
-    base_file=BASE_SCENARIO,
-    nzia_scenarios_dict=NZIA_SCENARIOS,
-    sheet_name="scrap",     output_dir="plots/scrap_range",
-    convert_to_mt=True,     include_mean=True
- )
+#plot_scrap_with_nzia_range_from_dict(
+#    base_file=BASE_SCENARIO,
+#    nzia_scenarios_dict=NZIA_SCENARIOS,
+#    sheet_name="scrap",     output_dir="plots/scrap_range",
+#    convert_to_mt=True,     include_mean=True
+# )
 
-plot_lng_spaghetti(
+#plot_lng_spaghetti(
+#    base_file=BASE_FILE,
+#    nzia_files=list(NZIA_SCENARIOS.values()),
+#    years=range(2024, 2041),
+#    output_file="scenario_comparison/lng_spaghetti.png"
+#)
+
+plot_system_costs_boxplot(
     base_file=BASE_FILE,
-    nzia_files=list(NZIA_SCENARIOS.values()),
-    years=range(2024, 2041),
-    output_file="scenario_comparison/lng_spaghetti.png"
+    nzia_files=nzia_files,
+    output_file="plots/system_costs_boxplot.png"
 )
