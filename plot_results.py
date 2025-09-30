@@ -350,8 +350,8 @@ def plot_lng_spaghetti(base_file, nzia_files, years=range(2024, 2041), output_fi
 
 
 nzia_files = list(NZIA_SCENARIOS.values())
-
-plot_base_scenario(base_file=BASE_SCENARIO)
+BASE_FILE = BASE_SCENARIO
+#plot_base_scenario(base_file=BASE_SCENARIO)
 plot_scrap_with_nzia_range(
     base_file=BASE_SCENARIO,
     nzia_files=nzia_files
