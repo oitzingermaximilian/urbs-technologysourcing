@@ -552,6 +552,56 @@ def plot_system_costs_total_boxplot(
     plt.show()
     print(f"✔ Boxplot saved → {output_file}")
 
+def plot_system_costs_cumulative_boxplot(base_file, nzia_files, years, output_file):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from pathlib import Path
+
+    # --- Base scenario ---
+    df_base = pd.read_excel(base_file, sheet_name="extension_cost")
+    base_yearly = df_base.groupby("stf")["Total_Cost"].sum()
+    base_cum = base_yearly.cumsum() / 1e9  # convert to billion €
+
+    # --- NZIA scenarios ---
+    nzia_cum_list = []
+    for file in nzia_files:
+        df = pd.read_excel(file, sheet_name="extension_cost")
+        yearly_total = df.groupby("stf")["Total_Cost"].sum()
+        cum = yearly_total.cumsum() / 1e9  # cumulative in billion €
+        nzia_cum_list.append(cum)
+
+    # --- Prepare boxplot data for selected years ---
+    box_data = []
+    for year in years:
+        year_vals = [cum.get(year, np.nan) for cum in nzia_cum_list]
+        box_data.append(year_vals)
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.boxplot(box_data, positions=range(len(years)), widths=0.6, patch_artist=True,
+               boxprops=dict(facecolor='lightblue', color='blue'),
+               medianprops=dict(color='blue'))
+
+    # Plot base scenario cumulative values at selected years
+    base_vals = [base_cum.get(y, np.nan) for y in years]
+    ax.plot(range(len(years)), base_vals, color='red', marker='o', linewidth=2, label='Base Scenario')
+
+    ax.set_xticks(range(len(years)))
+    ax.set_xticklabels([str(y) for y in years])
+    ax.set_ylabel("Cumulative System Cost [Billion €]")
+    ax.set_xlabel("Year")
+    ax.set_title("Cumulative System Costs with NZIA Scenarios")
+    ax.legend()
+    ax.grid(True, linestyle="--", alpha=0.3)
+    plt.tight_layout()
+
+    output_file = Path(output_file)
+    output_file.parent.mkdir(exist_ok=True, parents=True)
+    plt.savefig(output_file, dpi=300)
+    plt.show()
+    print(f"✔ Plot saved → {output_file}")
+
 
 nzia_files = list(NZIA_SCENARIOS.values())
 BASE_FILE = BASE_SCENARIO
@@ -576,9 +626,9 @@ BASE_FILE = BASE_SCENARIO
 #    output_file="plots/system_costs_boxplot.png"
 #)
 
-plot_system_costs_total_boxplot(
+plot_system_costs_cumulative_boxplot(
     base_file=BASE_FILE,
     nzia_files=nzia_files,
     years=[2025, 2030, 2035, 2040],  # select the years you want to visualize
-    output_file="figures/system_costs_total_boxplot.png"
+    output_file="figures/system_costs_cumulative_boxplot.png"
 )
