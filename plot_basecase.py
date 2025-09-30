@@ -370,33 +370,6 @@ def plot_generation_share_by_year_100pct(
     print(f"✔ Stacked share chart saved → {output_file}")
 
 
-def plot_lng_deviation_from_base(base_label="Without NZIA"):
-    base_totals = load_lng_data(SCENARIOS[base_label])
-    base_series = pd.Series([base_totals[y] for y in YEARS], index=YEARS)
-
-    plt.figure(figsize=(6, 4))
-    for label, folder in SCENARIOS.items():
-        if label == base_label:
-            continue  # skip the base
-        totals = load_lng_data(folder)
-        series = pd.Series([totals[y] for y in YEARS], index=YEARS)
-        deviation = (series - base_series) / base_series * 100  # % deviation
-        plt.bar(series.index, deviation, alpha=0.7, label=f"{label} vs {base_label}")
-
-    plt.xlabel("Year")
-    plt.ylabel("Deviation [%]")
-    plt.title(f"LNG Demand deviation from '{base_label}'")
-    plt.xticks(YEARS[::2])  # every 2 years or adjust
-    plt.grid(True, linestyle="--", alpha=0.3)
-    plt.legend()
-    plt.tight_layout()
-
-    output_dir = Path("scenario_comparison")
-    output_dir.mkdir(exist_ok=True)
-    out_file = output_dir / "lng_deviation_from_base.png"
-    plt.savefig(out_file, dpi=300)
-    plt.show()
-    print(f"✔ LNG deviation plot saved → {out_file}")
 
 def plot_fossil_fuels_stack(
     file_path,
