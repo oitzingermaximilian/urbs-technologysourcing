@@ -1,8 +1,8 @@
+from matplotlib import ticker as mticker
+from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import ticker as mticker
 import numpy as np
-from pathlib import Path
 
 # -------------------------------
 # Paths
@@ -225,66 +225,174 @@ def plot_base_scenario(
     plt.show()
     print(f"✔ Base scenario 100% stacked bar chart saved → {output_path}")
 
-def plot_scrap_with_nzia_range(base_file: Path, nzia_files: list, sheet_name: str = "scrap"):
+def plot_scrap_with_nzia_range_from_dict(
+    base_file: Path,
+    nzia_scenarios_dict: dict,
+    sheet_name: str = "Total_Scrap",
+    years: list = list(range(2024, 2041)),
+    output_dir: str = "plots/scrap_range",
+    convert_to_mt: bool = True,
+    include_mean: bool = True,
+    lr_filter: str = None,
+    scenario_filter: str = None,
+):
     """
-    Plot scrap over time by technology:
-    - Base scenario as a solid line
-    - NZIA scenarios as a shaded min-max range per technology
+    For each technology:
+      - plot base scenario line (base_file)
+      - plot NZIA min-max shaded band across provided NZIA files (from nzia_scenarios_dict)
+      - optionally plot NZIA mean dashed line
 
-    Args:
-        base_file: Path to base scenario Excel
-        nzia_files: List of Paths to NZIA scenario Excel files
-        sheet_name: Name of sheet containing scrap data
+    nzia_scenarios_dict: dict with keys (lr, scenario) and values Path objects pointing to .xlsx files
     """
-    # --- Load base scenario ---
-    df_base = pd.read_excel(base_file, sheet_name=sheet_name)
-    df_base["capacity_scrap_total"] = df_base["capacity_scrap_total"] / 1e6  # convert to Mt
-    years = list(range(2024, 2041))
-    techs = df_base["tech"].unique()
 
-    # --- Load NZIA scenarios ---
-    nzia_data = {tech: [] for tech in techs}
+    years = list(years)
+    min_year, max_year = min(years), max(years)
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    # helper: find which column names exist in a dataframe
+    def _find_col(df, candidates):
+        for c in candidates:
+            if c in df.columns:
+                return c
+        return None
+
+    # helper: load a file and return a pivot DataFrame (index=years, columns=techs) aggregated by year,tech
+    def _load_and_pivot(file_path):
+        try:
+            df = pd.read_excel(file_path, sheet_name=sheet_name)
+        except Exception as e:
+            print(f"⚠ could not read {file_path}: {e}")
+            return pd.DataFrame(index=years)  # empty
+
+        # guess column names
+        year_col = _find_col(df, ["stf", "Stf", "year", "Year"])
+        tech_col = _find_col(df, ["tech", "Tech", "key_1", "key1", "technology", "Process"])
+        value_col = _find_col(df, ["capacity_scrap_total", "value", "capacity_scrap", "capacity_scrap_tonnes"])
+
+        if year_col is None or tech_col is None or value_col is None:
+            print(f"⚠ Missing expected columns in {file_path}. Found: {df.columns.tolist()}")
+            return pd.DataFrame(index=years)
+
+        # forward-fill years because your sheet shows a single year cell then blank rows
+        df[year_col] = df[year_col].ffill()
+
+        # convert year to numeric (coerce bad values -> NaN) and drop non-numeric
+        df[year_col] = pd.to_numeric(df[year_col], errors="coerce")
+        df = df.dropna(subset=[year_col])
+        df[year_col] = df[year_col].astype(int)
+
+        # filter by year range
+        df = df[(df[year_col] >= min_year) & (df[year_col] <= max_year)]
+
+        # convert values to numeric and aggregate duplicates by summing
+        df[value_col] = pd.to_numeric(df[value_col], errors="coerce").fillna(0)
+
+        grouped = df.groupby([year_col, tech_col], as_index=True)[value_col].sum().reset_index()
+
+        # pivot so index = year, columns = tech, values = aggregated scrap
+        pivot = grouped.pivot(index=year_col, columns=tech_col, values=value_col).fillna(0)
+
+        # reindex to ensure all years are present and sorted
+        pivot = pivot.reindex(years, fill_value=0)
+
+        # optionally convert to Mt (from tonnes)
+        if convert_to_mt:
+            pivot = pivot / 1e6
+
+        return pivot
+
+    # --- load base pivot ---
+    base_pivot = _load_and_pivot(base_file)
+    if base_pivot.empty:
+        print(f"⚠ Base file produced no data: {base_file}")
+
+    # --- collect NZIA files (respect optional filters) ---
+    nzia_files = []
+    for (lr, scenario), path in nzia_scenarios_dict.items():
+        if lr_filter is not None and lr != lr_filter:
+            continue
+        if scenario_filter is not None and scenario != scenario_filter:
+            continue
+        if not Path(path).exists():
+            # warn but keep going
+            print(f"⚠ NZIA file not found, skipping: {path}")
+            continue
+        nzia_files.append(Path(path))
+
+    if not nzia_files:
+        print("⚠ No NZIA files found after applying filters — aborting.")
+        return
+
+    # --- load all NZIA pivots and build per-tech series lists ---
+    # We'll make a union of techs across base and all nzia files
+    tech_set = set(base_pivot.columns.tolist())
+    nzia_pivots = []
     for f in nzia_files:
-        df = pd.read_excel(f, sheet_name=sheet_name)
-        df["capacity_scrap_total"] = df["capacity_scrap_total"] / 1e6  # Mt
-        for tech in techs:
-            tech_df = df[df["tech"] == tech].set_index("stf").sort_index()
-            series = tech_df["capacity_scrap_total"].reindex(years).fillna(0)
-            nzia_data[tech].append(series)
+        p = _load_and_pivot(f)
+        nzia_pivots.append(p)
+        tech_set.update(p.columns.tolist())
 
-    # --- Plot per technology ---
+    techs = sorted(list(tech_set))
+
+    # For each tech, collect a DataFrame where columns are scenarios and index=years
     for tech in techs:
-        base_series = df_base[df_base["tech"] == tech].set_index("stf").reindex(years)["capacity_scrap_total"].fillna(0)
-        if base_series.sum() == 0:
-            print(f"⚠ No data for technology '{tech}', skipping.")
+        # base series (if missing -> zeros)
+        if tech in base_pivot.columns:
+            base_series = base_pivot[tech].reindex(years).fillna(0)
+        else:
+            base_series = pd.Series(0.0, index=years)
+
+        # collect NZIA series for this tech
+        nzia_series_list = []
+        for p in nzia_pivots:
+            if tech in p.columns:
+                s = p[tech].reindex(years).fillna(0)
+            else:
+                s = pd.Series(0.0, index=years)
+            nzia_series_list.append(s)
+
+        if len(nzia_series_list) == 0:
+            print(f"⚠ No NZIA data for tech '{tech}', skipping.")
             continue
 
-        # Compute min/max range across NZIA scenarios
-        nzia_df = pd.DataFrame(nzia_data[tech]).T  # index = years, columns = scenarios
-        min_series = nzia_df.min(axis=1)
-        max_series = nzia_df.max(axis=1)
+        nzia_df = pd.DataFrame(nzia_series_list).T  # index=years, columns=scenarios
 
-        # Plot
+        # compute min, max, mean across NZIA scenarios
+        nz_min = nzia_df.min(axis=1)
+        nz_max = nzia_df.max(axis=1)
+        nz_mean = nzia_df.mean(axis=1)
+
+        # skip if everything zero
+        if (base_series.sum() == 0) and (nz_max.max() == 0):
+            print(f"⚠ All-zero for tech '{tech}', skipping.")
+            continue
+
+        # --- Plot ---
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(years, base_series.values, color="darkred", linewidth=2, label="Base Scenario")
-        ax.fill_between(years, min_series.values, max_series.values, color="seagreen", alpha=0.3, label="NZIA Range")
+        ax.plot(years, base_series.values, color="darkred", linewidth=2.2, label="Base scenario")
+        ax.fill_between(years, nz_min.values, nz_max.values, color="seagreen", alpha=0.25, label="NZIA min–max range")
+        if include_mean:
+            ax.plot(years, nz_mean.values, color="seagreen", linestyle="--", linewidth=1.5, label="NZIA mean")
 
-        ax.set_title(f"Scrap volume – {tech}")
+        ax.set_title(f"Scrap volume — {tech}")
         ax.set_xlabel("Year")
-        ax.set_ylabel("Scrap [Mt]")
-        ax.set_xlim(2023, 2041)
+        ax.set_ylabel("Scrap [Mt]" if convert_to_mt else "Scrap [tonnes]")
+        ax.set_xlim(min_year - 1, max_year + 1)
         ax.set_xticks([2025, 2030, 2035, 2040])
-        ax.set_ylim(0, max(max_series.max(), base_series.max()) * 1.1)
+        # safe y-limit
+        ymax = max(base_series.max(), nz_max.max())
+        ax.set_ylim(0, ymax * 1.1 if ymax > 0 else 1)
         ax.grid(True, linestyle="--", alpha=0.3)
         ax.legend()
 
         plt.tight_layout()
-        output_dir = Path("plots/scrap_range")
-        output_dir.mkdir(exist_ok=True, parents=True)
-        fig.savefig(output_dir / f"scrap_range_{tech}.png", dpi=300)
+        safe_tech = str(tech).replace("/", "_").replace(" ", "_")
+        fname = out_path / f"scrap_range_{safe_tech}.png"
+        fig.savefig(fname, dpi=300)
         plt.close(fig)
 
-        print(f"✔ Plot saved for: {tech} → scrap_range_{tech}.png")
+        print(f"✔ Saved: {fname}")
 
 def plot_lng_spaghetti(base_file, nzia_files, years=range(2024, 2041), output_file="lng_spaghetti.png"):
     """
@@ -352,10 +460,12 @@ def plot_lng_spaghetti(base_file, nzia_files, years=range(2024, 2041), output_fi
 nzia_files = list(NZIA_SCENARIOS.values())
 BASE_FILE = BASE_SCENARIO
 #plot_base_scenario(base_file=BASE_SCENARIO)
-plot_scrap_with_nzia_range(
+plot_scrap_with_nzia_range_from_dict(
     base_file=BASE_SCENARIO,
-    nzia_files=nzia_files
-)
+    nzia_scenarios_dict=NZIA_SCENARIOS,
+    sheet_name="Total_Scrap",     output_dir="plots/scrap_range",
+    convert_to_mt=True,     include_mean=True
+ )
 
 plot_lng_spaghetti(
     base_file=BASE_FILE,
