@@ -501,6 +501,58 @@ def plot_system_costs_boxplot(base_file, nzia_files, years=range(2024, 2041), ou
     plt.show()
     print(f"✔ System costs boxplot saved → {output_path}")
 
+def plot_system_costs_total_boxplot(
+    base_file: Path,
+    nzia_files: list,
+    years=[2025, 2030, 2035, 2040],
+    output_file="system_costs_total_boxplot.png",
+):
+    """
+    Plot total system costs per scenario as boxplots for select years,
+    with the base scenario overlaid as a line.
+    """
+
+    # --- Load base scenario ---
+    df_base = pd.read_excel(base_file, sheet_name="extension_cost")
+    df_base_total = df_base.groupby("stf")["Total_Cost"].sum()
+    df_base_total = df_base_total.reindex(years)
+
+    # --- Load NZIA scenarios ---
+    nzia_totals = {y: [] for y in years}
+    for f in nzia_files:
+        df = pd.read_excel(f, sheet_name="extension_cost")
+        totals = df.groupby("stf")["Total_Cost"].sum()
+        for y in years:
+            nzia_totals[y].append(totals.get(y, np.nan))
+
+    # --- Prepare data for boxplots ---
+    data = [nzia_totals[y] for y in years]
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=(8, 5))
+    box = ax.boxplot(data, labels=years, patch_artist=True, showfliers=False)
+
+    # Color the boxes
+    for patch in box['boxes']:
+        patch.set_facecolor('#ADD8E6')  # light blue
+
+    # Overlay base scenario as red line
+    ax.plot(range(1, len(years)+1), df_base_total.values, color='red', marker='o', linewidth=2, label="Base scenario")
+
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Total System Costs")
+    ax.set_title("Total System Costs Comparison (NZIA vs Base)")
+    ax.grid(True, linestyle="--", alpha=0.3)
+    ax.legend()
+
+    plt.tight_layout()
+    output_file = Path(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_file, dpi=300)
+    plt.show()
+    print(f"✔ Boxplot saved → {output_file}")
+
+
 nzia_files = list(NZIA_SCENARIOS.values())
 BASE_FILE = BASE_SCENARIO
 #plot_base_scenario(base_file=BASE_SCENARIO)
@@ -518,8 +570,15 @@ BASE_FILE = BASE_SCENARIO
 #    output_file="scenario_comparison/lng_spaghetti.png"
 #)
 
-plot_system_costs_boxplot(
+#plot_system_costs_boxplot(
+#    base_file=BASE_FILE,
+#    nzia_files=nzia_files,
+#    output_file="plots/system_costs_boxplot.png"
+#)
+
+plot_system_costs_total_boxplot(
     base_file=BASE_FILE,
     nzia_files=nzia_files,
-    output_file="plots/system_costs_boxplot.png"
+    years=[2025, 2030, 2035, 2040],  # select the years you want to visualize
+    output_file="figures/system_costs_total_boxplot.png"
 )
