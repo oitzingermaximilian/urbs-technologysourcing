@@ -225,7 +225,7 @@ def plot_base_scenario(
     plt.show()
     print(f"✔ Base scenario 100% stacked bar chart saved → {output_path}")
 
-def plot_scrap_with_nzia_range(base_file: Path, nzia_files: list, sheet_name: str = "Total_Scrap"):
+def plot_scrap_with_nzia_range(base_file: Path, nzia_files: list, sheet_name: str = "scrap"):
     """
     Plot scrap over time by technology:
     - Base scenario as a solid line
@@ -238,23 +238,23 @@ def plot_scrap_with_nzia_range(base_file: Path, nzia_files: list, sheet_name: st
     """
     # --- Load base scenario ---
     df_base = pd.read_excel(base_file, sheet_name=sheet_name)
-    df_base["value"] = df_base["value"] / 1e6  # convert to Mt
+    df_base["capacity_scrap_total"] = df_base["capacity_scrap_total"] / 1e6  # convert to Mt
     years = list(range(2024, 2041))
-    techs = df_base["key_1"].unique()
+    techs = df_base["tech"].unique()
 
     # --- Load NZIA scenarios ---
     nzia_data = {tech: [] for tech in techs}
     for f in nzia_files:
         df = pd.read_excel(f, sheet_name=sheet_name)
-        df["value"] = df["value"] / 1e6  # Mt
+        df["capacity_scrap_total"] = df["capacity_scrap_total"] / 1e6  # Mt
         for tech in techs:
-            tech_df = df[df["key_1"] == tech].set_index("year").sort_index()
-            series = tech_df["value"].reindex(years).fillna(0)
+            tech_df = df[df["tech"] == tech].set_index("stf").sort_index()
+            series = tech_df["capacity_scrap_total"].reindex(years).fillna(0)
             nzia_data[tech].append(series)
 
     # --- Plot per technology ---
     for tech in techs:
-        base_series = df_base[df_base["key_1"] == tech].set_index("year").reindex(years)["value"].fillna(0)
+        base_series = df_base[df_base["tech"] == tech].set_index("stf").reindex(years)["capacity_scrap_total"].fillna(0)
         if base_series.sum() == 0:
             print(f"⚠ No data for technology '{tech}', skipping.")
             continue
