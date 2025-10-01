@@ -82,6 +82,21 @@ def mwh_to_bcm(mwh):
     bcm = mmbtu / 35_315_000    # 1 BCM = 35,315,000 MMBtu
     return bcm
 
+def load_lng(file_path, years):
+    df = pd.read_excel(file_path, sheet_name="gas demand per block")
+    df["blocks"] = df["blocks"].astype(str).str.strip()
+    df["stf"] = df["stf"].ffill()
+    lng_df = df[~df["blocks"].str.lower().str.contains("pipegas")]
+    lng_df = lng_df[lng_df["stf"].between(min(years), max(years))]
+
+    yearly = lng_df.groupby("stf")["gas_usage_block"].sum().reset_index()
+    yearly["lng_bcm"] = yearly["gas_usage_block"].apply(mwh_to_bcm)
+
+    series = pd.Series(0, index=years, dtype=float)
+    for _, row in yearly.iterrows():
+        series[int(row["stf"])] = row["lng_bcm"]
+    return series
+
 def plot_base_scenario(
         base_file: Path,
         sheet_name: str = "extension_balance",
@@ -744,6 +759,64 @@ def plot_system_costs_cumulative_boxplot(base_file, nzia_files, years, output_fi
     plt.show()
     print(f"✔ Plot saved → {output_file}")
 
+def plot_lng_boxplot_with_base_and_scatter(base_file, nzia_files, years=range(2024, 2041),
+                                           target_years=[2025, 2030, 2035, 2040],
+                                           output_file="lng_boxplot_with_scatter.png"):
+    """
+    Plot annual LNG demand boxplots for NZIA scenarios at target years,
+    alongside the base scenario curve, with scatter points for each scenario.
+    """
+
+    # Load base scenario
+    base_series = load_lng(base_file, years)
+
+    # Load NZIA scenarios
+    nzia_series = [load_lng(f, years) for f in nzia_files]
+    data = pd.DataFrame({i: s for i, s in enumerate(nzia_series)}).T
+
+    # --- Plot ---
+    plt.figure(figsize=(9, 5))
+
+    # 1. Plot base curve (all years)
+    plt.plot(base_series.index, base_series.values,
+             color="seagreen", linewidth=2.5, label="Base scenario")
+
+    # 2. Plot boxplots at milestone years
+    box_data = [data[y].dropna() for y in target_years]
+    bp = plt.boxplot(
+        box_data,
+        positions=target_years,
+        widths=1.0,
+        patch_artist=True,
+        boxprops=dict(facecolor="lightsteelblue", alpha=0.6, linewidth=1.2),
+        medianprops=dict(color="darkblue", linewidth=2),
+        whiskerprops=dict(color="grey", linestyle="--", linewidth=1.2),
+        capprops=dict(color="grey", linewidth=1.2),
+        flierprops=dict(marker="o", markersize=4, markerfacecolor="lightgrey", alpha=0.5)
+    )
+
+    # 3. Overlay scatter points for each scenario
+    for i, year in enumerate(target_years):
+        y_values = data[year].dropna().values
+        x_values = [year + 0.05*(np.random.rand() - 0.5) for _ in y_values]  # small jitter
+        plt.scatter(x_values, y_values, color="grey", alpha=0.6, s=25, zorder=3)
+
+    # --- Style ---
+    plt.title("Annual LNG Demand – NZIA Scenarios vs Base", fontsize=13, weight="bold")
+    plt.xlabel("Year")
+    plt.ylabel("LNG Demand [BCM]")
+    plt.xticks(list(years), rotation=45)
+    plt.xlim(min(years)-0.5, max(years)+0.5)
+    plt.grid(axis="y", linestyle="--", alpha=0.4)
+    plt.legend(frameon=False)
+
+    plt.tight_layout()
+    output_file = Path(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_file, dpi=300)
+    plt.show()
+    print(f"✔ Annual LNG demand boxplot with scatter saved → {output_file}")
+
 
 nzia_files = list(NZIA_SCENARIOS.values())
 BASE_FILE = BASE_SCENARIO
@@ -775,7 +848,7 @@ BASE_FILE = BASE_SCENARIO
 #    output_file="figures/system_costs_cumulative_boxplot.png"
 #)
 
-plot_lng_cumulative_boxplot(
+plot_lng_boxplot_with_base_and_scatter(
     base_file=BASE_FILE,
     nzia_files=nzia_files,
     output_file="figures/lng_boxplots_cumulative.png"
