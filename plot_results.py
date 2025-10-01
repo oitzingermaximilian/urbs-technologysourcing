@@ -470,7 +470,7 @@ def plot_lng_boxplot(base_file, nzia_files, target_years=[2025, 2030, 2035, 2040
     """
 
     # --- Helper to load LNG demand series ---
-    def load_lng(file_path):
+    def load_lng(file_path, years):
         df = pd.read_excel(file_path, sheet_name="gas demand per block")
         df["blocks"] = df["blocks"].astype(str).str.strip()
         df["stf"] = df["stf"].ffill()
