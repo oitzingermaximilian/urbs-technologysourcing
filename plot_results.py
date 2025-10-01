@@ -823,34 +823,36 @@ def plot_system_costs_cumulative_boxplot(base_file, nzia_files, years, output_fi
     plt.show()
     print(f"✔ Plot saved → {output_file}")
 
-def plot_lng_boxplot_with_base_and_scatter(base_file, nzia_files, years=range(2024, 2041),
-                                           target_years=[2025, 2030, 2035, 2040],
-                                           output_file="lng_boxplot_with_scatter.png"):
+def plot_lng_cumulative_pct_deviation_compact(base_file, nzia_files,
+                                              years=range(2024, 2041),
+                                              target_years=[2025, 2030, 2035, 2040],
+                                              output_file="lng_cumulative_pct_boxplot_compact.png"):
     """
-    Plot annual LNG demand boxplots for NZIA scenarios at target years,
-    alongside the base scenario curve, with scatter points for each scenario.
+    Compact, beautiful boxplot of cumulative LNG percentage deviation from base,
+    with scatter points and base scenario reference markers only at target years.
     """
 
-    # Load base scenario
-    base_series = load_lng(base_file, years)
-
-    # Load NZIA scenarios
-    nzia_series = [load_lng(f, years) for f in nzia_files]
+    # Load cumulative data
+    base_series = load_lng(base_file, years).cumsum()
+    nzia_series = [load_lng(f, years).cumsum() for f in nzia_files]
     data = pd.DataFrame({i: s for i, s in enumerate(nzia_series)}).T
 
-    # --- Plot ---
-    plt.figure(figsize=(9, 5))
+    # Percentage deviations at target years
+    pct_dev = pd.DataFrame({
+        y: 100 * (data[y] - base_series[y]) / base_series[y] for y in target_years
+    })
 
-    # 1. Plot base curve (all years)
-    plt.plot(base_series.index, base_series.values,
-             color="seagreen", linewidth=2.5, label="Base scenario")
+    # X-axis positions for boxplots (compact spacing)
+    x_pos = np.arange(len(target_years)) + 1  # 1,2,3,4
 
-    # 2. Plot boxplots at milestone years
-    box_data = [data[y].dropna() for y in target_years]
+    plt.figure(figsize=(7, 5))
+
+    # Boxplots
+    box_data = [pct_dev[y].dropna() for y in target_years]
     bp = plt.boxplot(
         box_data,
-        positions=target_years,
-        widths=1.0,
+        positions=x_pos,
+        widths=0.6,
         patch_artist=True,
         boxprops=dict(facecolor="lightsteelblue", alpha=0.6, linewidth=1.2),
         medianprops=dict(color="darkblue", linewidth=2),
@@ -859,27 +861,32 @@ def plot_lng_boxplot_with_base_and_scatter(base_file, nzia_files, years=range(20
         flierprops=dict(marker="o", markersize=4, markerfacecolor="lightgrey", alpha=0.5)
     )
 
-    # 3. Overlay scatter points for each scenario
+    # Scatter points with jitter
     for i, year in enumerate(target_years):
-        y_values = data[year].dropna().values
-        x_values = [year + 0.05*(np.random.rand() - 0.5) for _ in y_values]  # small jitter
-        plt.scatter(x_values, y_values, color="grey", alpha=0.6, s=25, zorder=3)
+        y_vals = pct_dev[year].dropna().values
+        x_vals = [x_pos[i] + 0.08*(np.random.rand() - 0.5) for _ in y_vals]
+        plt.scatter(x_vals, y_vals, color="grey", alpha=0.6, s=30, zorder=3)
+
+    # Base scenario markers/line at target years
+    base_pct = [0]*len(target_years)  # 0% deviation
+    plt.plot(x_pos, base_pct, "o-", color="seagreen", linewidth=2.5, markersize=7, label="Base scenario")
 
     # --- Style ---
-    plt.title("Annual LNG Demand – NZIA Scenarios vs Base", fontsize=13, weight="bold")
-    plt.xlabel("Year")
-    plt.ylabel("LNG Demand [BCM]")
-    plt.xticks(list(years), rotation=45)
-    plt.xlim(min(years)-0.5, max(years)+0.5)
+    plt.title("Cumulative LNG – % Deviation from Base", fontsize=13, weight="bold")
+    plt.xlabel("Year", fontsize=12)
+    plt.ylabel("Deviation from Base [%]", fontsize=12)
+    plt.xticks(x_pos, target_years, fontsize=11)
+    plt.yticks(fontsize=11)
     plt.grid(axis="y", linestyle="--", alpha=0.4)
-    plt.legend(frameon=False)
+    plt.xlim(x_pos[0]-0.5, x_pos[-1]+0.5)
+    plt.legend(frameon=False, fontsize=11)
 
     plt.tight_layout()
     output_file = Path(output_file)
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file, dpi=300)
     plt.show()
-    print(f"✔ Annual LNG demand boxplot with scatter saved → {output_file}")
+    print(f"✔ Compact cumulative LNG % deviation boxplot saved → {output_file}")
 
 
 nzia_files = list(NZIA_SCENARIOS.values())
