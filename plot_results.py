@@ -553,11 +553,10 @@ def plot_lng_cumulative_pct_deviation_comparison(base_file, nzia_files, years=ra
     nzia_series = [load_lng(f, years).cumsum() for f in nzia_files]
     data = pd.DataFrame({i: s for i, s in enumerate(nzia_series)}).T
 
-    # --- Calculate deviations for periods ---
+    # --- Calculate cumulative deviations up to each end year ---
     pct_dev = {}
     for (start, end), label in zip(periods, labels):
-        dev_vals = 100 * ((data[end] - data[start]) - (base_series[end] - base_series[start])) \
-                   / (base_series[end] - base_series[start])
+        dev_vals = 100 * (data[end] - base_series[end]) / base_series[end]
         pct_dev[label] = dev_vals.dropna()
 
     # --- Plot ---
