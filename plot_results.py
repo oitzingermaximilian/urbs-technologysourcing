@@ -535,6 +535,74 @@ def plot_lng_cumulative_pct_deviation_pretty(base_file, nzia_files, years=range(
     plt.show()
     print(f"✔ Pretty cumulative LNG % deviation boxplot saved → {output_file}")
 
+def plot_lng_cumulative_pct_deviation_compact(base_file, nzia_files, years=range(2024, 2041),
+                                              periods=[(2025, 2030), (2030, 2035), (2035, 2040), (2024, 2040)],
+                                              labels=["2025–2030", "2030–2035", "2035–2040", "2024–2040"],
+                                              output_file="lng_cumulative_pct_boxplot_compact.png"):
+    """
+    Compact grouped boxplots of cumulative LNG percentage deviations from base,
+    with colorful scatter points for each group.
+    """
+
+    # --- Load base cumulative ---
+    base_series = load_lng(base_file, years).cumsum()
+
+    # --- Load NZIA cumulative ---
+    nzia_series = [load_lng(f, years).cumsum() for f in nzia_files]
+    data = pd.DataFrame({i: s for i, s in enumerate(nzia_series)}).T
+
+    # --- Calculate deviations for periods ---
+    pct_dev = {}
+    for (start, end), label in zip(periods, labels):
+        dev_vals = 100 * ((data[end] - data[start]) - (base_series[end] - base_series[start])) \
+                   / (base_series[end] - base_series[start])
+        pct_dev[label] = dev_vals.dropna()
+
+    # --- Plot ---
+    plt.figure(figsize=(7, 5))
+    positions = np.arange(len(labels))
+
+    # Bright, distinct colors for each group (can adjust palette if you like)
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
+
+    for i, (label, color) in enumerate(zip(labels, colors)):
+        vals = pct_dev[label]
+        # Boxplot
+        bp = plt.boxplot(
+            vals,
+            positions=[positions[i]],
+            widths=0.6,
+            patch_artist=True,
+            boxprops=dict(facecolor=color, alpha=0.35, linewidth=1.2),  # lighter box
+            medianprops=dict(color="black", linewidth=2),
+            whiskerprops=dict(color="grey", linestyle="--", linewidth=1.2),
+            capprops=dict(color="grey", linewidth=1.2),
+            flierprops=dict(marker="o", markersize=3, markerfacecolor=color, alpha=0.5)
+        )
+        # Scatter overlay — bright, matching group color
+        x_vals = [positions[i] + 0.1*(np.random.rand() - 0.5) for _ in vals]
+        plt.scatter(x_vals, vals, color=color, alpha=0.9, s=25, zorder=3, edgecolors="k", linewidth=0.3)
+
+    # --- Style ---
+    plt.xticks(positions, labels, fontsize=11)
+    plt.ylabel("Deviation from Base [%]", fontsize=12)
+    plt.title("Cumulative LNG Demand – Deviation from Base", fontsize=13, weight="bold")
+
+    # Subtle zero-line
+    plt.axhline(0, color="lightgrey", linewidth=1.2, linestyle="-")
+
+    plt.grid(axis="y", linestyle="--", alpha=0.4)
+    plt.tight_layout()
+
+    # Save
+    output_file = Path(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_file, dpi=300)
+    plt.show()
+    print(f"✔ Compact deviation boxplot saved → {output_file}")
+
+
+
 def plot_lng_boxplot(base_file, nzia_files, target_years=[2025, 2030, 2035, 2040],
                      output_file="plot/lng_boxplot.png", deviations=False):
     """
@@ -919,8 +987,8 @@ BASE_FILE = BASE_SCENARIO
 #    output_file="figures/system_costs_cumulative_boxplot.png"
 #)
 
-plot_lng_cumulative_pct_deviation_pretty(
+plot_lng_cumulative_pct_deviation_compact(
     base_file=BASE_FILE,
     nzia_files=nzia_files,
-    output_file="figures/lng_boxplots_cumulative.png"
+    output_file="figures/lng_boxplots_deviation.png"
 )
