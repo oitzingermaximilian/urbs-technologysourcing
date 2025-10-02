@@ -556,18 +556,19 @@ def plot_cumulative_capacity_scatter(
     tech_list,
     nzia_scenarios_dict,
     target_years=[2025, 2030, 2035, 2040],
-    output_dir="plots/cumulative_scatter"
+    output_dir="plots/cumulative_scatter",
+    save_csv=True
 ):
     """
     Scatter plot of cumulative capacities:
     - X-axis: Remanufacturing
     - Y-axis: Manufacturing
     - Different colors for each target year
+    - Optionally export plotted data to CSV
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Assign distinct colors for years
     year_colors = {2025: "#FF8C42", 2030: "#4CB5AE", 2035: "#FF6B6B", 2040: "#FFD166"}
 
     for tech_name in tech_list:
@@ -600,7 +601,9 @@ def plot_cumulative_capacity_scatter(
             for year in target_years:
                 row = df_tech[df_tech["stf"] == year]
                 all_data.append({
+                    "tech": tech_name,
                     "year": year,
+                    "learning_rate": lr,
                     "scenario": scenario_name,
                     "Remanufacturing": row["cum_eusecondary"].sum() / 1e3,
                     "Manufacturing": row["cum_euprimary"].sum() / 1e3,
@@ -613,12 +616,12 @@ def plot_cumulative_capacity_scatter(
 
         df_all = pd.DataFrame(all_data)
 
-        # Scatter plot
+        # ===== Scatter plot =====
         plt.figure(figsize=(8,6))
         for year in target_years:
             subset = df_all[df_all["year"] == year]
             plt.scatter(subset["Remanufacturing"], subset["Manufacturing"],
-                        color=year_colors[year], label=str(year), alpha=0.7, s=20)
+                        color=year_colors[year], label=str(year), alpha=0.7, s=50)
 
         plt.xlabel("Remanufacturing Capacity (GW)")
         plt.ylabel("Manufacturing Capacity (GW)")
@@ -631,6 +634,12 @@ def plot_cumulative_capacity_scatter(
         plt.savefig(fig_path, dpi=300)
         plt.show()
         print(f"✔ Scatter plot saved for {tech_name}: {fig_path}")
+
+        # ===== Export plotted data to CSV =====
+        if save_csv:
+            csv_path = Path(output_dir) / f"cumulative_data_{tech_name}.csv"
+            df_all.to_csv(csv_path, index=False)
+            print(f"✔ Data exported for {tech_name}: {csv_path}")
 
 # -------------------------------
 # Main Execution
