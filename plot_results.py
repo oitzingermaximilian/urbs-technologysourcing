@@ -553,39 +553,46 @@ def plot_lng_cumulative_pct_deviation_comparison(base_file, nzia_files, years=ra
     nzia_series = [load_lng(f, years).cumsum() for f in nzia_files]
     data = pd.DataFrame({i: s for i, s in enumerate(nzia_series)}).T
 
-    # --- Calculate cumulative deviations up to each end year ---
+    # --- Assign colors per LR ---
+    cmap = plt.cm.get_cmap("tab10", len(nzia_series))  # distinct colors
+    lr_colors = {i: cmap(i) for i in range(len(nzia_series))}
+
+    # --- Collect deviations per group ---
     pct_dev = {}
-    for (start, end), label in zip(periods, labels):
-        dev_vals = 100 * (data[end] - base_series[end]) / base_series[end]
+    for label, (start, end), gtype in groups:
+        if gtype == "point":
+            # cumulative deviation at that year
+            dev_vals = 100 * (data[end] - base_series[end]) / base_series[end]
+        elif gtype == "period":
+            # incremental deviation in that window
+            dev_vals = 100 * ((data[end] - data[start]) - (base_series[end] - base_series[start])) \
+                       / (base_series[end] - base_series[start])
         pct_dev[label] = dev_vals.dropna()
 
     # --- Plot ---
-    plt.figure(figsize=(6.5, 4))
-    positions = np.arange(len(labels))
+    plt.figure(figsize=(7, 4))
+    positions = np.arange(len(groups))
 
-    # Bright colors (one per group)
-    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
-
-    for i, (label, color) in enumerate(zip(labels, colors)):
+    for i, (label, _, _) in enumerate(groups):
         vals = pct_dev[label]
 
-        # Scatter points
-        x_vals = [positions[i] + 0.15*(np.random.rand() - 0.5) for _ in vals]
-        plt.scatter(x_vals, vals, color=color, alpha=0.9, s=28, zorder=3, edgecolors="k", linewidth=0.3)
+        # Scatter per LR with unique colors
+        for lr_idx, v in vals.items():
+            plt.scatter(positions[i], v, color=lr_colors[lr_idx],
+                        alpha=0.9, s=35, edgecolors="k", linewidth=0.4, zorder=3)
 
-        # Median line
+        # Median line across all LRs
         median_val = np.median(vals)
-        plt.hlines(median_val, positions[i]-0.25, positions[i]+0.25, colors="black", linewidth=2.8)
+        plt.hlines(median_val, positions[i] - 0.25, positions[i] + 0.25,
+                   colors="black", linewidth=2.8)
 
     # --- Style ---
-    plt.xticks(positions, labels, fontsize=11)
+    plt.xticks(positions, [label for label, _, _ in groups], fontsize=11)
     plt.xlabel("Comparison to base", fontsize=12)
     plt.ylabel("Deviation from Base [%]", fontsize=12)
-    plt.title("Cumulative LNG Demand – Comparison to Base", fontsize=13, weight="bold")
+    plt.title("Cumulative LNG Demand – Deviations by Period", fontsize=13, weight="bold")
 
-    # Clean grid (only y axis)
     plt.grid(axis="y", linestyle="--", alpha=0.4)
-
     plt.tight_layout()
 
     # Save
@@ -593,7 +600,7 @@ def plot_lng_cumulative_pct_deviation_comparison(base_file, nzia_files, years=ra
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file, dpi=300)
     plt.close()
-    print(f"✔ Scatter+median comparison plot saved → {output_file}")
+    print(f"✔ Period deviation plot saved → {output_file}")
 
 
 
