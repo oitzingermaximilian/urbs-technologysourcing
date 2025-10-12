@@ -478,18 +478,18 @@ def plot_total_generation_split(
 if __name__ == "__main__":
     plot_lng_totals()
     # save_lng_table()
-    plot_lng_totals_step()
+    #plot_lng_totals_step()
     #plot_lng_deviation_from_base()
-    plot_generation_mix(
-        file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
-    )
-    plot_generation_share_by_year_100pct(
-        file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
-    )
+    #plot_generation_mix(
+    #    file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
+    #)
+    #plot_generation_share_by_year_100pct(
+    #    file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
+    #)
 
-    plot_total_generation_split(
-        file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
-    )
-    plot_fossil_fuels_stack(
-        file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
-    )
+    #plot_total_generation_split(
+    #    file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
+    #)
+    #plot_fossil_fuels_stack(
+    #    file_path="result/without_NZIA_26/rolling_2024_to_2050/scenario_high_high_high.xlsx"
+    #)

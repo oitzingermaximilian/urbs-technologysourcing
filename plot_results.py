@@ -661,7 +661,7 @@ def run_all_analyses():
     # Run analyses
     #plot_base_generation_mix(base_file)
     #plot_scrap_comparison(base_file, nzia_scenarios)
-    #plot_lng_analysis(base_file, nzia_scenarios)
+    plot_lng_analysis(base_file, nzia_scenarios)
     #plot_system_costs_boxplot(base_file, nzia_scenarios)
     #plot_nzia_boxplots(
     #    tech_list=tech_list,
@@ -670,12 +670,12 @@ def run_all_analyses():
     #    output_dir="plots/nzia_plots",
     #)
 
-    plot_cumulative_capacity_scatter(
-        tech_list=tech_list,
-        nzia_scenarios_dict=nzia_scenarios,
-        target_years=[2025, 2030, 2035, 2040],
-        output_dir="plots/cumulative_scatter"
-    )
+    #plot_cumulative_capacity_scatter(
+    #    tech_list=tech_list,
+    #    nzia_scenarios_dict=nzia_scenarios,
+    #    target_years=[2025, 2030, 2035, 2040],
+    #    output_dir="plots/cumulative_scatter"
+    #)
 
     print("✅ All analyses completed!")
 
