@@ -11,6 +11,7 @@ import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
 from plotly.subplots import make_subplots
 import math
+import matplotlib.patheffects as pe
 # -------------------------------
 # Configuration
 # -------------------------------
@@ -56,17 +57,15 @@ GROUP_COLORS = {
     "Thermal nuclear generation": "#F57C00"
 }
 
-# Colors for renewable breakdown + grey for non-renewables
-RENEWABLE_COLORS = {
-    "Hydro (reservoir)": "#1f77b4",       # Blue
-    "Hydro (run-of-river)": "#6baed6",    # Light blue
-    "Solar PV": "#ffdd00",                # Yellow
-    "Wind onshore": "#2ca02c",            # Green
-    "Wind offshore": "#17becf",           # Cyan/teal
-    "Biomass": "#8c564b",                  # Brown
-"Non-renewables": "#B0B0B0"
+IMPROVED_RENEWABLE_COLORS = {
+    "Hydro (reservoir)": "#5B9BD5",        # medium blue
+    "Hydro (run-of-river)": "#9FC5E8",     # light blue
+    "Solar PV": "#FFC658",                 # warm yellow/orange
+    "Wind onshore": "#66C2A5",             # teal-green (onshore)
+    "Wind offshore": "#2E8B57",            # darker sea-green (offshore) - more distinguishable
+    "Biomass": "#D77B60",                  # muted terracotta
+    "Non-renewables": "#BDBDBD"            # neutral grey
 }
-
 
 PROCESS_MAP = {
     "Hydro (reservoir)": "Hydro (reservoir)",
@@ -377,37 +376,50 @@ def plot_base_generation_mix(base_file=None, output_dir="plots"):
     ax.vlines(np.arange(0, 101, 10), -0.5, n - 0.5, colors="white", linewidth=1.5, zorder=7)
     ax.set_facecolor("#E6E6E6")
 
-    ax.set_title("Base Scenario Generation Share by Year (%)", loc="left",
+    ax.set_title("Current Policies Scenario Generation Share by Year (%)", loc="left",
                  fontsize=18, fontweight="bold", color="#1F4E79")
 
     handles = [plt.Rectangle((0, 0), 1, 1, color=GROUP_COLORS[g]) for g in group_order]
     ax.legend(handles, group_order, loc="upper center", bbox_to_anchor=(0.5, -0.06),
-              ncol=len(group_order), frameon=False, fontsize=11)
+              ncol=len(group_order), frameon=False, fontsize=15)
 
     plt.tight_layout(rect=[0.02, 0.04, 0.98, 0.94])
-    output_path = Path(output_dir) / "base_generation_share_100pct.png"
+    ax.tick_params(axis="x", labelsize=14)  # increase x tick label size
+    ax.tick_params(axis="y", labelsize=14)  # increase y tick label size
+    output_path = Path(output_dir) / "Fig1.png"
     plt.savefig(output_path, dpi=300)
     plt.show()
     print(f"✔ Base scenario stacked bar chart saved → {output_path}")
 
-def plot_renewables_breakdown_100pct(base_file=None, output_dir="plots"):
-    """100% stacked horizontal bar chart showing renewable breakdown, grey out fossil/nuclear"""
+def plot_renewables_breakdown_100pct(
+    base_file=None,
+    output_dir="plots",
+    colors=IMPROVED_RENEWABLE_COLORS,
+    years=None
+):
+    """100% stacked horizontal bar chart showing renewable breakdown.
+    - Uses a more readable pastel palette by default.
+    - Larger tick-labels and clearer legend patches.
+    """
     if base_file is None:
         base_file = get_base_scenario()
 
-    years = list(range(2025, 2041))
+    if years is None:
+        years = list(range(2025, 2041))
+
     df = load_generation_data(base_file, years=years)
 
     # --- Prepare data --- #
     records = []
-    group_order = ["Hydro (reservoir)", "Hydro (run-of-river)", "Solar PV",
-                   "Wind onshore", "Wind offshore", "Biomass", "Non-renewables"]
+    group_order = [
+        "Hydro (reservoir)", "Hydro (run-of-river)", "Solar PV",
+        "Wind onshore", "Wind offshore", "Biomass", "Non-renewables"
+    ]
 
     for year in years:
         year_df = df[df["Stf"] == year]
 
         totals = {}
-        # Renewable components
         totals["Hydro (reservoir)"] = year_df[year_df["Process"] == "Hydro (reservoir)"]["Value"].sum()
         totals["Hydro (run-of-river)"] = year_df[year_df["Process"] == "Hydro (run-of-river)"]["Value"].sum()
         totals["Solar PV"] = year_df[year_df["Process"] == "solarPV"]["Value"].sum()
@@ -415,14 +427,14 @@ def plot_renewables_breakdown_100pct(base_file=None, output_dir="plots"):
         totals["Wind offshore"] = year_df[year_df["Process"] == "windoff"]["Value"].sum()
         totals["Biomass"] = year_df[year_df["Process"] == "Biomass Plant"]["Value"].sum()
 
-        # Non-renewables
-        renewable_processes = ["Hydro (reservoir)", "Hydro (run-of-river)", "solarPV",
-                               "windon", "windoff", "Biomass Plant"]
+        renewable_processes = [
+            "Hydro (reservoir)", "Hydro (run-of-river)", "solarPV",
+            "windon", "windoff", "Biomass Plant"
+        ]
         totals["Non-renewables"] = year_df[~year_df["Process"].isin(renewable_processes)]["Value"].sum()
 
         total_all = sum(totals.values())
-        shares = {g: totals[g] / total_all if total_all > 0 else 0 for g in group_order}
-
+        shares = {g: (totals[g] / total_all if total_all > 0 else 0) for g in group_order}
         records.append({"year": year, **shares})
 
     data = pd.DataFrame(records)
@@ -438,51 +450,83 @@ def plot_renewables_breakdown_100pct(base_file=None, output_dir="plots"):
         width = data[g].values * 100
         ax.barh(
             y_pos, width, left=left, height=bar_height,
-            color=RENEWABLE_COLORS[g], edgecolor="white", linewidth=1.2, zorder=5
+            color=colors[g], edgecolor="white", linewidth=1.2, zorder=5
         )
         left += width
 
-    # Formatting to match original 100% stacked bar
-    ax.set_yticks(y_pos, [str(y) for y in years])
+    # Formatting
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([str(y) for y in years])
     ax.invert_yaxis()
     ax.set_xlim(0, 100)
     ax.xaxis.set_major_locator(mticker.MultipleLocator(10))
     ax.xaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
     ax.xaxis.set_ticks_position("top")
 
-    # Vertical white grid lines
+    # Increase tick label sizes and padding
+    ax.tick_params(axis="x", labelsize=14, pad=8)
+    ax.tick_params(axis="y", labelsize=14)
+
+    for lbl in ax.get_yticklabels():
+        lbl.set_fontweight("medium")
+
+    # Vertical white grid lines and background
     ax.vlines(np.arange(0, 101, 10), -0.5, n - 0.5, colors="white", linewidth=1.5, zorder=7)
-    ax.set_facecolor("#E6E6E6")
+    ax.set_facecolor("#EFEFEF")
 
     ax.set_title(
         "Renewable Generation Share Breakdown (%)",
         loc="left",
-        fontsize=18,
+        fontsize=20,
         fontweight="bold",
         color="#1F4E79"
     )
 
-    # Legend
-    handles = [plt.Rectangle((0, 0), 1, 1, color=RENEWABLE_COLORS[g]) for g in group_order]
-    ax.legend(
-        handles, group_order,
+    # Legend: build explicit colored Patch objects so colors show reliably
+    # Use a multi-column layout (ncol) to avoid one long single-line legend.
+    handles = [
+        mpatches.Patch(facecolor=colors[g], edgecolor="#666666", linewidth=0.6, label=g)
+        for g in group_order
+    ]
+
+    # Choose ncol so legend wraps into multiple rows. With 7 items ncol=3 gives 3 rows.
+    ncol = 3
+    legend = ax.legend(
+        handles=handles,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.06),
-        ncol=len(group_order),
+        bbox_to_anchor=(0.5, -0.16),
+        ncol=ncol,
         frameon=False,
-        fontsize=11
+        fontsize=13,
+        handlelength=1.5,
+        handletextpad=0.6,
+        columnspacing=1.2
     )
 
-    plt.tight_layout(rect=[0.02, 0.04, 0.98, 0.94])
-    output_path = Path(output_dir) / "renewables_breakdown_100pct.png"
+    # Slightly enlarge patch displayed in legend by adjusting legend handlers' sizes (if available)
+    # This will affect how large the color boxes look in the legend.
+    for lh in legend.legendHandles:
+        # most handlers are Patch objects; set a visible edge to help contrast
+        try:
+            lh.set_linewidth(0.6)
+        except Exception:
+            pass
+
+    # Give space for legend below the figure and ensure layout isn't clipped
+    plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.96])
+    plt.subplots_adjust(bottom=0.24)
+
+    output_path = Path(output_dir) / "Fig2.png"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=300)
     plt.show()
     print(f"✔ Renewable 100% stacked bar chart saved → {output_path}")
-
-def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", region="EU27"):
+def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", region="EU27", colors=IMPROVED_RENEWABLE_COLORS):
     """
     Vertical stacked bar plot of renewable installed capacities (GW) 2024-2040.
+    - Uses improved color palette
+    - Larger tick & label sizes
+    - Compact multi-column legend as colored patches (4 columns x wrap)
     """
     # Load data
     df = pd.read_excel(base_file, sheet_name="extension_total_caps")
@@ -503,31 +547,68 @@ def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", r
 
     # Plot
     fig, ax = plt.subplots(figsize=(14, 8))
-    bottom = [0]*len(years)
+    bottom = [0] * len(years)
 
     for g in group_order:
-        ax.bar(years, records[g], bottom=bottom, color=RENEWABLE_COLORS[g], label=g, edgecolor="white", width=0.7)
+        color = colors.get(g, "#BDBDBD")
+        ax.bar(years, records[g], bottom=bottom, color=color, label=g,
+               edgecolor="white", width=0.7)
         bottom = [b + v for b, v in zip(bottom, records[g])]
 
-    ax.set_xlabel("Year", fontsize=14)
-    ax.set_ylabel("Installed Capacity [GW]", fontsize=14)
-    ax.set_title("Renewable Installed Capacity by Technology (2024-2040)", fontsize=18, fontweight="bold", color="#1F4E79")
-    ax.set_facecolor("#E6E6E6")
+    # Axis labels and sizing
+    ax.set_xlabel("Year", fontsize=16)
+    ax.set_ylabel("Installed Capacity [GW]", fontsize=16)
+    ax.set_title(
+        "Renewable Installed Capacity by Technology (2024-2040)",
+        fontsize=20, fontweight="bold", color="#1F4E79", loc="left"
+    )
+
+    # Face and grid
+    ax.set_facecolor("#F3F3F3")
     ax.grid(axis="y", color="white", linewidth=1.5, zorder=7)
 
-    # Legend 4x2 below
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=2, frameon=False, fontsize=11)
+    # Tick sizes
+    ax.tick_params(axis="x", labelsize=13, rotation=0, pad=6)
+    ax.tick_params(axis="y", labelsize=13)
 
-    plt.tight_layout(rect=[0.02, 0.05, 0.98, 0.95])
+    # Legend: use explicit colored Patch objects so colors show reliably
+    handles = [
+        mpatches.Patch(facecolor=colors.get(g, "#BDBDBD"), edgecolor="#666666", linewidth=0.6, label=g)
+        for g in group_order
+    ]
+
+    # Place legend below the chart; 4 columns -> will wrap to 2 rows for 7 items
+    ncol = 4
+    legend = ax.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.16),
+        ncol=ncol,
+        frameon=False,
+        fontsize=13,
+        handlelength=1.5,
+        handletextpad=0.6,
+        columnspacing=1.2
+    )
+
+    # Make legend boxes more visible
+    for lh in legend.legendHandles:
+        try:
+            lh.set_linewidth(0.6)
+        except Exception:
+            pass
+
+    plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.96])
+    plt.subplots_adjust(bottom=0.22)
 
     # Save plot
     output_dir = Path(output_dir)
-    output_dir.mkdir(exist_ok=True)
-    output_path = output_dir / "renewables_installed_capacity_vertical.png"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "Fig3.png"
     plt.savefig(output_path, dpi=300)
     plt.show()
     print(f"✔ Vertical stacked bar chart saved → {output_path}")
+
 
 
 def plot_scrap_comparison(base_file=None, nzia_scenarios_dict=None, output_dir="plots/scrap_range"):
@@ -641,7 +722,7 @@ def plot_lng_analysis(base_file=None, nzia_scenarios_dict=None, lng_file=None,
     ltc_series = pd.Series(ltc_data).sort_index()
     ltc_series = ltc_series.reindex(years).interpolate()
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(9, 5))
     ax = plt.gca()
 
     # --- Aggregate NZIA scenario data for range plot ---
@@ -649,14 +730,19 @@ def plot_lng_analysis(base_file=None, nzia_scenarios_dict=None, lng_file=None,
     for f in nzia_files:
         series = load_lng(f, years)
         nzia_arrays.append(series.values)
-    nzia_array = np.vstack(nzia_arrays)
-    min_vals = np.nanmin(nzia_array, axis=0)
-    max_vals = np.nanmax(nzia_array, axis=0)
+    if nzia_arrays:
+        nzia_array = np.vstack(nzia_arrays)
+        min_vals = np.nanmin(nzia_array, axis=0)
+        max_vals = np.nanmax(nzia_array, axis=0)
+    else:
+        # fallback: empty arrays (avoid errors)
+        min_vals = np.zeros(len(list(years)))
+        max_vals = np.zeros(len(list(years)))
 
     # --- NZIA range band ---
     ax.fill_between(
         years, min_vals, max_vals,
-        color="#B0C4DE", alpha=0.4,
+        color="#B0C4DE", alpha=0.45,
         label="NZIA scenario range", zorder=1
     )
 
@@ -667,7 +753,7 @@ def plot_lng_analysis(base_file=None, nzia_scenarios_dict=None, lng_file=None,
     )
     ax.plot(
         ltc_series.index, ltc_series.values,
-        color="#6E6E6E", linewidth=1.5, linestyle="--",
+        color="#6E6E6E", linewidth=1.6, linestyle="--",
         label="long-term contracts", zorder=3
     )
 
@@ -675,62 +761,100 @@ def plot_lng_analysis(base_file=None, nzia_scenarios_dict=None, lng_file=None,
     base_series = load_lng(base_file, years)
     best_case_series = load_lng(lng_file, years)
     ax.plot(base_series.index, base_series.values,
-            color="#1F3A93", linewidth=2.2, label="current policies", zorder=4)
+            color="#1F3A93", linewidth=2.4, label="current policies", zorder=4)
     ax.plot(best_case_series.index, best_case_series.values,
-            color="#008080", linewidth=2.2, linestyle="--",
+            color="#008080", linewidth=2.4, linestyle="--",
             label="best-case scenario", zorder=5)
 
     # --- Formatting ---
     ax.set_xlim(min(years) - 1, max(years) + 1)
     ax.set_xticks([2025, 2030, 2035, 2040])
-    ax.set_xlabel("Year", fontsize=8)
-    ax.set_ylabel("LNG Demand and Supply [bcm]", fontsize=8)
+    ax.set_xlabel("Year", fontsize=10)
+    ax.set_ylabel("LNG Demand and Supply [bcm]", fontsize=10)
     ax.set_title("LNG demand trajectories vs. long-term contracts",
-                 fontsize=9, weight="bold")
+                 fontsize=12, weight="bold")
 
     ax.grid(axis="y", linestyle=":", color="0.8", linewidth=0.8)
-    ax.legend(frameon=True, fontsize=7, loc="upper right")
+    ax.legend(frameon=True, fontsize=9, loc="upper right")
+
+    # increase tick label size
+    ax.tick_params(axis="x", labelsize=10)
+    ax.tick_params(axis="y", labelsize=10)
 
     plt.tight_layout()
-    plt.savefig(out_path / "lng_demand_range_plot.pdf", dpi=800, bbox_inches="tight")
+    plt.savefig(out_path / "lng_demand_range_plot.pdf", dpi=600, bbox_inches="tight")
     plt.show()
     print("✔ LNG demand range plot saved")
 
     # ----------------------------------------------------------------------
-    # 2. CUMULATIVE PERCENTAGE DEVIATION BOXPLOT
+    # 2. CUMULATIVE PERCENTAGE DEVIATION BOXPLOT (no outliers shown)
     # ----------------------------------------------------------------------
     base_cumulative = load_lng(base_file, years).cumsum()
     nzia_cumulative = [load_lng(f, years).cumsum() for f in nzia_files]
 
-    data = pd.DataFrame({i: s for i, s in enumerate(nzia_cumulative)}).T
-    pct_dev = pd.DataFrame({
-        y: 100 * (data[y] - base_cumulative[y]) / base_cumulative[y]
-        for y in target_years
-    })
+    # prepare DataFrame where each column is one scenario cumulative series
+    # if nzia_cumulative empty, handle gracefully
+    if nzia_cumulative:
+        data = pd.DataFrame({i: s for i, s in enumerate(nzia_cumulative)}).T
+        # pct_dev: columns for target years (we want distribution across scenarios)
+        pct_dev = pd.DataFrame({
+            y: 100 * (data[y] - base_cumulative[y]) / base_cumulative[y]
+            for y in target_years
+        })
+    else:
+        pct_dev = pd.DataFrame({y: pd.Series(dtype=float) for y in target_years})
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(9, 5))
     ax = plt.gca()
     positions = np.arange(len(target_years))
     box_data = [pct_dev[y].dropna() for y in target_years]
 
+    # draw boxplot without fliers/outliers (showfliers=False)
+    median_color = "#1F78B4"
+    median_linewidth = 2.0
     bp = ax.boxplot(
-        box_data, positions=positions, widths=0.25, patch_artist=True,
-        boxprops=dict(facecolor="#A6CEE3", alpha=0.6, linewidth=1.2),
-        medianprops=dict(color="#1F78B4", linewidth=2),
-        whiskerprops=dict(color="grey", linestyle="--", linewidth=1.2),
-        capprops=dict(color="grey", linewidth=1.2)
+        box_data, positions=positions, widths=0.35, patch_artist=True,
+        showfliers=False,  # hide outliers
+        boxprops=dict(facecolor="#A6CEE3", alpha=0.75, linewidth=1.2),
+        medianprops=dict(color=median_color, linewidth=median_linewidth),
+        whiskerprops=dict(color="#666666", linestyle="--", linewidth=1.2),
+        capprops=dict(color="#666666", linewidth=1.2),
+        flierprops=dict(marker='o', markersize=4, markeredgecolor='none')  # not shown since showfliers=False
     )
 
+    # Formatting for readability (larger fonts etc.)
     ax.set_title("Cumulative LNG demand – Compared to current policies",
-                 fontsize=9, weight="bold")
-    ax.set_xlabel("Year", fontsize=8)
-    ax.set_ylabel("Deviation from base [%]", fontsize=8)
+                 fontsize=12, weight="bold")
+    ax.set_xlabel("Year", fontsize=10)
+    ax.set_ylabel("Deviation from base [%]", fontsize=10)
     ax.set_xticks(positions)
-    ax.set_xticklabels(target_years, fontsize=8)
+    ax.set_xticklabels(target_years, fontsize=10)
     ax.grid(axis="y", linestyle=":", color="0.8", linewidth=0.8)
 
+    ax.tick_params(axis="x", labelsize=10)
+    ax.tick_params(axis="y", labelsize=10)
+
+    # Draw thin dashed horizontal lines from each median to the y-axis (no numeric text)
+    # Use the same color and thickness as the median, with slightly lower alpha
+    # We'll draw from the left axis limit to the box x position.
+    x_left = ax.get_xlim()[0]  # left axis coordinate
+    for i, med_line in enumerate(bp.get('medians', [])):
+        # median line y data; average the y-values to get a single median y
+        ydata = med_line.get_ydata()
+        if len(ydata) == 0:
+            continue
+        median_val = float(np.mean(ydata))
+
+        # horizontal dashed line from left axis to the box position using median style
+        ax.plot([x_left, positions[i]], [median_val, median_val],
+                color=median_color, linestyle="--", linewidth=median_linewidth, alpha=0.65, zorder=2)
+
+        # small tick at the y-axis to indicate the median point (no numeric label)
+        ax.plot([x_left], [median_val], marker='|', markersize=14,
+                color=median_color, markeredgewidth=1.6, alpha=0.9, zorder=3)
+
     plt.tight_layout()
-    plt.savefig(out_path / "lng_cumulative_pct_deviation.pdf", dpi=500, bbox_inches="tight")
+    plt.savefig(out_path / "lng_cumulative_pct_deviation.pdf", dpi=600, bbox_inches="tight")
     plt.show()
     print("✔ LNG cumulative deviation plot saved")
 
@@ -1197,22 +1321,45 @@ def plot_window_scatter_relative_single(
         output_dir="plots/window_scatter_relative",
         save_csv=True,
         figsize=(7, 6),
-        target_lines=(0.40, 0.45, 0.50, 0.55, 0.60),
+        grid_mode=True,
+        grid_figsize=(13, 10),   # Used if grid_mode=True
+        target_lines=(0.40, 0.45, 0.50, 0.55, 0.60,0.65,0.7,0.75,0.8,0.85),
         project_with_stock=True,
         projection_color="#ff7f0e",
         barrier_color="#d62728",
         show_top_projections=0,
         scale_marker_by_totals=False,
-        min_stock_frac_to_show=0.01
+        min_stock_frac_to_show=0.01,
+        #tracer_step=0.05,                # draw tracer "L" lines every 5% by default
+        #tracer_color="0.85",
+        #tracer_lw=0.6,
+        #tracer_alpha=0.28,
+        global_tick_labelsize=13,       # increased tick label sizes
+        global_xlabel_size=14,
+        global_ylabel_size=14,
+        global_title_size=16,
+        legend_fontsize=10
+
 ):
     """
-    Single-window fractional scatter, with technology-based marker color,
-    thinner stockpile lines, and hollow markers to reduce overlay density.
+    Single-window fractional scatter.
+
+    Important behavior:
+    - Maximum used to determine dynamic barrier (target) line lengths is
+      computed from the overall fraction we calculate: Rem_frac + Man_frac + Stock_frac
+      (stored in LocalSourcing_frac). That per-window maximum sets how high
+      dashed target lines are drawn (effective_p = min(requested_p, max_local_sourcing)).
+    - The baseline 0.40 target is always shown (solid/thick). It is drawn up to
+      min(0.40, axis_max) so it is visible in every subplot (but clipped by axis limits).
+    - Other target_lines (e.g., 0.45, 0.50...) are dashed and capped by the
+      per-window maximum LocalSourcing_frac.
+    - Tracer "L" guides are drawn every tracer_step up to the per-window maximum.
     """
+
     # Tech color palette (add more as needed)
     tech_colors = {
         "solarPV": (223 / 255, 221 / 255, 25 / 255),  # yellow
-        "windon": (44 / 255, 80 / 255, 180 / 255),  # blue
+        "windon": (44 / 255, 80 / 255, 180 / 255),    # blue
         "windoff": (143 / 255, 60 / 255, 175 / 255),  # purple
     }
     default_tech_color = (0.13, 0.13, 0.13)
@@ -1220,6 +1367,40 @@ def plot_window_scatter_relative_single(
     outdir = Path(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
     saved_paths = []
+
+
+    def _draw_barrier_connect_axes(ax, p, max_point, axis_min, axis_max,
+                                   color=barrier_color, linewidth=1.6, linestyle='--', alpha=0.6,
+                                   baseline_value=0.40):
+        """
+        Draw the barrier line y = p - x in a 'connect-axes' style but with the visible
+        height determined as follows:
+         - if p is the baseline (baseline_value, default 0.40), draw it up to
+           min(baseline_value, axis_max) so it's always present (but clipped by axis limits).
+         - otherwise (dynamic targets), compute effective_p = min(p, max_point)
+           and draw the segment from (0,effective_p) to (effective_p,0).
+
+        This matches the visual of a full connect-axes target line while ensuring
+        dynamic lines reflect the per-window overall LocalSourcing_frac maximum.
+        """
+        if axis_max <= axis_min:
+            return
+
+        # baseline: always present (but clipped by axis_max)
+        if abs(p - baseline_value) < 1e-9:
+            effective_p = min(baseline_value, axis_max)
+            if effective_p <= axis_min:
+                return
+        else:
+            # dynamic targets: capped by per-window max of LocalSourcing_frac
+            effective_p = min(p, max_point)
+            if effective_p <= axis_min:
+                return
+
+        xs = np.linspace(0.0, effective_p, 300)
+        ys = effective_p - xs
+        ys = np.clip(ys, axis_min, axis_max)
+        ax.plot(xs, ys, color=color, linestyle=linestyle, linewidth=linewidth, alpha=alpha, zorder=1)
 
     for tech_name in tech_list:
         all_data = []
@@ -1276,136 +1457,253 @@ def plot_window_scatter_relative_single(
         df_all["Rem_frac"] = df_all["Remanufacturing"].div(totals).fillna(0)
         df_all["Man_frac"] = df_all["Manufacturing"].div(totals).fillna(0)
         df_all["Stock_frac"] = df_all["Stockpile"].div(totals).fillna(0)
-        df_all["LocalSourcing_frac"] = df_all[["Rem_frac", "Man_frac", "Stock_frac"]].sum(axis=1)
+        # overall fraction user requested to use for maxing target lines
+        df_all["LocalSourcing_frac"] = df_all["Rem_frac"] + df_all["Man_frac"] + df_all["Stock_frac"]
 
         unique_windows = sorted(df_all["window_id"].unique())
-        for win in unique_windows:
-            sub = df_all[df_all["window_id"] == win].copy()
-            if sub.empty:
-                continue
+        window_labels = [df_all[df_all["window_id"] == win]["window_label"].iloc[0] for win in unique_windows]
 
-            try:
-                rem_max = float(sub["Rem_frac"].max(skipna=True))
-                man_max = float(sub["Man_frac"].max(skipna=True))
-                proj_rem_max = float((sub["Rem_frac"] + sub["Stock_frac"] / 2.0).max(skipna=True))
-                proj_man_max = float((sub["Man_frac"] + sub["Stock_frac"] / 2.0).max(skipna=True))
-                local_max = np.nanmax([rem_max, man_max, proj_rem_max, proj_man_max, 0.6])
-            except Exception:
-                local_max = 0.6
-            axis_max = min(1.0, max(local_max * 1.05, 0.6))
+        if grid_mode:
+            # --------- 2x2 grid mode (all windows for this tech) ----------
+            fig, axes = plt.subplots(2, 2, figsize=grid_figsize, squeeze=True)
+            axes = axes.flatten()
+
+            # compute global axis scaling (still use global to keep grid comparable)
+            all_local_max = float(df_all["LocalSourcing_frac"].max(skipna=True))
+            all_proj_local_max = float((df_all["LocalSourcing_frac"]).max(skipna=True))
+            global_max = np.nanmax([all_local_max, all_proj_local_max, 0.6])
+            axis_max = min(1.0, max(global_max * 1.05, 0.6))
             axis_min = 0.0
-            xs_line = np.linspace(axis_min, axis_max, 500)
 
-            fig, ax = plt.subplots(figsize=figsize)
+            for ax_idx, win in enumerate(unique_windows):
+                sub = df_all[df_all["window_id"] == win].copy()
+                ax = axes[ax_idx]
+                if sub.empty:
+                    ax.set_visible(False)
+                    continue
 
-            # marker sizing: larger for trend visibility; can be scaled by totals if requested
-            if scale_marker_by_totals:
-                tot = sub["Totals (incl. Imports)"].fillna(0)
-                sizes = np.clip((tot / (tot.max() if tot.max() > 0 else 1)) * 120, 24, 180)
-            else:
-                sizes = np.full(len(sub), 80)
+                plot_x = sub["Rem_frac"].to_numpy(copy=True)
+                plot_y = sub["Man_frac"].to_numpy(copy=True)
 
-            # deterministic jitter for axis-packed points
-            seed = abs(hash(f"{tech_name}_{win}")) % (2**32)
-            rng = np.random.default_rng(seed)
-            jitter_scale = 0.002
-            jitter_x = rng.normal(scale=jitter_scale, size=len(sub))
-            jitter_y = rng.normal(scale=jitter_scale, size=len(sub))
+                # jitter
+                seed = abs(hash(f"{tech_name}_{win}")) % (2**32)
+                rng = np.random.default_rng(seed)
+                jitter_scale = 0.002
+                jitter_x = rng.normal(scale=jitter_scale, size=len(sub))
+                jitter_y = rng.normal(scale=jitter_scale, size=len(sub))
+                small_mask_x = plot_x <= 1e-6
+                small_mask_y = plot_y <= 1e-6
+                plot_x[small_mask_x] += jitter_x[small_mask_x]
+                plot_y[small_mask_y] += jitter_y[small_mask_y]
+                plot_x = np.clip(plot_x, axis_min, axis_max)
+                plot_y = np.clip(plot_y, axis_min, axis_max)
 
-            plot_x = sub["Rem_frac"].to_numpy(copy=True)
-            plot_y = sub["Man_frac"].to_numpy(copy=True)
-            small_mask_x = plot_x <= 1e-6
-            small_mask_y = plot_y <= 1e-6
-            plot_x[small_mask_x] += jitter_x[small_mask_x]
-            plot_y[small_mask_y] += jitter_y[small_mask_y]
-            plot_x = np.clip(plot_x, axis_min, axis_max)
-            plot_y = np.clip(plot_y, axis_min, axis_max)
+                # marker sizing
+                if scale_marker_by_totals:
+                    tot = sub["Totals (incl. Imports)"].fillna(0)
+                    sizes = np.clip((tot / (tot.max() if tot.max() > 0 else 1)) * 120, 12, 120)
+                else:
+                    sizes = np.full(len(sub), 48)   # smaller markers for grid mode
 
-            # faint shadow tracers from axes to each plotted point
-            tracer_lw = 0.6
-            tracer_alpha = 0.28
-            tracer_color = "0.85"
-            for xi, yi in zip(plot_x, plot_y):
-                ax.plot([0, xi], [yi, yi], color=tracer_color, linewidth=tracer_lw, linestyle='-', alpha=tracer_alpha, zorder=0)
-                ax.plot([xi, xi], [0, yi], color=tracer_color, linewidth=tracer_lw, linestyle='-', alpha=tracer_alpha, zorder=0)
+                # determine per-window max using LocalSourcing_frac (overall)
+                max_point = float(sub["LocalSourcing_frac"].max(skipna=True)) if len(sub) else 0.0
+                max_point = max(max_point, 0.0)
 
-            # draw barrier lines (red)
-            for p in target_lines:
-                ys = p - xs_line
-                mask = ys >= axis_min
-                linestyle = '-' if abs(p - 0.40) < 1e-9 else '--'
-                linewidth = 2.4 if abs(p - 0.40) < 1e-9 else 1.6
-                alpha = 0.98 if abs(p - 0.40) < 1e-9 else 0.6
-                ax.plot(xs_line[mask], ys[mask], color=barrier_color, linestyle=linestyle,
-                        linewidth=linewidth, alpha=alpha, zorder=1)
+                # draw tracer levels up to this subplot's max point
+                #_draw_tracer_levels(ax, max_point, step=tracer_step, color=tracer_color, lw=tracer_lw, alpha=tracer_alpha)
 
-            # Draw projections UNDER markers (so markers always visible)
-            proj_lw = 0.7
-            for idx, r in sub.iterrows():
-                sf = r["Stock_frac"]
-                if sf >= min_stock_frac_to_show and project_with_stock:
-                    x = r["Rem_frac"]
-                    y = r["Man_frac"]
-                    proj_x = min(max(x + sf / 2.0, axis_min), axis_max)
-                    proj_y = min(max(y + sf / 2.0, axis_min), axis_max)
-                    ax.plot([x, proj_x], [y, proj_y], color=projection_color, linewidth=proj_lw, alpha=0.9, zorder=2)
-                    ax.plot(proj_x, proj_y, marker='o', color=projection_color, markersize=6, markeredgecolor='white', zorder=2)
+                # barrier lines: baseline (0.40) drawn solid up to axis_max (so it's always present),
+                # other dynamic target lines are dashed and capped at per-window max_point
+                for p in target_lines:
+                    linestyle = '-' if abs(p - 0.40) < 1e-9 else '--'
+                    linewidth = 2.4 if abs(p - 0.40) < 1e-9 else 1.6
+                    alpha = 0.98 if abs(p - 0.40) < 1e-9 else 0.6
+                    # baseline always drawn (but clipped by axis_max); dynamic ones capped by max_point
+                    if abs(p - 0.40) < 1e-9:
+                        _draw_barrier_connect_axes(ax, p, max_point, axis_min, axis_max,
+                                                   color=barrier_color, linewidth=linewidth, linestyle=linestyle, alpha=alpha,
+                                                   baseline_value=0.40)
+                    else:
+                        _draw_barrier_connect_axes(ax, p, max_point, axis_min, axis_max,
+                                                   color=barrier_color, linewidth=linewidth, linestyle=linestyle, alpha=alpha,
+                                                   baseline_value=0.40)
 
-            # Draw hollow (or semi-hollow) markers for all scenarios, tech color edge, faint fill
-            edgecolor = tech_rgb
-            facecolor = (tech_rgb[0], tech_rgb[1], tech_rgb[2], 0.15)  # very faint fill
-            ax.scatter(plot_x, plot_y, s=sizes, facecolors=[facecolor], edgecolors=[edgecolor],
-                       linewidths=1.4, zorder=4, marker='o')
+                # projections (under markers)
+                if project_with_stock:
+                    for idx, r in sub.iterrows():
+                        sf = r["Stock_frac"]
+                        if sf >= min_stock_frac_to_show:
+                            x = r["Rem_frac"]
+                            y = r["Man_frac"]
+                            proj_x = min(max(x + sf / 2.0, axis_min), axis_max)
+                            proj_y = min(max(y + sf / 2.0, axis_min), axis_max)
+                            ax.plot([x, proj_x], [y, proj_y], color=projection_color, linewidth=0.7, alpha=0.9, zorder=2)
+                            ax.plot(proj_x, proj_y, marker='o', color=projection_color, markersize=4, markeredgecolor='white', zorder=2)
 
-            # annotate top projections if requested
-            if show_top_projections and len(sub) > 0:
-                top = sub[sub["Stock_frac"] >= min_stock_frac_to_show].sort_values("Stock_frac", ascending=False).head(show_top_projections)
-                for _, trow in top.iterrows():
-                    px = min(max(trow["Rem_frac"] + trow["Stock_frac"]/2.0, axis_min), axis_max)
-                    py = min(max(trow["Man_frac"] + trow["Stock_frac"]/2.0, axis_min), axis_max)
-                    label = f"+{trow['Stock_frac']*100:.1f}%\n{trow['Stockpile']:.1f} GW"
-                    ax.text(px + 0.01*(axis_max-axis_min), py + 0.01*(axis_max-axis_min), label,
-                            fontsize=8, bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'))
+                # filled markers (smaller)
+                edgecolor = tech_colors.get(tech_name, default_tech_color)
+                facecolor = (edgecolor[0], edgecolor[1], edgecolor[2], 0.9)
+                ax.scatter(plot_x, plot_y, s=sizes, facecolors=[facecolor], edgecolors=[edgecolor],
+                           linewidths=0.7, zorder=4, marker='o')
 
-            # aesthetics & equal axes
-            ax.set_xlim(axis_min, axis_max)
-            ax.set_ylim(axis_min, axis_max)
-            ax.set_aspect('equal', adjustable='box')
-            ax.set_xlabel("Remanufacturing (fraction of total)")
-            ax.set_ylabel("Manufacturing (fraction of total)")
-            window_label = sub["window_label"].iloc[0]
-            ax.set_title(f"{tech_name} — {window_label}")
-            ax.grid(True, linestyle='--', alpha=0.25)
+                # axis/labels/titles
+                ax.set_xlim(axis_min, axis_max)
+                ax.set_ylim(axis_min, axis_max)
+                ax.set_aspect('equal', adjustable='box')
+                ax.set_xlabel("Remanufacturing (fraction of total)", fontsize=global_xlabel_size)
+                ax.set_ylabel("Manufacturing (fraction of total)", fontsize=global_ylabel_size)
+                ax.set_title(f"{window_labels[ax_idx]}", fontsize=global_title_size)
+                ax.grid(True, linestyle='--', alpha=0.25)
 
-            # Compact legend: tech marker, projection, NZIA Benchmark
+                # tick sizing
+                ax.tick_params(axis="x", labelsize=global_tick_labelsize, pad=6)
+                ax.tick_params(axis="y", labelsize=global_tick_labelsize)
+
+            # Legend (once)
             proxy_marker = Line2D([0], [0], marker='o', color='w',
                                   markerfacecolor=facecolor, markeredgecolor=edgecolor,
-                                  markeredgewidth=1.4, markersize=8)
+                                  markeredgewidth=1.0, markersize=7)
             proxy_proj = Line2D([0], [0], color=projection_color, lw=1.2)
             proxy_benchmark = Line2D([0], [0], color=barrier_color, lw=2.4)
-            ax.legend([proxy_marker, proxy_proj, proxy_benchmark],
-                      [f"{tech_name} scenario", "stockpile projection (equal split)", "NZIA Benchmark (40%)"],
-                      fontsize=8, frameon=True, loc='upper right')
+            axes[-1].legend([proxy_marker, proxy_proj, proxy_benchmark],
+                            [f"{tech_name} scenario", "stockpile projection (equal split)", "NZIA Benchmark (40%)"],
+                            fontsize=legend_fontsize, frameon=True, loc='upper right')
 
-            # save the figure
-            safe_label = window_label.replace(' ', '_').replace('/', '-')
-            fname = outdir / f"{tech_name}_window_{safe_label}_relative.png"
-            fig.tight_layout(rect=[0, 0, 1, 0.96])
+            fig.suptitle(f"{tech_name} — Remanufacturing vs Manufacturing in all windows", fontsize=global_title_size, y=1.01)
+            fig.tight_layout(rect=[0, 0, 1, 0.97])
+            fname = outdir / f"{tech_name}_window_ALL_relative_grid.png"
             fig.savefig(fname, dpi=500)
             plt.close(fig)
             saved_paths.append(fname)
-            print(f"✔ Saved relative fractional plot: {fname}")
+            print(f"✔ Saved 2x2 grid plot: {fname}")
+        else:
+            # --------- One plot per window (as before) ----------
+            for win in unique_windows:
+                sub = df_all[df_all["window_id"] == win].copy()
+                if sub.empty:
+                    continue
+
+                try:
+                    # local_max should be computed from LocalSourcing_frac (overall fraction)
+                    local_max = float(sub["LocalSourcing_frac"].max(skipna=True))
+                except Exception:
+                    local_max = 0.6
+                axis_max = min(1.0, max(local_max * 1.05, 0.6))
+                axis_min = 0.0
+
+                fig, ax = plt.subplots(figsize=figsize)
+
+                # marker sizing: larger for trend visibility; can be scaled by totals if requested
+                if scale_marker_by_totals:
+                    tot = sub["Totals (incl. Imports)"].fillna(0)
+                    sizes = np.clip((tot / (tot.max() if tot.max() > 0 else 1)) * 120, 24, 180)
+                else:
+                    sizes = np.full(len(sub), 80)
+
+                # deterministic jitter for axis-packed points
+                seed = abs(hash(f"{tech_name}_{win}")) % (2**32)
+                rng = np.random.default_rng(seed)
+                jitter_scale = 0.002
+                jitter_x = rng.normal(scale=jitter_scale, size=len(sub))
+                jitter_y = rng.normal(scale=jitter_scale, size=len(sub))
+                plot_x = sub["Rem_frac"].to_numpy(copy=True)
+                plot_y = sub["Man_frac"].to_numpy(copy=True)
+                small_mask_x = plot_x <= 1e-6
+                small_mask_y = plot_y <= 1e-6
+                plot_x[small_mask_x] += jitter_x[small_mask_x]
+                plot_y[small_mask_y] += jitter_y[small_mask_y]
+                plot_x = np.clip(plot_x, axis_min, axis_max)
+                plot_y = np.clip(plot_y, axis_min, axis_max)
+
+                # draw tracer levels up to this subplot's max point (based on LocalSourcing_frac)
+                max_point = float(sub["LocalSourcing_frac"].max(skipna=True)) if len(sub) else 0.0
+                _draw_tracer_levels(ax, max_point, step=tracer_step, color=tracer_color, lw=tracer_lw, alpha=tracer_alpha)
+
+                # draw barrier lines: baseline always present (solid, thicker) up to axis_max,
+                # other target_lines dashed and capped by per-window LocalSourcing_frac (max_point)
+                for p in target_lines:
+                    linestyle = '-' if abs(p - 0.40) < 1e-9 else '--'
+                    linewidth = 2.4 if abs(p - 0.40) < 1e-9 else 1.6
+                    alpha = 0.98 if abs(p - 0.40) < 1e-9 else 0.6
+                    _draw_barrier_connect_axes(ax, p, max_point, axis_min, axis_max,
+                                               color=barrier_color, linewidth=linewidth, linestyle=linestyle, alpha=alpha,
+                                               baseline_value=0.40)
+
+                # projections
+                proj_lw = 0.7
+                for idx, r in sub.iterrows():
+                    sf = r["Stock_frac"]
+                    if sf >= min_stock_frac_to_show and project_with_stock:
+                        x = r["Rem_frac"]
+                        y = r["Man_frac"]
+                        proj_x = min(max(x + sf / 2.0, axis_min), axis_max)
+                        proj_y = min(max(y + sf / 2.0, axis_min), axis_max)
+                        ax.plot([x, proj_x], [y, proj_y], color=projection_color, linewidth=proj_lw, alpha=0.9, zorder=2)
+                        ax.plot(proj_x, proj_y, marker='o', color=projection_color, markersize=6, markeredgecolor='white', zorder=2)
+
+                # filled markers
+                edgecolor = tech_colors.get(tech_name, default_tech_color)
+                facecolor = (edgecolor[0], edgecolor[1], edgecolor[2], 0.9)
+                ax.scatter(plot_x, plot_y, s=sizes, facecolors=[facecolor], edgecolors=[edgecolor],
+                           linewidths=1.4, zorder=4, marker='o')
+
+                # annotate top projections if requested
+                if show_top_projections and len(sub) > 0:
+                    top = sub[sub["Stock_frac"] >= min_stock_frac_to_show].sort_values("Stock_frac", ascending=False).head(show_top_projections)
+                    for _, trow in top.iterrows():
+                        px = min(max(trow["Rem_frac"] + trow["Stock_frac"]/2.0, axis_min), axis_max)
+                        py = min(max(trow["Man_frac"] + trow["Stock_frac"]/2.0, axis_min), axis_max)
+                        label = f"+{trow['Stock_frac']*100:.1f}%\n{trow['Stockpile']:.1f} GW"
+                        ax.text(px + 0.01*(axis_max-axis_min), py + 0.01*(axis_max-axis_min), label,
+                                fontsize=8, bbox=dict(facecolor='white', alpha=0.85, edgecolor='none'))
+
+                # aesthetics & equal axes
+                ax.set_xlim(axis_min, axis_max)
+                ax.set_ylim(axis_min, axis_max)
+                ax.set_aspect('equal', adjustable='box')
+                ax.set_xlabel("Remanufacturing (fraction of total)", fontsize=global_xlabel_size)
+                ax.set_ylabel("Manufacturing (fraction of total)", fontsize=global_ylabel_size)
+                window_label = sub["window_label"].iloc[0]
+                ax.set_title(f"{tech_name} — {window_label}", fontsize=global_title_size)
+                ax.grid(True, linestyle='--', alpha=0.25)
+
+                # tick sizing
+                ax.tick_params(axis="x", labelsize=global_tick_labelsize, pad=6)
+                ax.tick_params(axis="y", labelsize=global_tick_labelsize)
+
+                # Compact legend: tech marker, projection, NZIA Benchmark
+                proxy_marker = Line2D([0], [0], marker='o', color='w',
+                                      markerfacecolor=facecolor, markeredgecolor=edgecolor,
+                                      markeredgewidth=1.4, markersize=8)
+                proxy_proj = Line2D([0], [0], color=projection_color, lw=1.2)
+                proxy_benchmark = Line2D([0], [0], color=barrier_color, lw=2.4)
+                ax.legend([proxy_marker, proxy_proj, proxy_benchmark],
+                          [f"{tech_name} scenario", "stockpile projection (equal split)", "NZIA Benchmark (40%)"],
+                          fontsize=legend_fontsize, frameon=True, loc='upper right')
+
+                # save the figure
+                safe_label = window_label.replace(' ', '_').replace('/', '-')
+                fname = outdir / f"{tech_name}_window_{safe_label}_relative.png"
+                fig.tight_layout(rect=[0, 0, 1, 0.96])
+                fig.savefig(fname, dpi=500)
+                plt.close(fig)
+                saved_paths.append(fname)
+                print(f"✔ Saved relative fractional plot: {fname}")
 
     return saved_paths
 
 def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
     """
     Plot clustered benchmark for windowed capacities instead of years.
-    Adds grey bar for imports and colors windows in scatter overlay.
+    Adds grey bar for imports and colors windows in cluster overlays.
 
     Changes:
     - X axis and legends now use window labels (e.g., '2024-2025', '2026-2030', ...)
       instead of 'Window 1', 'Window 2', etc.
+    - Increased tick / tick-label sizes and axis/title font sizes for readability.
+    - Legend order changed so the Imports (grey) patch appears at the top of the legend for bar plots.
+    - Scatter overlay: cluster centroid overlays are drawn as colored outlines (no fill).
+      Scatter points are now filled (one fill color per window) and slightly smaller.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1415,14 +1713,18 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
     colors = ["#FDC5B5", "#F99B7D", "#F76C5E"]
     hatches = ["..", "//", "xx"]
 
-    # Define window colors for scatter overlay
+    # Define window colors for cluster overlays
     window_colors = ["#DFDD19", "#EF7748", "#E72385", "#5B2F68"]
+    # Markers per window for scatter points (triangle, circle, square, diamond)
+    window_markers = ["^", "o", "s", "D"]
 
     for tech in df_with_clusters["tech"].unique():
         df_tech = df_with_clusters[df_with_clusters["tech"] == tech].copy()
-        # The following two lines changed: use window_label for ticks/legends
+
+        # Use window_label for ticks/legends
         windows = sorted(df_tech["year"].unique())
-        winid_to_label = {row["year"]: row["window_label"] for _, row in df_tech.drop_duplicates(subset=["year", "window_label"]).iterrows()}
+        winid_to_label = {row["year"]: row["window_label"]
+                          for _, row in df_tech.drop_duplicates(subset=["year", "window_label"]).iterrows()}
         window_labels = [winid_to_label[w] for w in windows]
         x_base = np.arange(len(windows))
 
@@ -1483,24 +1785,34 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
 
                 ax_rel.text(x_pos, bottom + 0.02, f"C{int(cluster)}", ha="center", fontsize=8)
 
+        # benchmark line
         ax_rel.axhline(0.4, color="red", linestyle="--", alpha=0.7, linewidth=2)
+
+        # ticks and labels: larger for readability
         ax_rel.set_xticks(x_base)
-        ax_rel.set_xticklabels(window_labels)
+        ax_rel.set_xticklabels(window_labels, fontsize=13, rotation=0)
+        ax_rel.tick_params(axis="x", labelsize=13, pad=6)
+        ax_rel.tick_params(axis="y", labelsize=13)
         ax_rel.set_ylim(0, 1)
         ax_rel.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{int(y * 100)}%"))
-        ax_rel.set_title(f"Clustered Local Sourcing % - {tech}", pad=15)
-        ax_rel.set_xlabel("Window")
-        ax_rel.set_ylabel("% of Total Capacity Additions")
+
+        # titles and axis labels: increase font sizes
+        ax_rel.set_title(f"Clustered Local Sourcing % - {tech}", pad=15, fontsize=18, fontweight="bold")
+        ax_rel.set_xlabel("Window", fontsize=14)
+        ax_rel.set_ylabel("% of Total Capacity Additions", fontsize=14)
         ax_rel.grid(axis="y", alpha=0.3)
 
-        # Legend including Imports
+        # Legend including Imports — ensure Imports patch is first (top of legend)
         legend_patches = [
             mpatches.Patch(facecolor=fc, edgecolor="black", hatch=h, label=lab)
             for fc, h, lab in zip(colors, hatches, labels)
         ]
         imports_patch = mpatches.Patch(facecolor="#D3D3D3", edgecolor="black", label="Imports")
-        nzia_line = plt.Line2D([0], [0], color="red", linestyle="--", linewidth=2, label="NZIA Benchmark")
-        ax_rel.legend(handles=legend_patches + [imports_patch, nzia_line], frameon=True, loc="upper right")
+        nzia_line = Line2D([0], [0], color="red", linestyle="--", linewidth=2, label="NZIA Benchmark")
+
+        # Put Imports first so it appears on top of the legend
+        rel_handles = [imports_patch] + legend_patches + [nzia_line]
+        ax_rel.legend(handles=rel_handles, frameon=True, loc="upper right", fontsize=12, handlelength=1.5)
 
         fig_rel.tight_layout()
         fig_rel.savefig(output_dir / f"{tech}_clustered_relative_window.png", dpi=300)
@@ -1555,14 +1867,20 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
 
                 ax_abs.text(x_pos, bottom + 0.5, f"C{int(cluster)}", ha="center", fontsize=8)
 
+        # ticks and labels: larger for readability
         ax_abs.set_xticks(x_base)
-        ax_abs.set_xticklabels(window_labels)
-        ax_abs.set_ylabel("Capacity (GW)")
-        ax_abs.set_xlabel("Window")
-        ax_abs.set_title(f"Clustered Absolute Capacity - {tech}", pad=15)
+        ax_abs.set_xticklabels(window_labels, fontsize=13, rotation=0)
+        ax_abs.tick_params(axis="x", labelsize=13, pad=6)
+        ax_abs.tick_params(axis="y", labelsize=13)
+
+        ax_abs.set_ylabel("Capacity (GW)", fontsize=14)
+        ax_abs.set_xlabel("Window", fontsize=14)
+        ax_abs.set_title(f"Clustered Absolute Capacity - {tech}", pad=15, fontsize=18, fontweight="bold")
         ax_abs.grid(axis="y", alpha=0.3)
 
-        ax_abs.legend(handles=legend_patches + [imports_patch], frameon=True, loc="upper right")
+        # Legend: ensure Imports appears on top
+        abs_handles = [imports_patch] + legend_patches
+        ax_abs.legend(handles=abs_handles, frameon=True, loc="upper right", fontsize=12, handlelength=1.5)
 
         fig_abs.tight_layout()
         fig_abs.savefig(output_dir / f"{tech}_clustered_absolute_window.png", dpi=300)
@@ -1571,57 +1889,97 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         print(f"✔ Clustered bar plots saved for {tech}")
 
         # =====================================================
-        # SCATTER OVERLAY WITH CLUSTER LABELS (windows as colors)
+        # SCATTER OVERLAY WITH CLUSTER LABELS
+        # - scatter points: filled markers per window, slightly smaller
+        # - cluster overlays: colored outlines (no fill)
         # =====================================================
         fig_scat, ax_scat = plt.subplots(figsize=(8, 6))
 
+        # plot scatter points: different marker per window, filled with window color, smaller size
         for i, win in enumerate(windows):
             subset = df_tech[df_tech["year"] == win]
+            marker = window_markers[i % len(window_markers)]
+            col = window_colors[i % len(window_colors)]
             ax_scat.scatter(
                 subset["Remanufacturing"],
                 subset["Manufacturing"],
-                color=window_colors[i],
-                alpha=0.6,
-                label=window_labels[i],
-                s=60
+                marker=marker,
+                facecolors=col,            # filled markers
+                edgecolors="black",
+                alpha=0.85,
+                s=50,                      # slightly smaller than before
+                linewidths=0.7,
+                label=None  # we'll construct a custom legend below
             )
 
+        # compute centroids and draw colored outline overlays (one color per window), no fill
         centroids = df_tech.groupby(["year", "cluster_id"])[["Remanufacturing", "Manufacturing"]].mean().reset_index()
         x_range = df_tech["Remanufacturing"].max() - df_tech["Remanufacturing"].min()
         y_range = df_tech["Manufacturing"].max() - df_tech["Manufacturing"].min()
-        radius = 0.05 * max(x_range, y_range)
+        if x_range == 0 and y_range == 0:
+            radius = 0.5  # fallback if there's no range
+        else:
+            radius = 0.05 * max(x_range if x_range > 0 else 1e-6, y_range if y_range > 0 else 1e-6)
 
         for _, row in centroids.iterrows():
+            win_idx = windows.index(row["year"])
+            color = window_colors[win_idx % len(window_colors)]
             circle = plt.Circle(
                 (row["Remanufacturing"], row["Manufacturing"]),
                 radius=radius,
-                edgecolor="black",
-                facecolor="none",
-                lw=1.5,
-                alpha=0.8
+                edgecolor=color,
+                facecolor='none',   # no fill — outline only
+                lw=2.0,
+                alpha=0.95,
+                zorder=5
             )
             ax_scat.add_patch(circle)
-            ax_scat.text(
+
+            # centroid label: use outline color for text, add light stroke for visibility
+            txt = ax_scat.text(
                 row["Remanufacturing"],
                 row["Manufacturing"],
                 f"C{int(row['cluster_id'])}",
                 ha="center",
                 va="center",
                 fontsize=9,
-                fontweight="bold"
+                fontweight="bold",
+                color=color,
+                zorder=6
             )
+            txt.set_path_effects([pe.Stroke(linewidth=2.5, foreground="white", alpha=0.8), pe.Normal()])
 
-        ax_scat.set_xlabel("Remanufacturing Capacity (GW)")
-        ax_scat.set_ylabel("Manufacturing Capacity (GW)")
-        ax_scat.set_title(f"Cluster Overview - {tech}")
+        # Labels, title, grid and sizing
+        ax_scat.set_xlabel("Remanufacturing Capacity (GW)", fontsize=13)
+        ax_scat.set_ylabel("Manufacturing Capacity (GW)", fontsize=13)
+        ax_scat.set_title(f"Cluster Overview - {tech}", fontsize=16, fontweight="bold")
         ax_scat.grid(True, linestyle="--", alpha=0.3)
-        ax_scat.legend(title="Window", frameon=True)
+        ax_scat.tick_params(axis="x", labelsize=12)
+        ax_scat.tick_params(axis="y", labelsize=12)
+
+        # Build a clean legend showing marker shapes filled and the overlay outline color:
+        legend_handles = []
+        for i, lbl in enumerate(window_labels):
+            mk = window_markers[i % len(window_markers)]
+            col = window_colors[i % len(window_colors)]
+            legend_handles.append(
+                Line2D([0], [0],
+                       marker=mk,
+                       color='black',
+                       markerfacecolor=col,
+                       markeredgecolor='black',
+                       markeredgewidth=0.7,
+                       markersize=8,
+                       linestyle='',
+                       label=lbl)
+            )
+        ax_scat.legend(handles=legend_handles, title="Window", frameon=True, fontsize=11, loc="best")
+
         fig_scat.tight_layout()
         fig_scat.savefig(output_dir / f"{tech}_scatter_cluster_overlay_window.png", dpi=300)
         plt.close(fig_scat)
 
         print(f"✔ Scatter with cluster overlays saved for {tech}")
-
 def plot_clustered_benchmark_from_df(df_with_clusters, output_dir):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -2001,7 +2359,7 @@ def run_all_analyses():
     #plot_renewables_breakdown_100pct(base_file)
     #plot_renewables_installed_capacity_vertical(base_file)
     #plot_scrap_comparison(base_file, nzia_scenarios)
-    #plot_lng_analysis(base_file, nzia_scenarios)
+    plot_lng_analysis(base_file, nzia_scenarios)
     #plot_system_costs_boxplot(base_file, nzia_scenarios)
     #plot_nzia_boxplots(
     #    tech_list=tech_list,
@@ -2012,13 +2370,13 @@ def run_all_analyses():
     #plot_window_scatter_relative_single(tech_list=tech_list,
     #    nzia_scenarios_dict=nzia_scenarios)
 
-    plot_window_capacity_scatter(
-        tech_list=tech_list,
-        nzia_scenarios_dict=nzia_scenarios,
-        perform_clustering=True,  # enable clustering
-        eps=0.15,  # tune sensitivity
-        min_samples=3
-    )
+    #plot_window_capacity_scatter(
+    #    tech_list=tech_list,
+    #    nzia_scenarios_dict=nzia_scenarios,
+    #    perform_clustering=True,  # enable clustering
+    #    eps=0.15,  # tune sensitivity
+    #    min_samples=3
+    #)
     #plot_cumulative_capacity_scatter(
     #    tech_list=tech_list,
     #    nzia_scenarios_dict=nzia_scenarios,
