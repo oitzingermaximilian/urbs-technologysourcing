@@ -12,6 +12,7 @@ from matplotlib.lines import Line2D
 from plotly.subplots import make_subplots
 import math
 import matplotlib.patheffects as pe
+
 # -------------------------------
 # Configuration
 # -------------------------------
@@ -41,31 +42,32 @@ SCENARIO_NAMES = [
 ]
 
 GROUPS = {
-    "Fossil fuels generation": [
+    "Fossil fuels": [
         "Coal Plant", "Coal Plant CCUS", "Gas Plant (CCGT)", "Gas Plant (CCGT) CCUS",
         "Lignite Plant", "Lignite Plant CCUS", "Oil Plant", "Other non-res"
     ],
-    "Renewable generation": [
+    "Renewables":[
         "Hydro (reservoir)", "Hydro (run-of-river)", "solarPV", "windoff", "windon","Biomass Plant"
     ],
-    "Thermal nuclear generation": ["Nuclear Plant"]
+    "Thermal nuclear": ["Nuclear Plant"]
 }
 
 GROUP_COLORS = {
-    "Fossil fuels generation": "#F4C20D",
-    "Renewable generation": "#009688",
-    "Thermal nuclear generation": "#F57C00"
+    "Fossil fuels": "#8C564B", #F4C20D"
+    "Renewables": "#009688",
+    "Thermal nuclear": "#E6AC00"
 }
 
 IMPROVED_RENEWABLE_COLORS = {
-    "Hydro (reservoir)": "#5B9BD5",        # medium blue
-    "Hydro (run-of-river)": "#9FC5E8",     # light blue
-    "Solar PV": "#FFC658",                 # warm yellow/orange
-    "Wind onshore": "#66C2A5",             # teal-green (onshore)
-    "Wind offshore": "#2E8B57",            # darker sea-green (offshore) - more distinguishable
-    "Biomass": "#D77B60",                  # muted terracotta
-    "Non-renewables": "#BDBDBD"            # neutral grey
+    "Hydro (reservoir)": "#0072B2",      # strong blue
+    "Hydro (run-of-river)": "#56B4E9",   # lighter blue
+    "Solar PV": "#E69F00",               # bright orange/gold
+    "Wind onshore": "#66C2A5",           # light vibrant green
+    "Wind offshore": "#00876C",          # darker rich green
+    "Biomass": "#CC79A7",                # magenta for contrast
+    "Non-renewables": "#595959"          # dark neutral grey
 }
+
 
 PROCESS_MAP = {
     "Hydro (reservoir)": "Hydro (reservoir)",
@@ -376,16 +378,16 @@ def plot_base_generation_mix(base_file=None, output_dir="plots"):
     ax.vlines(np.arange(0, 101, 10), -0.5, n - 0.5, colors="white", linewidth=1.5, zorder=7)
     ax.set_facecolor("#E6E6E6")
 
-    ax.set_title("Current Policies Scenario Generation Share by Year (%)", loc="left",
-                 fontsize=18, fontweight="bold", color="#1F4E79")
+    #ax.set_title("Current Policies Scenario Generation Share by Year (%)", loc="left",
+                 #fontsize=18, fontweight="bold", color="#1F4E79")
 
     handles = [plt.Rectangle((0, 0), 1, 1, color=GROUP_COLORS[g]) for g in group_order]
     ax.legend(handles, group_order, loc="upper center", bbox_to_anchor=(0.5, -0.06),
-              ncol=len(group_order), frameon=False, fontsize=15)
+              ncol=len(group_order), frameon=False, fontsize=18)
 
     plt.tight_layout(rect=[0.02, 0.04, 0.98, 0.94])
-    ax.tick_params(axis="x", labelsize=14)  # increase x tick label size
-    ax.tick_params(axis="y", labelsize=14)  # increase y tick label size
+    ax.tick_params(axis="x", labelsize=18)  # increase x tick label size
+    ax.tick_params(axis="y", labelsize=18) # increase y tick label size
     output_path = Path(output_dir) / "Fig1.png"
     plt.savefig(output_path, dpi=300)
     plt.show()
@@ -464,8 +466,8 @@ def plot_renewables_breakdown_100pct(
     ax.xaxis.set_ticks_position("top")
 
     # Increase tick label sizes and padding
-    ax.tick_params(axis="x", labelsize=14, pad=8)
-    ax.tick_params(axis="y", labelsize=14)
+    ax.tick_params(axis="x", labelsize=18, pad=8)
+    ax.tick_params(axis="y", labelsize=18)
 
     for lbl in ax.get_yticklabels():
         lbl.set_fontweight("medium")
@@ -474,13 +476,13 @@ def plot_renewables_breakdown_100pct(
     ax.vlines(np.arange(0, 101, 10), -0.5, n - 0.5, colors="white", linewidth=1.5, zorder=7)
     ax.set_facecolor("#EFEFEF")
 
-    ax.set_title(
-        "Renewable Generation Share Breakdown (%)",
-        loc="left",
-        fontsize=20,
-        fontweight="bold",
-        color="#1F4E79"
-    )
+    #ax.set_title(
+    #    "Renewable Generation Share Breakdown (%)",
+    #    loc="left",
+    #    fontsize=20,
+    #    fontweight="bold",
+    #    color="#1F4E79"
+    #)
 
     # Legend: build explicit colored Patch objects so colors show reliably
     # Use a multi-column layout (ncol) to avoid one long single-line legend.
@@ -497,7 +499,7 @@ def plot_renewables_breakdown_100pct(
         bbox_to_anchor=(0.5, -0.16),
         ncol=ncol,
         frameon=False,
-        fontsize=13,
+        fontsize=18,
         handlelength=1.5,
         handletextpad=0.6,
         columnspacing=1.2
@@ -555,21 +557,23 @@ def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", r
                edgecolor="white", width=0.7)
         bottom = [b + v for b, v in zip(bottom, records[g])]
 
+    ax.set_xticks([2024, 2030, 2035, 2040])
+    ax.set_xticklabels([str(y) for y in [2024, 2030, 2035, 2040]], fontsize=25)
     # Axis labels and sizing
-    ax.set_xlabel("Year", fontsize=16)
-    ax.set_ylabel("Installed Capacity [GW]", fontsize=16)
-    ax.set_title(
-        "Renewable Installed Capacity by Technology (2024-2040)",
-        fontsize=20, fontweight="bold", color="#1F4E79", loc="left"
-    )
+    #ax.set_xlabel("Year", fontsize=16)
+    ax.set_ylabel("Installed Capacity (GW)", fontsize=22)
+    #ax.set_title(
+    #    "Renewable Installed Capacity by Technology (2024-2040)",
+    #    fontsize=20, fontweight="bold", color="#1F4E79", loc="left"
+    #)
 
     # Face and grid
     ax.set_facecolor("#F3F3F3")
     ax.grid(axis="y", color="white", linewidth=1.5, zorder=7)
 
     # Tick sizes
-    ax.tick_params(axis="x", labelsize=13, rotation=0, pad=6)
-    ax.tick_params(axis="y", labelsize=13)
+    ax.tick_params(axis="x", labelsize=22, rotation=0, pad=6)
+    ax.tick_params(axis="y", labelsize=22)
 
     # Legend: use explicit colored Patch objects so colors show reliably
     handles = [
@@ -585,7 +589,7 @@ def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", r
         bbox_to_anchor=(0.5, -0.16),
         ncol=ncol,
         frameon=False,
-        fontsize=13,
+        fontsize=22,
         handlelength=1.5,
         handletextpad=0.6,
         columnspacing=1.2
@@ -598,8 +602,8 @@ def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", r
         except Exception:
             pass
 
-    plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.96])
-    plt.subplots_adjust(bottom=0.22)
+    plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.94])  # leave extra bottom space
+    plt.subplots_adjust(bottom=0.25)  # increase bottom margin
 
     # Save plot
     output_dir = Path(output_dir)
@@ -857,6 +861,89 @@ def plot_lng_analysis(base_file=None, nzia_scenarios_dict=None, lng_file=None,
     plt.savefig(out_path / "lng_cumulative_pct_deviation.pdf", dpi=600, bbox_inches="tight")
     plt.show()
     print("✔ LNG cumulative deviation plot saved")
+
+
+def export_lng_data(base_file=None, nzia_scenarios_dict=None, lng_file=None,
+                    output_dir="plots/lng_data"):
+    """
+    Collects yearly LNG data for NZIA scenarios, base case, best-case scenario,
+    and long-term contracts (LTC), and exports them to CSV files.
+
+    CSV files format:
+    - Years as rows
+    - Scenarios or series as columns
+    """
+
+    if base_file is None:
+        base_file = get_base_scenario()
+    if nzia_scenarios_dict is None:
+        nzia_scenarios_dict = build_scenario_dict()
+    if lng_file is None:
+        lng_file = get_lng_best_case_scenario()
+
+    years = range(2025, 2041)
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+
+    # --------------------------
+    # NZIA scenarios
+    # --------------------------
+    nzia_arrays = []
+    nzia_files = [f for f in nzia_scenarios_dict.values() if f.exists()]
+    for f in nzia_files:
+        series = load_lng(f, years)
+        nzia_arrays.append(series.values)
+
+    if nzia_arrays:
+        nzia_array = np.vstack(nzia_arrays)
+        nzia_df = pd.DataFrame({
+    name: load_lng(path, years)
+    for name, path in nzia_scenarios_dict.items()
+})
+    else:
+        nzia_df = pd.DataFrame(index=years)
+
+    # --------------------------
+    # Base case
+    # --------------------------
+    base_series = load_lng(base_file, years)
+    base_df = pd.DataFrame({"Base": base_series.values}, index=years)
+
+    # --------------------------
+    # Best-case scenario
+    # --------------------------
+    best_case_series = load_lng(lng_file, years)
+    best_case_df = pd.DataFrame({"Best_Case": best_case_series.values}, index=years)
+
+    # --------------------------
+    # Long-term contracts
+    # --------------------------
+    ltc_data = {2025: 82, 2026: 85, 2027: 99, 2028: 92, 2029: 92,
+                2030: 88, 2031: 86, 2032: 84, 2035: 57, 2040: 48}
+    ltc_series = pd.Series(ltc_data).sort_index().reindex(years).interpolate()
+    ltc_df = pd.DataFrame({"LTC": ltc_series.values}, index=years)
+
+    # --------------------------
+    # Export CSVs
+    # --------------------------
+    print("NZIA df head:\n", nzia_df.head())
+    print("Base df head:\n", base_df.head())
+    print("Best case df head:\n", best_case_df.head())
+    print("LTC df head:\n", ltc_df.head())
+
+    nzia_df.to_csv(out_path / "NZIA_Scenarios_Yearly.csv", index_label="Year")
+    base_df.to_csv(out_path / "Base_Series_Yearly.csv", index_label="Year")
+    best_case_df.to_csv(out_path / "Best_Case_Series_Yearly.csv", index_label="Year")
+    ltc_df.to_csv(out_path / "LongTermContracts_Yearly.csv", index_label="Year")
+
+    print("✔ LNG data exported to CSV files (yearly values)")
+    return {
+        "NZIA": nzia_df,
+        "Base": base_df,
+        "Best_Case": best_case_df,
+        "LTC": ltc_df
+    }
 
 
 def plot_system_costs_boxplot(base_file=None, nzia_scenarios_dict=None, output_dir="plots/system_costs"):
@@ -1135,7 +1222,8 @@ def plot_cumulative_capacity_scatter(
         plt.title(f"Cumulative Capacity for {tech_name}")
         plt.grid(True, linestyle="--", alpha=0.3)
         plt.legend(title="Year", frameon=True, edgecolor='black')
-        plt.tight_layout()
+        plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.94])  # leave extra bottom space
+        plt.subplots_adjust(bottom=0.25)  # increase bottom margin
         fig_path = Path(output_dir) / f"cumulative_scatter_points_{tech_name}.png"
         plt.savefig(fig_path, dpi=300)
         plt.show()
@@ -1167,7 +1255,8 @@ def plot_cumulative_capacity_scatter(
         plt.title(f"Cumulative Capacity with Tracers for {tech_name}")
         plt.grid(True, linestyle="--", alpha=0.3)
         plt.legend(title="Year", frameon=True, edgecolor='black')
-        plt.tight_layout()
+        plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.94])  # leave extra bottom space
+        plt.subplots_adjust(bottom=0.25)  # increase bottom margin
         fig_path = Path(output_dir) / f"cumulative_scatter_tracer_{tech_name}.png"
         plt.savefig(fig_path, dpi=300)
         plt.show()
@@ -1281,7 +1370,8 @@ def plot_window_capacity_scatter(
         plt.title(f"Capacity by Window for {tech_name}")
         plt.grid(True, linestyle="--", alpha=0.3)
         plt.legend(title="Window", frameon=True, edgecolor='black')
-        plt.tight_layout()
+        plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.94])  # leave extra bottom space
+        plt.subplots_adjust(bottom=0.25)  # increase bottom margin
         fig_path = Path(output_dir) / f"window_scatter_points_{tech_name}.png"
         plt.savefig(fig_path, dpi=300)
         plt.close()
@@ -1783,23 +1873,23 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
                     )
                     bottom += frac
 
-                ax_rel.text(x_pos, bottom + 0.02, f"C{int(cluster)}", ha="center", fontsize=8)
+                ax_rel.text(x_pos, bottom + 0.02, f"C{int(cluster)}", ha="center", fontsize=16)
 
         # benchmark line
-        ax_rel.axhline(0.4, color="red", linestyle="--", alpha=0.7, linewidth=2)
+        ax_rel.axhline(0.4, color="red", linestyle="--", alpha=0.7, linewidth=2.5)
 
         # ticks and labels: larger for readability
         ax_rel.set_xticks(x_base)
-        ax_rel.set_xticklabels(window_labels, fontsize=13, rotation=0)
-        ax_rel.tick_params(axis="x", labelsize=13, pad=6)
-        ax_rel.tick_params(axis="y", labelsize=13)
+        ax_rel.set_xticklabels(window_labels, fontsize=22, rotation=0)
+        ax_rel.tick_params(axis="x", labelsize=22, pad=6)
+        ax_rel.tick_params(axis="y", labelsize=22)
         ax_rel.set_ylim(0, 1)
         ax_rel.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{int(y * 100)}%"))
 
         # titles and axis labels: increase font sizes
-        ax_rel.set_title(f"Clustered Local Sourcing % - {tech}", pad=15, fontsize=18, fontweight="bold")
-        ax_rel.set_xlabel("Window", fontsize=14)
-        ax_rel.set_ylabel("% of Total Capacity Additions", fontsize=14)
+        #ax_rel.set_title(f"Clustered Local Sourcing % - {tech}", pad=15, fontsize=18, fontweight="bold")
+        #ax_rel.set_xlabel("Window", fontsize=22)
+        ax_rel.set_ylabel("% of Total Capacity Additions", fontsize=22)
         ax_rel.grid(axis="y", alpha=0.3)
 
         # Legend including Imports — ensure Imports patch is first (top of legend)
@@ -1875,7 +1965,7 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
 
         ax_abs.set_ylabel("Capacity (GW)", fontsize=14)
         ax_abs.set_xlabel("Window", fontsize=14)
-        ax_abs.set_title(f"Clustered Absolute Capacity - {tech}", pad=15, fontsize=18, fontweight="bold")
+        #ax_abs.set_title(f"Clustered Absolute Capacity - {tech}", pad=15, fontsize=18, fontweight="bold")
         ax_abs.grid(axis="y", alpha=0.3)
 
         # Legend: ensure Imports appears on top
@@ -1952,7 +2042,7 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         # Labels, title, grid and sizing
         ax_scat.set_xlabel("Remanufacturing Capacity (GW)", fontsize=13)
         ax_scat.set_ylabel("Manufacturing Capacity (GW)", fontsize=13)
-        ax_scat.set_title(f"Cluster Overview - {tech}", fontsize=16, fontweight="bold")
+        #ax_scat.set_title(f"Cluster Overview - {tech}", fontsize=16, fontweight="bold")
         ax_scat.grid(True, linestyle="--", alpha=0.3)
         ax_scat.tick_params(axis="x", labelsize=12)
         ax_scat.tick_params(axis="y", labelsize=12)
@@ -2356,10 +2446,11 @@ def run_all_analyses():
 
     # Run analyses
     #plot_base_generation_mix(base_file)
-    #plot_renewables_breakdown_100pct(base_file)
-    #plot_renewables_installed_capacity_vertical(base_file)
+    #plot_renewables_breakdown_100pct(base_file) #JA
+    #plot_renewables_installed_capacity_vertical(base_file) #JA
     #plot_scrap_comparison(base_file, nzia_scenarios)
-    plot_lng_analysis(base_file, nzia_scenarios)
+    #plot_lng_analysis(base_file, nzia_scenarios)
+    export_lng_data(base_file, nzia_scenarios)
     #plot_system_costs_boxplot(base_file, nzia_scenarios)
     #plot_nzia_boxplots(
     #    tech_list=tech_list,
@@ -2370,7 +2461,7 @@ def run_all_analyses():
     #plot_window_scatter_relative_single(tech_list=tech_list,
     #    nzia_scenarios_dict=nzia_scenarios)
 
-    #plot_window_capacity_scatter(
+    #plot_window_capacity_scatter( #JA
     #    tech_list=tech_list,
     #    nzia_scenarios_dict=nzia_scenarios,
     #    perform_clustering=True,  # enable clustering
