@@ -47,7 +47,7 @@ GROUPS = {
         "Lignite Plant", "Lignite Plant CCUS", "Oil Plant", "Other non-res"
     ],
     "Renewables":[
-        "Hydro (reservoir)", "Hydro (run-of-river)", "solarPV", "windoff", "windon","Biomass Plant"
+        "Hydro (reservoir)", "Hydro (run-of-river)", "solarPV", "windoff", "windon"
     ],
     "Thermal nuclear": ["Nuclear Plant"]
 }
@@ -64,7 +64,6 @@ IMPROVED_RENEWABLE_COLORS = {
     "Solar PV": "#E69F00",               # bright orange/gold
     "Wind onshore": "#66C2A5",           # light vibrant green
     "Wind offshore": "#00876C",          # darker rich green
-    "Biomass": "#CC79A7",                # magenta for contrast
     "Non-renewables": "#595959"          # dark neutral grey
 }
 
@@ -75,7 +74,6 @@ PROCESS_MAP = {
     "Solar PV": "solarPV",
     "Wind onshore": "windon",
     "Wind offshore": "windoff",
-    "Biomass": "Biomass Plant"
 }
 
 
@@ -293,6 +291,86 @@ def aggregate_and_cluster_yearly(df, windows=None, eps=0.7, min_samples=2):
 
     return summary_df, agg_df
 
+def create_cumulative_capacity_csv_with_stats(
+        nzia_scenarios_dict=None,
+        target_years=[2030, 2040],
+        techs=["solarPV", "windon", "windoff"],
+        output_csv="plots/nzia_cumulative_capacity.csv",
+        stats_csv="plots/nzia_capacity_stats.csv"
+):
+    """
+    Creates a CSV summarizing cumulative total capacity for
+    selected technologies in target years, across multiple scenarios.
+    Also creates a summary CSV with statistics: median, mean, min, max, delta.
+    Assumes the Excel sheet already contains cumulative capacities.
+    """
+    results = []
+
+    # Step 1: Extract cumulative capacity per scenario
+    for (lr, scenario_name), file_path in nzia_scenarios_dict.items():
+        if not file_path.exists():
+            print(f"⚠ Missing file: {file_path}")
+            continue
+
+        try:
+            df = pd.read_excel(file_path, sheet_name="extension_only_totalcapacity")
+        except Exception as e:
+            print(f"⚠ Could not read {file_path}: {e}")
+            continue
+
+        df.columns = df.columns.str.strip()
+        df["tech"] = df["tech"].astype(str).str.strip()
+        df["stf"] = df["stf"].ffill()
+
+        df_scen = df[df["tech"].isin(techs)].copy()
+        if df_scen.empty:
+            print(f"⚠ No relevant techs in {scenario_name}")
+            continue
+
+        # Extract values for target years
+        for year in target_years:
+            df_year = df_scen[df_scen["stf"] == year]
+            # If some techs are missing, fill with 0
+            entry = {
+                "scenario": scenario_name,
+                "lr": lr,
+                "year": year
+            }
+            for tech in techs:
+                if tech in df_year["tech"].values:
+                    entry[tech] = df_year[df_year["tech"] == tech]["capacity_ext"].values[0]
+                else:
+                    entry[tech] = 0
+            results.append(entry)
+
+    # Output cumulative capacity CSV
+    output_df = pd.DataFrame(results)
+    output_df.to_csv(output_csv, index=False)
+    print(f"✅ Cumulative capacity CSV saved to {output_csv}")
+
+    # Step 2: Compute statistics
+    stats_list = []
+    for year in target_years:
+        df_year = output_df[output_df["year"] == year]
+        for tech in techs:
+            values = df_year[tech]
+            stats_list.append({
+                "year": year,
+                "tech": tech,
+                "median": values.median(),
+                "mean": values.mean(),
+                "min": values.min(),
+                "max": values.max(),
+                "delta": values.max() - values.min()
+            })
+
+    stats_df = pd.DataFrame(stats_list)
+    stats_df.to_csv(stats_csv, index=False)
+    print(f"✅ Statistics CSV saved to {stats_csv}")
+
+    return output_df, stats_df
+
+
 # -------------------------------
 # Plotting Functions
 # -------------------------------
@@ -415,7 +493,7 @@ def plot_renewables_breakdown_100pct(
     records = []
     group_order = [
         "Hydro (reservoir)", "Hydro (run-of-river)", "Solar PV",
-        "Wind onshore", "Wind offshore", "Biomass", "Non-renewables"
+        "Wind onshore", "Wind offshore"
     ]
 
     for year in years:
@@ -427,16 +505,31 @@ def plot_renewables_breakdown_100pct(
         totals["Solar PV"] = year_df[year_df["Process"] == "solarPV"]["Value"].sum()
         totals["Wind onshore"] = year_df[year_df["Process"] == "windon"]["Value"].sum()
         totals["Wind offshore"] = year_df[year_df["Process"] == "windoff"]["Value"].sum()
-        totals["Biomass"] = year_df[year_df["Process"] == "Biomass Plant"]["Value"].sum()
 
+        # Compute NON-RENEWABLES (but do NOT include in total share calculation)
         renewable_processes = [
             "Hydro (reservoir)", "Hydro (run-of-river)", "solarPV",
-            "windon", "windoff", "Biomass Plant"
+            "windon", "windoff"
         ]
-        totals["Non-renewables"] = year_df[~year_df["Process"].isin(renewable_processes)]["Value"].sum()
+        non_renew = year_df[~year_df["Process"].isin(renewable_processes)]["Value"].sum()
+        totals["Non-renewables"] = non_renew  # keep for reporting if needed
 
-        total_all = sum(totals.values())
-        shares = {g: (totals[g] / total_all if total_all > 0 else 0) for g in group_order}
+        # ❗ total excluding non-renewables
+        total_renew_only = (
+                totals["Hydro (reservoir)"]
+                + totals["Hydro (run-of-river)"]
+                + totals["Solar PV"]
+                + totals["Wind onshore"]
+                + totals["Wind offshore"]
+        )
+
+        # Compute shares only from renewable denominator
+        shares = {
+            g: (totals[g] / total_renew_only if total_renew_only > 0 else 0)
+            for g in group_order
+            if g != "Non-renewables"  # ❗ remove non-renewables from share output
+        }
+
         records.append({"year": year, **shares})
 
     data = pd.DataFrame(records)
@@ -613,6 +706,71 @@ def plot_renewables_installed_capacity_vertical(base_file, output_dir="plots", r
     plt.show()
     print(f"✔ Vertical stacked bar chart saved → {output_path}")
 
+
+def plot_capacity_violin_per_tech(csv_file="nzia_cumulative_totalcapacity.csv",
+                                  year=2040,
+                                  save_path="plots/capacity_violin_2040.png"):
+    """
+    Creates a single PNG with three separate violin plots (one per technology),
+    each with its own y-axis scale, for cumulative capacities in the given year.
+    Minimalist style: only x and y axes visible, colored violins with quartile lines.
+    """
+    # Load CSV
+    df = pd.read_csv(csv_file)
+    df_year = df[df["year"] == year].copy()
+
+    # Convert capacities to GW
+    techs = ["solarPV", "windon", "windoff"]
+    for tech in techs:
+        df_year[tech] = df_year[tech] / 1000  # MW -> GW
+
+    # Map for prettier labels
+    tech_labels = {"solarPV": "Solar PV", "windon": "onshore Wind", "windoff": "offshore Wind"}
+
+    # Color map
+    tech_colors = {
+        "Solar PV": "#E69F00",  # bright orange/gold
+        "onshore Wind": "#66C2A5",  # light vibrant green
+        "offshore Wind": "#00876C"  # darker rich green
+    }
+    title_fs = 18
+    axis_label_fs = 18
+    tick_label_fs = 18
+    legend_fs = 18
+
+    # Create figure with 3 subplots (side by side)
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6), sharex=False)
+
+    for ax, tech in zip(axes, techs):
+        label = tech_labels[tech]
+        sns.violinplot(
+            data=df_year,
+            y=tech,
+            ax=ax,
+            inner="quartile",
+            color=tech_colors[label],
+            linewidth=2
+        )
+        ax.set_title(label, fontsize=title_fs)
+        ax.set_ylabel("Capacity (GW)", fontsize=axis_label_fs)
+        ax.set_xlabel("", fontsize=axis_label_fs)
+        ax.tick_params(axis='both', which='major', labelsize=tick_label_fs)
+        # Minimalist spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(True)
+        ax.spines['bottom'].set_visible(True)
+
+    # Custom legend for quartile lines
+    legend_elements = [
+        Line2D([0], [0], color='black', lw=2, label='Quartiles')
+    ]
+    fig.legend(handles=legend_elements, loc='upper center', ncol=1, frameon=False, fontsize=legend_fs)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.93])  # leave space for legend
+    plt.savefig(save_path, dpi=300)
+    print(f"✅ Violin plots saved to {save_path}")
+    plt.show()
 
 
 def plot_scrap_comparison(base_file=None, nzia_scenarios_dict=None, output_dir="plots/scrap_range"):
@@ -2450,7 +2608,7 @@ def run_all_analyses():
     #plot_renewables_installed_capacity_vertical(base_file) #JA
     #plot_scrap_comparison(base_file, nzia_scenarios)
     #plot_lng_analysis(base_file, nzia_scenarios)
-    export_lng_data(base_file, nzia_scenarios)
+    #export_lng_data(base_file, nzia_scenarios)
     #plot_system_costs_boxplot(base_file, nzia_scenarios)
     #plot_nzia_boxplots(
     #    tech_list=tech_list,
@@ -2475,6 +2633,13 @@ def run_all_analyses():
     #    eps=0.3,  # tune sensitivity
     #    min_samples=3
     #)
+    #create_cumulative_capacity_csv_with_stats(
+    #    nzia_scenarios_dict=nzia_scenarios,
+    #    target_years=[2030, 2040],
+    #    techs=["solarPV", "windon", "windoff"],
+    #    output_csv="nzia_cumulative_totalcapacity.csv"
+    #)
+    plot_capacity_violin_per_tech()
 
 
     print("✅ All analyses completed!")
