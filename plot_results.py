@@ -1359,69 +1359,114 @@ def plot_nzia_boxplots(
         plot_grouped_boxplot(df_cum, "Cumulative Capacity Additions", f"{tech_name}_cumulative_boxplot.png")
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from pathlib import Path
+# Try importing sklearn for clustering
+try:
+    from sklearn.cluster import DBSCAN
+    from sklearn.preprocessing import StandardScaler
 
-from matplotlib.patches import ConnectionPatch
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
+    print("⚠ Warning: scikit-learn not found. Clustering will be skipped.")
 
-FS_TICK = 20
-FS_AXIS = 22
-FS_CLUSTER_LABEL = 16
-FS_LEGEND = 16
-FS_WINDOW_LABEL = 20
+
+def identify_capacity_clusters(df_all, eps=0.5, min_samples=3):
+    """
+    Performs DBSCAN clustering on the 2040 data points to group similar scenarios.
+    """
+    if not HAS_SKLEARN:
+        df_all['cluster_label'] = -1
+        return pd.DataFrame(), df_all
+
+    # Filter for the target year (2040) for clustering
+    df_2040 = df_all[df_all['year'] == 2040].copy()
+
+    if df_2040.empty:
+        df_all['cluster_label'] = -1
+        return pd.DataFrame(), df_all
+
+    # Features to cluster on
+    features = df_2040[['Remanufacturing', 'Manufacturing']].values
+
+    # Standardize features (DBSCAN is sensitive to scale)
+    scaler = StandardScaler()
+    features_scaled = scaler.fit_transform(features)
+
+    # Run DBSCAN
+    # eps: The maximum distance between two samples for one to be considered as in the neighborhood of the other.
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(features_scaled)
+
+    # Assign labels back to the 2040 slice
+    df_2040['cluster_label'] = db.labels_
+
+    # Map these labels back to the main dataframe (only for 2040 rows)
+    # For other years, we can leave them as NaN or -1 since we only label 2040
+    df_all['cluster_label'] = -1
+    df_all.loc[df_all['year'] == 2040, 'cluster_label'] = df_2040['cluster_label']
+
+    # Generate Summary
+    summary = df_2040.groupby('cluster_label').size().reset_index(name='count')
+
+    return summary, df_all
 
 
 def plot_cumulative_capacity_scatter(
-    tech_list,
-    nzia_scenarios_dict,
-    target_years=[2025, 2030, 2035, 2040],
-    output_dir="plots/cumulative_scatter",
-    save_csv=True,
-    perform_clustering=False,
-    eps=0.7,
-    min_samples=4
+        tech_list,
+        nzia_scenarios_dict,
+        target_years=[2025, 2030, 2035, 2040],
+        output_dir="plots/cumulative_scatter",
+        save_csv=True,
+        perform_clustering=True,
+        eps=0.5,  # Adjusted default (sensitivity depends on data scale)
+        min_samples=3
 ):
     """
-    Scatter plot of cumulative capacities:
-    - X-axis: Remanufacturing
-    - Y-axis: Manufacturing
-    - Different colors for each target year
-    - Optional tracer lines connecting the same scenario between windows
-    - Optional DBSCAN clustering (used only for benchmarking, not plotted)
+    Generates SEPARATE scatter plots for each technology.
+    - Layout: Rectangular (Landscape)
+    - Legend: Solar only
+    - Clusters: Annotates 2040 clusters with scenario counts (N=...)
     """
 
     # ---------------------------
-    # Color mapping
+    # Local Settings
     # ---------------------------
+    FS_TICK = 20
+    FS_AXIS = 20
+    FS_LEGEND = 20
+    FS_ANNOTATION = 20  # Font size for the "N=..." labels
+
+    # Color mapping
     window_colors = ["#F4E100", "#3A737D", "#05A5D2", "#D79327"]
     year_colors = dict(zip(target_years, window_colors))
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for tech_name in tech_list:
+    print("--- Processing & Plotting Individual Figures ---")
 
+    for tech_name in tech_list:
         all_data = []
 
         # -----------------------------
-        # Load and process files
+        # 1. Load Data
         # -----------------------------
         for (lr, scenario_name), file_path in nzia_scenarios_dict.items():
-            if not file_path.exists():
+            path_obj = Path(file_path)
+            if not path_obj.exists():
                 continue
 
             try:
-                df = pd.read_excel(file_path, sheet_name="extension_only_caps")
+                df = pd.read_excel(path_obj, sheet_name="extension_only_caps")
             except Exception as e:
-                print(f"⚠ Could not read {file_path}: {e}")
+                print(f"⚠ Could not read {path_obj}: {e}")
                 continue
 
             df.columns = df.columns.str.strip()
             df["tech"] = df["tech"].astype(str).str.strip()
-            df["stf"] = df["stf"].ffill()
-            if "location" in df.columns:
-                df["location"] = df["location"].ffill()
+
+            # Basic Filling
+            if "stf" in df.columns: df["stf"] = df["stf"].ffill()
+            if "location" in df.columns: df["location"] = df["location"].ffill()
 
             df_tech = df[df["tech"] == tech_name].copy()
             if df_tech.empty:
@@ -1429,7 +1474,13 @@ def plot_cumulative_capacity_scatter(
 
             df_tech = df_tech.sort_values("stf")
 
-            # cumulative values
+            # Check columns
+            req_cols = ["capacity_ext_eusecondary", "capacity_ext_stockout", "capacity_ext_euprimary",
+                        "newly_added_capacity"]
+            if not all(c in df_tech.columns for c in req_cols):
+                continue
+
+            # Cumulative calculations
             df_tech["cum_eusecondary"] = df_tech["capacity_ext_eusecondary"].cumsum()
             df_tech["cum_stockout"] = df_tech["capacity_ext_stockout"].cumsum()
             df_tech["cum_euprimary"] = df_tech["capacity_ext_euprimary"].cumsum()
@@ -1437,16 +1488,17 @@ def plot_cumulative_capacity_scatter(
 
             for year in target_years:
                 row = df_tech[df_tech["stf"] == year]
-                all_data.append({
-                    "tech": tech_name,
-                    "year": year,
-                    "learning_rate": lr,
-                    "scenario": scenario_name,
-                    "Remanufacturing": row["cum_eusecondary"].sum() / 1e3,
-                    "Manufacturing": row["cum_euprimary"].sum() / 1e3,
-                    "Stockpile": row["cum_stockout"].sum() / 1e3,
-                    "Totals (incl. Imports)": row["cum_newly_added_capacity"].sum() / 1e3
-                })
+                if not row.empty:
+                    all_data.append({
+                        "tech": tech_name,
+                        "year": year,
+                        "learning_rate": lr,
+                        "scenario": scenario_name,
+                        "Remanufacturing": row["cum_eusecondary"].sum() / 1e3,
+                        "Manufacturing": row["cum_euprimary"].sum() / 1e3,
+                        "Stockpile": row["cum_stockout"].sum() / 1e3,
+                        "Totals (incl. Imports)": row["cum_newly_added_capacity"].sum() / 1e3
+                    })
 
         if not all_data:
             print(f"No data for {tech_name}. Skipping.")
@@ -1455,129 +1507,160 @@ def plot_cumulative_capacity_scatter(
         df_all = pd.DataFrame(all_data)
 
         # -----------------------------
-        # Save CSV
+        # 2. Perform Clustering (Automatic)
         # -----------------------------
-        if save_csv:
-            csv_path = output_dir / f"cumulative_data_{tech_name}.csv"
-            df_all.to_csv(csv_path, index=False)
-            print(f"✔ Data exported for {tech_name}: {csv_path}")
-
-        # -----------------------------
-        # Simple scatter
-        # -----------------------------
-        plt.figure(figsize=(9, 7))
-        plt.rc('xtick', labelsize=FS_TICK)
-        plt.rc('ytick', labelsize=FS_TICK)
-
-        for year in target_years:
-            subset = df_all[df_all["year"] == year]
-            plt.scatter(
-                subset["Remanufacturing"],
-                subset["Manufacturing"],
-                color=year_colors[year],
-                s=80,
-                edgecolor="black",
-                linewidth=0.6,
-                label=str(year)
+        if perform_clustering and HAS_SKLEARN:
+            # We specifically cluster the 2040 endpoints
+            df_summary, df_all = identify_capacity_clusters(
+                df_all, eps=eps, min_samples=min_samples
             )
 
-        plt.xlabel("Remanufacturing Capacity (GW)", fontsize=FS_AXIS)
-        plt.ylabel("Manufacturing Capacity (GW)", fontsize=FS_AXIS)
-        #plt.title(f"Cumulative Capacity for {tech_name}", fontsize=FS_WINDOW_LABEL)
-        plt.grid(True, linestyle="--", alpha=0.3)
-
-        plt.legend(title="Year", frameon=True, edgecolor='black',
-                   fontsize=FS_LEGEND, title_fontsize=FS_LEGEND)
-
-        plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.94])
-        plt.subplots_adjust(bottom=0.25)
-        fig_path = output_dir / f"cumulative_scatter_points_{tech_name}.png"
-        plt.savefig(fig_path, dpi=300)
-        plt.show()
-        print(f"✔ Simple scatter plot saved for {tech_name}: {fig_path}")
+            # Save Clustering Results to CSV
+            cluster_dir = output_dir / "clusters"
+            cluster_dir.mkdir(exist_ok=True)
+            df_all.to_csv(cluster_dir / f"clustered_data_{tech_name}.csv", index=False)
 
         # -----------------------------
-        # Scatter + tracers (arrows)
+        # 3. Plotting
         # -----------------------------
-        plt.figure(figsize=(9, 7))
+        plt.figure(figsize=(10, 6))  # Slightly wider for better spacing
         plt.rc('xtick', labelsize=FS_TICK)
         plt.rc('ytick', labelsize=FS_TICK)
 
+        # Draw Arrows (Tracers)
         for (lr, scenario_name), group_df in df_all.groupby(["learning_rate", "scenario"]):
             group_df = group_df.sort_values("year")
-
-            # arrows between consecutive windows — put behind points
             for y1, y2 in zip(target_years[:-1], target_years[1:]):
                 p1 = group_df[group_df["year"] == y1]
                 p2 = group_df[group_df["year"] == y2]
-
-                if p1.empty or p2.empty:
-                    continue
+                if p1.empty or p2.empty: continue
 
                 x1, y1v = p1["Remanufacturing"].values[0], p1["Manufacturing"].values[0]
                 x2, y2v = p2["Remanufacturing"].values[0], p2["Manufacturing"].values[0]
 
-                # directional arrow behind points
-                plt.annotate(
-                    "",
-                    xy=(x2, y2v),
-                    xytext=(x1, y1v),
-                    arrowprops=dict(
-                        arrowstyle="->",
-                        color="gray",
-                        lw=1.2,
-                        alpha=0.5,
-                        shrinkA=5,
-                        shrinkB=5
-                    ),
-                    zorder=1  # arrows below scatter points
+                plt.annotate("", xy=(x2, y2v), xytext=(x1, y1v),
+                             arrowprops=dict(arrowstyle="->", color="gray", lw=1.1, alpha=0.3, shrinkA=0, shrinkB=0),
+                             zorder=1)
+
+        # Draw Scatter Points
+        for year in target_years:
+            point = df_all[df_all["year"] == year]
+            if not point.empty:
+                plt.scatter(
+                    point["Remanufacturing"], point["Manufacturing"],
+                    color=year_colors[year], s=80, edgecolor="black", linewidth=0.6,
+                    label=str(year), zorder=2, alpha=0.9
                 )
 
-            # scatter points — on top of arrows
-            for year in target_years:
-                point = group_df[group_df["year"] == year]
-                if not point.empty:
-                    plt.scatter(
-                        point["Remanufacturing"],
-                        point["Manufacturing"],
-                        color=year_colors[year],
-                        s=80,
-                        edgecolor="black",
-                        linewidth=0.6,
-                        label=str(year) if str(year) not in plt.gca().get_legend_handles_labels()[1] else None,
-                        zorder=2  # points above arrows
-                    )
+        # -----------------------------
+        # 4. ANNOTATE CLUSTERS (Label Positioning Logic)
+        # -----------------------------
+        if perform_clustering and 'cluster_label' in df_all.columns:
+            # Filter for 2040 data only
+            df_2040 = df_all[df_all['year'] == 2040]
 
+            # Identify valid clusters and sort them by X-position (Left -> Right)
+            # This ensures "First" cluster is always the left-most one, regardless of ID
+            valid_clusters = []
+            unique_labels = df_2040['cluster_label'].unique()
+
+            for label in unique_labels:
+                if label == -1: continue  # Skip noise
+
+                # Get data for this cluster
+                cluster_data = df_2040[df_2040['cluster_label'] == label]
+                mean_x = cluster_data['Remanufacturing'].mean()
+
+                valid_clusters.append({
+                    'id': label,
+                    'data': cluster_data,
+                    'mean_x': mean_x
+                })
+
+            # Sort the clusters by their mean X position
+            valid_clusters.sort(key=lambda x: x['mean_x'])
+
+            # Iterate through the sorted clusters
+            for i, cluster_info in enumerate(valid_clusters):
+                cluster_data = cluster_info['data']
+                count = len(cluster_data)
+
+                # Determine Label Position
+                # ---------------------------------------------------------
+                # Logic:
+                # 1. First Cluster (index 0 in sorted list) for On/Offshore Wind -> RIGHT of Centroid
+                # 2. All others -> TOP of Max Y
+                # ---------------------------------------------------------
+
+                # Check if current tech is Onshore or Offshore Wind
+                is_target_wind = any(x in tech_name.lower() for x in ['wind','batteries'])
+
+                # Calculate Coordinates
+                center_x = cluster_data['Remanufacturing'].mean()
+                center_y = cluster_data['Manufacturing'].mean()  # Needed for 'right' alignment
+                top_y = cluster_data['Manufacturing'].max()  # Needed for 'top' alignment
+
+                # Since list is sorted by X, i=0 is the left-most cluster
+                if is_target_wind and i == 0:
+                    # ---> PLACEMENT: RIGHT
+                    xy_target = (center_x, center_y)  # Anchor to the center (centroid)
+                    xy_offset = (20, 0)  # Shift right (20 points)
+                    ha_align = 'left'  # Align text to start from x
+                    va_align = 'center'  # Align text vertically centered
+                else:
+                    # ---> PLACEMENT: TOP (Default)
+                    xy_target = (center_x, top_y)  # Anchor to the highest point in cluster
+                    xy_offset = (0, 15)  # Shift up (15 points)
+                    ha_align = 'center'  # Center text horizontally
+                    va_align = 'bottom'  # Text sits on top of anchor
+
+                # Add Text Annotation
+                plt.annotate(
+                    f"n={count}",
+                    xy=xy_target,
+                    xytext=xy_offset,
+                    textcoords='offset points',
+                    fontsize=FS_ANNOTATION,
+                    color='black',
+                    ha=ha_align, va=va_align,
+                    fontweight='bold',
+                    zorder=10,
+                    bbox=dict(boxstyle="round,pad=0.4", fc="white", ec="black", alpha=0.85)
+                )
+
+        # Styling
         plt.xlabel("Remanufacturing Capacity (GW)", fontsize=FS_AXIS)
         plt.ylabel("Manufacturing Capacity (GW)", fontsize=FS_AXIS)
-        #plt.title(f"Cumulative Capacity with Tracers for {tech_name}", fontsize=FS_WINDOW_LABEL)
-
         plt.grid(True, linestyle="--", alpha=0.3)
-        plt.legend(title="Year", frameon=True, edgecolor='black',
-                   fontsize=FS_LEGEND, title_fontsize=FS_LEGEND)
-
-        plt.tight_layout(rect=[0.02, 0.06, 0.98, 0.94])
-        plt.subplots_adjust(bottom=0.25)
-
-        fig_path = output_dir / f"cumulative_scatter_tracer_{tech_name}.png"
-        plt.savefig(fig_path, dpi=300)
-        plt.show()
-        print(f"✔ Scatter + tracer plot saved for {tech_name}: {fig_path}")
+        plt.tight_layout()
 
         # -----------------------------
-        # Clustering (optional)
+        # 5. Conditional Legend
         # -----------------------------
-        if perform_clustering:
-            df_summary, df_with_clusters = identify_capacity_clusters(
-                df_all, eps=eps, min_samples=min_samples
+        # Only show legend for Solar (or if forced) to keep other plots clean
+        if "solar" in tech_name.lower():
+            handles, labels = plt.gca().get_legend_handles_labels()
+            # Remove duplicates
+            by_label = dict(zip(labels, handles))
+            # Sort by year
+            sorted_keys = sorted(by_label.keys())
+
+            plt.legend(
+                [by_label[k] for k in sorted_keys], sorted_keys,
+                loc='lower center', bbox_to_anchor=(0.5, 1.02),
+                ncol=4, fontsize=FS_LEGEND, frameon=True,
+                edgecolor='black', framealpha=1, fancybox=False,
+                handlelength=0.7, handletextpad=0.3, columnspacing=1.0
+
             )
-            cluster_dir = output_dir / "clusters"
-            cluster_dir.mkdir(exist_ok=True)
 
-            df_summary.to_csv(cluster_dir / f"cluster_summary_{tech_name}.csv", index=False)
-            df_with_clusters.to_csv(cluster_dir / f"clustered_data_{tech_name}.csv", index=False)
-
-            print(f"✅ Clustering done for {tech_name}. Results saved in {cluster_dir}")
+        # -----------------------------
+        # 6. Save
+        # -----------------------------
+        fig_path = output_dir / f"cumulative_scatter_tracer_{tech_name}.png"
+        plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"✔ Plot saved: {fig_path}")
 
 
 
@@ -2381,7 +2464,7 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
 
         ax_scat.legend(
             handles=legend_handles,
-            title="Window",
+            title="Period",
             frameon=True,
             fontsize=16,  # Controls the labels
             title_fontsize=16,  # Controls the title "Window"
@@ -2523,6 +2606,286 @@ def plot_all_cluster_flows(df_with_clusters, output_dir="plots/cluster_flows"):
         plot_cluster_flow(df_with_clusters, tech=tech, output_dir=output_dir)
 
 
+def calculate_and_plot_cost_bars(base_path, nzia_scenarios_dict, start_year=2024, end_year=2040,
+                                 output_dir="plots/costs"):
+    """
+    1. Calculates ANNUAL total costs (sum per year) for Base and all Scenarios.
+    2. Computes annual % deviation vs Base for every year.
+    3. Plots a Grouped Bar Chart over TIME (Min vs Max deviation per Year).
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"--- Processing Costs Over Time ({start_year}-{end_year}) ---")
+
+    years = range(start_year, end_year + 1)
+
+    # --- Helper: Load Annual Costs ---
+    def get_yearly_costs(file_path):
+        if not file_path.exists():
+            return None
+        try:
+            df = pd.read_excel(file_path, sheet_name="extension_cost")
+            # Filter for relevant years first
+            df = df[df["stf"].isin(years)]
+            # Group by year ('stf') and sum 'Total_Cost'
+            yearly_sums = df.groupby("stf")["Total_Cost"].sum()
+            # Reindex to ensure all years in range are present (fill missing with 0)
+            return yearly_sums.reindex(years, fill_value=0)
+        except Exception as e:
+            # print(f"Warning reading {file_path.name}: {e}")
+            return None
+
+    # 1. Load Base Cost Series
+    base_cost_series = get_yearly_costs(base_path)
+    if base_cost_series is None or base_cost_series.sum() == 0:
+        print("❌ Critical: Base cost not found or zero.")
+        return
+
+    print("Base Scenario loaded.")
+
+    # 2. Calculate Annual Deviations for all scenarios
+    # Structure: {year: [dev_scen1, dev_scen2, ...]}
+    yearly_deviations = {y: [] for y in years}
+
+    for (lr, scen_name), path in nzia_scenarios_dict.items():
+        scen_costs = get_yearly_costs(path)
+        if scen_costs is not None:
+            # Calculate % deviation for each year
+            for y in years:
+                base_val = base_cost_series.loc[y]
+                scen_val = scen_costs.loc[y]
+
+                # Avoid division by zero if base cost is 0 for a specific year
+                if base_val != 0:
+                    pct_diff = ((scen_val - base_val) / base_val) * 100
+                    yearly_deviations[y].append(pct_diff)
+
+    # 3. Aggregate Min/Max per Year across ALL scenarios
+    min_vals = []
+    max_vals = []
+    valid_years = []
+
+    for y in years:
+        devs = yearly_deviations[y]
+        if devs:
+            min_vals.append(min(devs))
+            max_vals.append(max(devs))
+            valid_years.append(y)
+
+    if not valid_years:
+        print("No valid deviation data found.")
+        return
+
+    # -------------------------------
+    # 3. PLOTTING (Tracer Style Sizes)
+    # -------------------------------
+
+    # Local Font Sizes matching the tracer plots
+    FS_AXIS = 20
+    FS_TICK = 20
+    FS_LEGEND = 20
+    FS_BAR_LABEL = 16  # Increased size for visibility (was 12)
+
+    # Increased figsize to accommodate larger fonts
+    fig, ax = plt.subplots(figsize=(14, 7))
+
+    x = np.array(valid_years)
+    width = 0.4
+
+    # Plot grouped bars (Years on X-axis)
+    # Min Deviation
+    ax.bar(x - width / 2, min_vals, width=width, label='Minimum deviation', color='#67B2D8', zorder=2)
+    # Max Deviation
+    ax.bar(x + width / 2, max_vals, width=width, label='Maximum deviation', color='#E67E22', zorder=2)
+
+    # Add labels on top of bars
+    for rects in ax.containers:
+        # padding=4 moves it up slightly to avoid overlap with bar edge
+        ax.bar_label(rects, padding=4, fontsize=FS_BAR_LABEL, fmt='%.1f%%', weight='bold')
+
+    # Styling
+    ax.grid(axis="y", linestyle=":", color="0.8", linewidth=0.8, zorder=-2)
+
+    # Updated Tick Params
+    ax.tick_params(axis="x", labelsize=FS_TICK)
+    ax.tick_params(axis="y", labelsize=FS_TICK)
+
+    # Updated Labels
+    ax.set_ylabel('Total Cost Deviation from Base (%)', fontsize=FS_AXIS)
+    ax.set_xlabel('Year', fontsize=FS_AXIS)
+
+    # Set X-Ticks to Requested Years only
+    major_ticks = [2025, 2030, 2035, 2040]
+    # Filter to ensure we only set ticks for years that actually exist in the data
+    actual_ticks = [y for y in major_ticks if y in valid_years]
+    ax.set_xticks(actual_ticks)
+
+    # Legend Styling
+    leg = ax.legend(loc="upper left", bbox_to_anchor=(0., 1.15),
+                    ncol=2, frameon=True,
+                    handlelength=1.25, handletextpad=0.5,
+                    fontsize=FS_LEGEND)
+    leg._legend_box.align = "left"
+    leg.get_frame().set_edgecolor("black")
+
+    # Add a horizontal line at 0 for clarity
+    ax.axhline(0, color='black', linewidth=1, zorder=1)
+
+    plt.tight_layout()
+
+    save_path = output_dir / "Annual_Cost_Deviation_Range.png"
+    fig.savefig(save_path, dpi=400, bbox_inches='tight')
+    print(f"✔ Plot saved to: {save_path}")
+
+
+def calculate_and_plot_cost_bars_range(base_path, nzia_scenarios_dict, start_year=2024, end_year=2040,
+                                 output_dir="plots/costs"):
+    """
+    1. Calculates ANNUAL total costs (sum per year) for Base and all Scenarios.
+    2. Computes annual % deviation vs Base for every year.
+    3. Plots a Range Plot (Line Chart with Shaded Area) over TIME.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"--- Processing Costs Over Time ({start_year}-{end_year}) ---")
+
+    years = range(start_year, end_year + 1)
+
+    # --- Helper: Load Annual Costs ---
+    def get_yearly_costs(file_path):
+        if not file_path.exists():
+            return None
+        try:
+            df = pd.read_excel(file_path, sheet_name="extension_cost")
+            # Filter for relevant years first
+            df = df[df["stf"].isin(years)]
+            # Group by year ('stf') and sum 'Total_Cost'
+            yearly_sums = df.groupby("stf")["Total_Cost"].sum()
+            # Reindex to ensure all years in range are present (fill missing with 0)
+            return yearly_sums.reindex(years, fill_value=0)
+        except Exception as e:
+            # print(f"Warning reading {file_path.name}: {e}")
+            return None
+
+    # 1. Load Base Cost Series
+    base_cost_series = get_yearly_costs(base_path)
+    if base_cost_series is None or base_cost_series.sum() == 0:
+        print("❌ Critical: Base cost not found or zero.")
+        return
+
+    print("Base Scenario loaded.")
+
+    # 2. Calculate Annual Deviations for all scenarios
+    # Structure: {year: [dev_scen1, dev_scen2, ...]}
+    yearly_deviations = {y: [] for y in years}
+
+    for (lr, scen_name), path in nzia_scenarios_dict.items():
+        scen_costs = get_yearly_costs(path)
+        if scen_costs is not None:
+            # Calculate % deviation for each year
+            for y in years:
+                base_val = base_cost_series.loc[y]
+                scen_val = scen_costs.loc[y]
+
+                # Avoid division by zero if base cost is 0 for a specific year
+                if base_val != 0:
+                    pct_diff = ((scen_val - base_val) / base_val) * 100
+                    yearly_deviations[y].append(pct_diff)
+
+    # 3. Aggregate Min/Max per Year across ALL scenarios
+    min_vals = []
+    max_vals = []
+    valid_years = []
+
+    for y in years:
+        devs = yearly_deviations[y]
+        if devs:
+            min_vals.append(min(devs))
+            max_vals.append(max(devs))
+            valid_years.append(y)
+
+    if not valid_years:
+        print("No valid deviation data found.")
+        return
+
+    # -------------------------------
+    # 3. PLOTTING (Range/Line Plot)
+    # -------------------------------
+
+    FS_AXIS = 20
+    FS_TICK = 20
+    FS_LEGEND = 20
+    FS_LABEL = 16  # Font size for annotations
+
+    fig, ax = plt.subplots(figsize=(14, 7))
+    x = np.array(valid_years)
+
+    # Fill Between (The Range)
+    # This creates the shaded corridor between min and max
+    ax.fill_between(x, min_vals, max_vals, color='#BDC3C7', alpha=0.3, label='Deviation Range')
+
+    # Plot Lines for Min and Max edges
+    ax.plot(x, min_vals, color='#67B2D8', linewidth=3, marker='o', markersize=8, label='Minimum deviation')
+    ax.plot(x, max_vals, color='#E67E22', linewidth=3, marker='o', markersize=8, label='Maximum deviation')
+
+    # Add text labels for SPECIFIC major years only (to avoid clutter)
+    label_years = [2025, 2030, 2035, 2040]
+
+    for i, year in enumerate(valid_years):
+        if year in label_years:
+            # Min Label (Placed slightly below point)
+            ax.annotate(f"{min_vals[i]:.1f}%",
+                        (year, min_vals[i]),
+                        xytext=(0, -20), textcoords='offset points',
+                        ha='center', va='top', fontsize=FS_LABEL,
+                        color='#2980B9', weight='bold')
+
+            # Max Label (Placed slightly above point)
+            ax.annotate(f"{max_vals[i]:.1f}%",
+                        (year, max_vals[i]),
+                        xytext=(0, 10), textcoords='offset points',
+                        ha='center', va='bottom', fontsize=FS_LABEL,
+                        color='#D35400', weight='bold')
+
+    # Styling
+    ax.grid(axis="y", linestyle=":", color="0.8", linewidth=0.8, zorder=-2)
+
+    # Tick Parameters
+    ax.tick_params(axis="x", labelsize=FS_TICK)
+    ax.tick_params(axis="y", labelsize=FS_TICK)
+
+    # Labels
+    ax.set_ylabel('Total Cost Deviation from Base (%)', fontsize=FS_AXIS)
+    ax.set_xlabel('Year', fontsize=FS_AXIS)
+
+    # Set X-Ticks to Requested Years only
+    major_ticks = [2025, 2030, 2035, 2040]
+    actual_ticks = [y for y in major_ticks if y in valid_years]
+    ax.set_xticks(actual_ticks)
+
+    # Ensure Y-Axis extends to at least -10% if requested
+    bottom, top = ax.get_ylim()
+    if bottom > -10:
+        ax.set_ylim(bottom=-10.5)
+
+    # Legend
+    leg = ax.legend(loc="upper left", bbox_to_anchor=(0., 1.15),
+                    ncol=3, frameon=True,
+                    handlelength=1.25, handletextpad=0.5,
+                    fontsize=FS_LEGEND)
+    leg._legend_box.align = "left"
+    leg.get_frame().set_edgecolor("black")
+
+    # Zero Line
+    ax.axhline(0, color='black', linewidth=1, zorder=1)
+
+    plt.tight_layout()
+
+    save_path = output_dir / "Annual_Cost_Deviation_Range.png"
+    fig.savefig(save_path, dpi=400, bbox_inches='tight')
+    print(f"✔ Plot saved to: {save_path}")
 # -------------------------------
 # Main Execution
 # -------------------------------
@@ -2541,6 +2904,7 @@ def run_all_analyses():
     print(f"📁 NZIA scenarios: {len(nzia_scenarios)} files")
 
     # Run analyses
+    #calculate_and_plot_cost_bars_range(base_file,nzia_scenarios)
     #plot_base_generation_mix(base_file) #JA Stand 2. Dez
     #plot_renewables_breakdown_100pct(base_file) #JA Stand 2. Dez
     #plot_renewables_installed_capacity_vertical(base_file) #JA Stand 2. Dez
@@ -2564,20 +2928,20 @@ def run_all_analyses():
     #    eps=0.25,  # tune sensitivity
     #    min_samples=10
     #)
-    #plot_cumulative_capacity_scatter( #JA Stand 2. Dez für Tracers
-    #    tech_list=tech_list,
-    ##    nzia_scenarios_dict=nzia_scenarios,
-    #    perform_clustering=False,  # enable clustering
-    #    eps=0.3,  # tune sensitivity
-    #    min_samples=3
-    #)
+    plot_cumulative_capacity_scatter( #JA Stand 2. Dez für Tracers
+        tech_list=tech_list,
+        nzia_scenarios_dict=nzia_scenarios,
+        perform_clustering=True,  # enable clustering
+        eps=0.3,  # tune sensitivity
+        min_samples=5
+    )
     #create_cumulative_capacity_csv_with_stats(
     #    nzia_scenarios_dict=nzia_scenarios,
     #    target_years=[2030, 2040],
     #    techs=["solarPV", "windon", "windoff"],
     #    output_csv="nzia_cumulative_totalcapacity.csv"
     #)
-    plot_capacity_violin_per_tech() #JA Stand 2. Dez
+    #plot_capacity_violin_per_tech() #JA Stand 2. Dez
 
 
     print("✅ All analyses completed!")

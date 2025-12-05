@@ -101,7 +101,7 @@ leg.get_frame().set_edgecolor("black")
 ax.set_ylim([0, 21.5])
 
 plt.tight_layout()
-fig.savefig("Relative_Increase_LNG_BCM.pdf", dpi=1000)
+fig.savefig("Relative_Increase_LNG_BCM.png", dpi=400)
 
 ###############################################################################
 
@@ -136,7 +136,7 @@ leg.get_frame().set_edgecolor("black")
 ax.set_ylim([0, 75])
 
 plt.tight_layout()
-fig.savefig("Buffer_LNG_BCM.pdf", dpi=1000)
+fig.savefig("Buffer_LNG_BCM.png", dpi=400)
 
 
 
