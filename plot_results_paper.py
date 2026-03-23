@@ -1109,12 +1109,12 @@ def plot_scrap_comparison(
 
 
 def plot_lng_analysis(
-    base_file=None,
-    nzia_scenarios_dict=None,
-    lng_file=None,
-    output_dir="plots/lng_analysis",
+        base_file=None,
+        nzia_scenarios_dict=None,
+        lng_file=None,
+        output_dir="plots/lng_analysis",
 ):
-    """Comprehensive LNG analysis with NZIA scenario range, LTC overlay, and boxplot"""
+    """Strict academic LNG analysis plot with large fonts, full frame, and straight vertical arrows."""
 
     if base_file is None:
         base_file = get_base_scenario()
@@ -1130,208 +1130,171 @@ def plot_lng_analysis(
 
     nzia_files = [f for f in nzia_scenarios_dict.values() if f.exists()]
 
-    # ----------------------------------------------------------------------
-    # 1. RANGE PLOT — NZIA scenario range, LTC area, and main trajectories
-    # ----------------------------------------------------------------------
+    # ======================================================================
+    # GLOBAL FONT & STYLE SETTINGS
+    # ======================================================================
+    FS_TICK = 20
+    FS_AXIS = 22
+    FS_LEGEND = 20
+    FS_ANNOTATION = 20
+    LINE_WIDTH = 3.0
 
-    # Long-term contract data (BCM)
+    # ======================================================================
+    # 1. RANGE PLOT
+    # ======================================================================
     ltc_data = {
-        2025: 82,
-        2026: 85,
-        2027: 99,
-        2028: 92,
-        2029: 92,
-        2030: 88,
-        2031: 86,
-        2032: 84,
-        2035: 57,
-        2040: 48,
+        2025: 82, 2026: 85, 2027: 99, 2028: 92, 2029: 92,
+        2030: 88, 2031: 86, 2032: 84, 2035: 57, 2040: 48,
     }
-    ltc_series = pd.Series(ltc_data).sort_index()
-    ltc_series = ltc_series.reindex(years).interpolate()
+    ltc_series = pd.Series(ltc_data).sort_index().reindex(years).interpolate()
 
-    plt.figure(figsize=(9, 5))
-    ax = plt.gca()
+    fig, ax = plt.subplots(figsize=(12, 8))
 
-    # --- Aggregate NZIA scenario data for range plot ---
-    nzia_arrays = []
-    for f in nzia_files:
-        series = load_lng(f, years)
-        nzia_arrays.append(series.values)
+    # --- FULL FRAME & ACADEMIC TICKS ---
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_color('black')
+        spine.set_linewidth(1.5)
+
+    # PAD=10 hinzugefügt, um Abstand zwischen Ticks und Zahlen zu vergrößern
+    ax.tick_params(axis='both', which='major', labelsize=FS_TICK, length=8, width=1.5,
+                   direction='in', top=True, right=True, pad=10)
+
+    # --- Load Data ---
+    base_series = load_lng(base_file, years)
+    best_case_series = load_lng(lng_file, years)
+
+    nzia_arrays = [load_lng(f, years).values for f in nzia_files]
     if nzia_arrays:
         nzia_array = np.vstack(nzia_arrays)
         min_vals = np.nanmin(nzia_array, axis=0)
         max_vals = np.nanmax(nzia_array, axis=0)
     else:
-        # fallback: empty arrays (avoid errors)
         min_vals = np.zeros(len(list(years)))
         max_vals = np.zeros(len(list(years)))
 
-    # --- NZIA range band ---
-    ax.fill_between(
-        years,
-        min_vals,
-        max_vals,
-        color="#B0C4DE",
-        alpha=0.45,
-        label="NZIA scenario range",
-        zorder=1,
+    # --- Plotting ---
+    # NZIA Range
+    ax.fill_between(years, min_vals, max_vals, color="#CCCCCC", alpha=0.6, label="NZIA Scenario Range", zorder=1)
+
+    # LTC Line
+    ax.plot(ltc_series.index, ltc_series.values, color="#B22222", linewidth=LINE_WIDTH, linestyle="-",
+            label="Long-Term Contracts", zorder=2)
+
+    # Base and Best-case
+    ax.plot(base_series.index, base_series.values, color="black", linewidth=LINE_WIDTH, linestyle="-",
+            label="Base Scenario", zorder=4)
+    ax.plot(best_case_series.index, best_case_series.values, color="#00509E", linewidth=LINE_WIDTH, linestyle="--",
+            label="Best-case Scenario", zorder=5)
+
+    # --- Straight, Vertical Annotations ---
+    peak_year = base_series.idxmax()
+    peak_val = base_series.max()
+
+    # Arrow 1: Coal Phase-Out
+    ax.annotate(
+        "Coal Phase-Out",
+        xy=(peak_year, peak_val),
+        xytext=(peak_year, peak_val + 15),
+        ha="center",
+        fontsize=FS_ANNOTATION,
+        color="black",
+        fontweight="bold",
+        arrowprops=dict(arrowstyle="-|>", color="black", lw=2.5, shrinkA=2, shrinkB=5)
     )
 
-    # --- Long-term contracts (grey area + dashed line) ---
-    ax.fill_between(
-        ltc_series.index, 0, ltc_series.values, color="#BEBEBE", alpha=0.25, zorder=2
-    )
-    ax.plot(
-        ltc_series.index,
-        ltc_series.values,
-        color="#6E6E6E",
-        linewidth=1.6,
-        linestyle="--",
-        label="long-term contracts",
-        zorder=3,
-    )
+    # Arrow 2: Gas Phase-Out
+    near_zero = base_series[base_series <= 2.0]
+    if not near_zero.empty:
+        phaseout_year = near_zero.index.min()
+        phaseout_val = base_series[phaseout_year]
+    else:
+        phaseout_year = base_series.idxmin()
+        phaseout_val = base_series.min()
 
-    # --- Base and Best-case trajectories ---
-    base_series = load_lng(base_file, years)
-    best_case_series = load_lng(lng_file, years)
-    ax.plot(
-        base_series.index,
-        base_series.values,
-        color="#1F3A93",
-        linewidth=2.4,
-        label="current policies",
-        zorder=4,
-    )
-    ax.plot(
-        best_case_series.index,
-        best_case_series.values,
-        color="#008080",
-        linewidth=2.4,
-        linestyle="--",
-        label="best-case scenario",
-        zorder=5,
+    ax.annotate(
+        "Gas Phase-Out",
+        xy=(phaseout_year, phaseout_val),
+        xytext=(phaseout_year, phaseout_val + 20),
+        ha="center",
+        fontsize=FS_ANNOTATION,
+        color="black",
+        fontweight="bold",
+        arrowprops=dict(arrowstyle="-|>", color="black", lw=2.5, shrinkA=2, shrinkB=5)
     )
 
     # --- Formatting ---
-    ax.set_xlim(min(years) - 1, max(years) + 1)
-    ax.set_xticks([2025, 2030, 2035, 2040])
-    ax.set_xlabel("Year", fontsize=10)
-    ax.set_ylabel("LNG Demand and Supply [bcm]", fontsize=10)
-    ax.set_title(
-        "LNG demand trajectories vs. long-term contracts", fontsize=12, weight="bold"
-    )
+    # LIMITS ANGEPASST: +/- 0.5 Jahre, damit 2025 nicht an der Y-Achse klebt
+    ax.set_xlim(min(years) - 0.5, max(years) + 0.5)
+    ax.set_ylim(bottom=0, top=max(ltc_series.max(), max_vals.max()) + 25)
 
-    ax.grid(axis="y", linestyle=":", color="0.8", linewidth=0.8)
-    ax.legend(frameon=True, fontsize=9, loc="upper right")
+    # Setze explizite X-Ticks, damit nicht plötzlich "2024.5" als Tick auftaucht
+    ax.set_xticks(target_years)
 
-    # increase tick label size
-    ax.tick_params(axis="x", labelsize=10)
-    ax.tick_params(axis="y", labelsize=10)
+    ax.set_ylabel("LNG Demand and Supply [bcm]", fontsize=FS_AXIS, labelpad=15)
+
+    ax.grid(axis="y", linestyle="--", color="#AAAAAA", linewidth=1.0, alpha=0.7)
+
+    ax.legend(frameon=True, edgecolor="black", facecolor="white", framealpha=1.0,
+              fontsize=FS_LEGEND, loc="upper right")
 
     plt.tight_layout()
     plt.savefig(out_path / "lng_demand_range_plot.pdf", dpi=600, bbox_inches="tight")
-    plt.show()
-    print("✔ LNG demand range plot saved")
+    plt.close()
+    print("✔ Strict journal LNG demand lineplot saved")
 
-    # ----------------------------------------------------------------------
-    # 2. CUMULATIVE PERCENTAGE DEVIATION BOXPLOT (no outliers shown)
-    # ----------------------------------------------------------------------
-    base_cumulative = load_lng(base_file, years).cumsum()
+    # ======================================================================
+    # 2. CUMULATIVE PERCENTAGE DEVIATION BOXPLOT
+    # ======================================================================
+    base_cumulative = base_series.cumsum()
     nzia_cumulative = [load_lng(f, years).cumsum() for f in nzia_files]
 
-    # prepare DataFrame where each column is one scenario cumulative series
-    # if nzia_cumulative empty, handle gracefully
     if nzia_cumulative:
         data = pd.DataFrame({i: s for i, s in enumerate(nzia_cumulative)}).T
-        # pct_dev: columns for target years (we want distribution across scenarios)
-        pct_dev = pd.DataFrame(
-            {
-                y: 100 * (data[y] - base_cumulative[y]) / base_cumulative[y]
-                for y in target_years
-            }
-        )
+        pct_dev = pd.DataFrame({y: 100 * (data[y] - base_cumulative[y]) / base_cumulative[y] for y in target_years})
     else:
         pct_dev = pd.DataFrame({y: pd.Series(dtype=float) for y in target_years})
 
-    plt.figure(figsize=(9, 5))
-    ax = plt.gca()
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # --- FULL FRAME & ACADEMIC TICKS ---
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_color('black')
+        spine.set_linewidth(1.5)
+
+    ax.tick_params(axis='both', which='major', labelsize=FS_TICK, length=8, width=1.5,
+                   direction='in', top=True, right=True, pad=10)
+
     positions = np.arange(len(target_years))
     box_data = [pct_dev[y].dropna() for y in target_years]
 
-    # draw boxplot without fliers/outliers (showfliers=False)
-    median_color = "#1F78B4"
-    median_linewidth = 2.0
+    median_color = "black"
+
     bp = ax.boxplot(
-        box_data,
-        positions=positions,
-        widths=0.35,
-        patch_artist=True,
-        showfliers=False,  # hide outliers
-        boxprops=dict(facecolor="#A6CEE3", alpha=0.75, linewidth=1.2),
-        medianprops=dict(color=median_color, linewidth=median_linewidth),
-        whiskerprops=dict(color="#666666", linestyle="--", linewidth=1.2),
-        capprops=dict(color="#666666", linewidth=1.2),
-        flierprops=dict(
-            marker="o", markersize=4, markeredgecolor="none"
-        ),  # not shown since showfliers=False
+        box_data, positions=positions, widths=0.4, patch_artist=True, showfliers=False,
+        boxprops=dict(facecolor="#D3D3D3", edgecolor="black", linewidth=2.0),
+        medianprops=dict(color=median_color, linewidth=3.0),
+        whiskerprops=dict(color="black", linestyle="--", linewidth=2.0),
+        capprops=dict(color="black", linewidth=2.0)
     )
 
-    # Formatting for readability (larger fonts etc.)
-    ax.set_title(
-        "Cumulative LNG demand – Compared to current policies",
-        fontsize=12,
-        weight="bold",
-    )
-    ax.set_xlabel("Year", fontsize=10)
-    ax.set_ylabel("Deviation from base [%]", fontsize=10)
+    ax.axhline(0, color="black", linewidth=1.5, linestyle="-", zorder=0)
+
+    # --- Formatting ---
+    # LIMITS ANGEPASST: Puffer für den Boxplot, damit 2025 nicht links klebt
+    ax.set_xlim(-0.5, len(target_years) - 0.5)
+
+    ax.set_ylabel("Cumulative Deviation from Base [%]", fontsize=FS_AXIS, labelpad=15)
     ax.set_xticks(positions)
-    ax.set_xticklabels(target_years, fontsize=10)
-    ax.grid(axis="y", linestyle=":", color="0.8", linewidth=0.8)
+    ax.set_xticklabels(target_years, fontsize=FS_TICK)
 
-    ax.tick_params(axis="x", labelsize=10)
-    ax.tick_params(axis="y", labelsize=10)
-
-    # Draw thin dashed horizontal lines from each median to the y-axis (no numeric text)
-    # Use the same color and thickness as the median, with slightly lower alpha
-    # We'll draw from the left axis limit to the box x position.
-    x_left = ax.get_xlim()[0]  # left axis coordinate
-    for i, med_line in enumerate(bp.get("medians", [])):
-        # median line y data; average the y-values to get a single median y
-        ydata = med_line.get_ydata()
-        if len(ydata) == 0:
-            continue
-        median_val = float(np.mean(ydata))
-
-        # horizontal dashed line from left axis to the box position using median style
-        ax.plot(
-            [x_left, positions[i]],
-            [median_val, median_val],
-            color=median_color,
-            linestyle="--",
-            linewidth=median_linewidth,
-            alpha=0.65,
-            zorder=2,
-        )
-
-        # small tick at the y-axis to indicate the median point (no numeric label)
-        ax.plot(
-            [x_left],
-            [median_val],
-            marker="|",
-            markersize=14,
-            color=median_color,
-            markeredgewidth=1.6,
-            alpha=0.9,
-            zorder=3,
-        )
+    ax.grid(axis="y", linestyle="--", color="#AAAAAA", linewidth=1.0, alpha=0.7)
 
     plt.tight_layout()
-    plt.savefig(
-        out_path / "lng_cumulative_pct_deviation.pdf", dpi=600, bbox_inches="tight"
-    )
-    plt.show()
-    print("✔ LNG cumulative deviation plot saved")
+    plt.savefig(out_path / "lng_cumulative_pct_deviation.pdf", dpi=600, bbox_inches="tight")
+    plt.close()
+    print("✔ Strict journal LNG cumulative deviation boxplot saved")
 
 
 def export_lng_data(
@@ -2704,34 +2667,40 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
     # ================================================================
     FS_TICK = 20
     FS_AXIS = 22
-    FS_LEGEND = 20
     FS_WINDOW_LABEL = 20
+
+    # Angepasste Größe für die 1-Zeilen-Legende
+    FS_LEGEND_1ROW = 18
 
     # Layout
     FIXED_MARGINS = dict(top=0.82, bottom=0.12, left=0.15, right=0.95)
     Y_LABEL_COORDS = (-0.14, 0.5)
-    LEGEND_Y_POS = 1.13
+    LEGEND_Y_POS = 1.05
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    components = ["Remanufacturing", "Stockpile", "Manufacturing"]
-    labels = ["Remanufacturing", "Stockpile", "Manufacturing"]
-    colors = ["#FDC5B5", "#F99B7D", "#F76C5E"]
-    hatches = ["..", "//", "xx"]
+    # --- NEW COMPONENT ORDER & REVIEWER COLORS ---
+    components = ["Stockpile", "Manufacturing", "Remanufacturing"]
+    labels = ["Stockpile", "Manufacturing", "Remanufacturing"]
+
+    # HEX conversions for rgb(168,216,234), rgb(170,150,218), rgb(252,186,211)
+    colors = ["#A8D8EA", "#AA96DA", "#FCBAD3"]
+
+    # The "egg colorish" thing for Imports: rgb(255, 255, 210)
+    imports_color = "#FFFFD2"
 
     # --- DEFINITIONS ---
-    # Colors for the 4 windows
     window_colors_list = ["#F4E100", "#3A737D", "#05A5D2", "#D79327"]
-    # Markers: Diamond, Circle, Triangle_Up, Square
     window_markers_list = ["D", "o", "^", "s"]
 
+    # Hatching removed
     base_patches = [
-        mpatches.Patch(facecolor=fc, edgecolor="black", hatch=h, label=lab)
-        for fc, h, lab in zip(colors, hatches, labels)
+        mpatches.Patch(facecolor=fc, edgecolor="black", label=lab)
+        for fc, lab in zip(colors, labels)
     ]
     imports_patch = mpatches.Patch(
-        facecolor="#D3D3D3", edgecolor="black", label="Imports"
+        facecolor=imports_color, edgecolor="black", label="Imports"
     )
     nzia_line = Line2D(
         [0], [0], color="red", linestyle="--", linewidth=2, label="NZIA Benchmark"
@@ -2744,11 +2713,8 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         df_tech["year"] = df_tech["year"].astype(int)
         windows = sorted(df_tech["year"].unique())
 
-        # Map each window year to a specific color and marker index
-        # This prevents mismatches if windows are missing or out of order
         win_to_idx = {win: i for i, win in enumerate(windows)}
 
-        # Label Helpers
         winid_to_label = {
             row["year"]: row["window_label"]
             for _, row in df_tech.drop_duplicates(
@@ -2758,7 +2724,6 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         window_labels = [winid_to_label[w] for w in windows]
         x_base = np.arange(len(windows))
 
-        # Bar Width
         max_clusters = max(df_tech.groupby("year")["cluster_id"].nunique())
         total_width = 0.8
         gap = 0.02
@@ -2770,22 +2735,28 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         fig_rel, ax_rel = plt.subplots(figsize=(12, 7))
         fig_rel.subplots_adjust(**FIXED_MARGINS)
 
+        # DEFINE PHYSICAL OFFSET TRANSFORM FOR RELATIVE PLOT (wie im Absolute Plot)
+        offset_trans_rel = mtransforms.ScaledTranslation(
+            0, 20 / 72, fig_rel.dpi_scale_trans
+        )
+        text_trans_rel = ax_rel.transData + offset_trans_rel
+
         for i, win in enumerate(windows):
             df_win = df_tech[df_tech["year"] == win]
             clusters_this_win = sorted(df_win["cluster_id"].unique())
             start_offset = (
-                -(len(clusters_this_win) * width + (len(clusters_this_win) - 1) * gap)
-                / 2
-                + width / 2
+                    -(len(clusters_this_win) * width + (len(clusters_this_win) - 1) * gap)
+                    / 2
+                    + width / 2
             )
 
             for j, cluster in enumerate(clusters_this_win):
                 df_cluster = df_win[df_win["cluster_id"] == cluster]
                 row = df_cluster[
                     [
-                        "Remanufacturing",
                         "Stockpile",
                         "Manufacturing",
+                        "Remanufacturing",
                         "Totals (incl. Imports)",
                     ]
                 ].mean()
@@ -2794,20 +2765,20 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
                 total = row["Totals (incl. Imports)"]
                 denom = total if total > 0 else 1
 
-                # Background
+                # Background (Imports)
                 ax_rel.bar(
                     x_pos,
                     1,
                     width=width,
-                    facecolor="#D3D3D3",
+                    facecolor=imports_color,
                     edgecolor="black",
                     linewidth=0.8,
                     zorder=0,
                 )
 
-                # Stack
+                # Stack (Hatching removed)
                 bottom = 0
-                for comp, color, hatch in zip(components, colors, hatches):
+                for comp, color in zip(components, colors):
                     frac = row[comp] / denom
                     ax_rel.bar(
                         x_pos,
@@ -2816,28 +2787,33 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
                         bottom=bottom,
                         facecolor=color,
                         edgecolor="black",
-                        hatch=hatch,
                         linewidth=0.8,
                         zorder=1,
                     )
                     bottom += frac
 
                 font_size = max(6, min(16, 80 / len(clusters_this_win)))
+
+                # NUTZE HIER DEN PHYSICAL OFFSET (text_trans_rel) statt "bottom + 0.02"
                 ax_rel.text(
                     x_pos,
-                    bottom + 0.02,
+                    bottom,
                     f"C{int(cluster)}",
                     ha="center",
                     va="bottom",
                     rotation=90,
                     fontsize=font_size,
+                    transform=text_trans_rel,
                 )
 
         ax_rel.axhline(0.4, color="red", linestyle="--", linewidth=2)
         ax_rel.set_xticks(x_base)
         ax_rel.set_xticklabels(window_labels, fontsize=FS_WINDOW_LABEL)
         ax_rel.tick_params(axis="y", labelsize=FS_TICK)
-        ax_rel.set_ylim(0, 1.08)
+
+        # Die y-Achse braucht evtl. minimal mehr Luft nach oben wegen des fixen Offsets
+        ax_rel.set_ylim(0, 1.15)
+
         ax_rel.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda y, _: f"{int(y * 100)}%")
         )
@@ -2846,9 +2822,9 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         ax_rel.grid(axis="y", alpha=0.3)
         ax_rel.legend(
             handles=[nzia_line],
-            fontsize=FS_LEGEND,
+            fontsize=20,
             frameon=True,
-            loc="upper center",
+            loc="lower center",
             bbox_to_anchor=(0.5, LEGEND_Y_POS),
             ncol=1,
             borderaxespad=0,
@@ -2877,18 +2853,18 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
             df_win = df_tech[df_tech["year"] == win]
             clusters_this_win = sorted(df_win["cluster_id"].unique())
             start_offset = (
-                -(len(clusters_this_win) * width + (len(clusters_this_win) - 1) * gap)
-                / 2
-                + width / 2
+                    -(len(clusters_this_win) * width + (len(clusters_this_win) - 1) * gap)
+                    / 2
+                    + width / 2
             )
 
             for j, cluster in enumerate(clusters_this_win):
                 df_cluster = df_win[df_win["cluster_id"] == cluster]
                 row = df_cluster[
                     [
-                        "Remanufacturing",
                         "Stockpile",
                         "Manufacturing",
+                        "Remanufacturing",
                         "Totals (incl. Imports)",
                     ]
                 ].mean()
@@ -2896,20 +2872,22 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
 
                 total_height = row["Totals (incl. Imports)"]
                 stack_height = (
-                    row["Remanufacturing"] + row["Stockpile"] + row["Manufacturing"]
+                        row["Stockpile"] + row["Manufacturing"] + row["Remanufacturing"]
                 )
 
-                # Bars
+                # Bars - Background (Total = acts as Imports)
                 ax_abs.bar(
                     x_pos,
                     total_height,
                     width=width,
-                    facecolor="#D3D3D3",
+                    facecolor=imports_color,
                     edgecolor="black",
                     linewidth=0.8,
                 )
+
+                # Stack (Hatching removed)
                 bottom = 0
-                for comp, color, hatch in zip(components, colors, hatches):
+                for comp, color in zip(components, colors):
                     val = row[comp]
                     ax_abs.bar(
                         x_pos,
@@ -2918,7 +2896,6 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
                         bottom=bottom,
                         facecolor=color,
                         edgecolor="black",
-                        hatch=hatch,
                         linewidth=0.8,
                     )
                     bottom += val
@@ -2948,31 +2925,32 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
         ax_abs.yaxis.set_label_coords(*Y_LABEL_COORDS)
         ax_abs.grid(axis="y", alpha=0.3)
 
-        abs_handles = [imports_patch, base_patches[1], base_patches[2], base_patches[0]]
+        abs_handles = [base_patches[0], base_patches[1], base_patches[2], imports_patch]
+
+        # ONE-LINE LEGEND TRICKS APPLIED HERE
         ax_abs.legend(
             handles=abs_handles,
-            fontsize=FS_LEGEND,
+            fontsize=FS_LEGEND_1ROW,
             frameon=True,
-            loc="upper center",
+            loc="lower center",
             bbox_to_anchor=(0.5, LEGEND_Y_POS),
-            ncol=len(abs_handles),
+            ncol=4,  # Force 1 row
+            columnspacing=0.8,  # Squish columns together
+            handletextpad=0.4,  # Squish text closer to color box
+            borderaxespad=0.
         )
 
         fig_abs.savefig(output_dir / f"{tech}_clustered_absolute_window.png", dpi=1000)
         plt.close(fig_abs)
 
         # =====================================================
-        # 3. SCATTER OVERLAY WITH CLUSTER LABELS (RESTORED & IMPROVED)
+        # 3. SCATTER OVERLAY WITH CLUSTER LABELS
         # =====================================================
         fig_scat, ax_scat = plt.subplots(figsize=(10, 8))
 
-        # A. Plot Scatter Points using groupby (SAFE METHOD)
-        # This matches your original logic exactly
+        # A. Plot Scatter Points using groupby
         for win, subset in df_tech.groupby("year"):
-            # Determine index for this window to get correct color/marker
             idx = win_to_idx.get(win, 0)
-
-            # Cyclic selection
             marker_char = window_markers_list[idx % len(window_markers_list)]
             color_hex = window_colors_list[idx % len(window_colors_list)]
 
@@ -2985,7 +2963,7 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
                 alpha=0.6,
                 s=90,
                 linewidths=0.6,
-                label=None,  # We build legend manually below
+                label=None,
                 zorder=3,
             )
 
@@ -3011,7 +2989,6 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
             idx = win_to_idx.get(win_val, 0)
             color = window_colors_list[idx % len(window_colors_list)]
 
-            # Draw centroid circle
             circle = plt.Circle(
                 (row["Remanufacturing"], row["Manufacturing"]),
                 radius=radius,
@@ -3062,7 +3039,7 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
                 [0],
                 [0],
                 marker=mk,
-                color="w",  # invisible line
+                color="w",
                 markerfacecolor=col,
                 markeredgecolor="black",
                 markeredgewidth=0.8,
@@ -3076,8 +3053,8 @@ def plot_clustered_benchmark_from_window_df(df_with_clusters, output_dir):
             handles=legend_handles,
             title="Period",
             frameon=True,
-            fontsize=16,  # Controls the labels
-            title_fontsize=16,  # Controls the title "Window"
+            fontsize=16,
+            title_fontsize=16,
             loc="best",
         )
 
@@ -3612,7 +3589,7 @@ def run_all_analyses():
     # plot_renewables_breakdown_100pct(base_file) #JA Stand 2. Dez
     # plot_renewables_installed_capacity_vertical(base_file) #JA Stand 2. Dez
     # plot_scrap_comparison(base_file, nzia_scenarios)
-    # plot_lng_analysis(base_file, nzia_scenarios)
+    plot_lng_analysis(base_file, nzia_scenarios)
     # export_lng_data(base_file, nzia_scenarios)
     # plot_system_costs_boxplot(base_file, nzia_scenarios)
     # plot_nzia_boxplots(
@@ -3624,20 +3601,20 @@ def run_all_analyses():
     # plot_window_scatter_relative_single(tech_list=tech_list,
     #    nzia_scenarios_dict=nzia_scenarios)
 
-    # plot_window_capacity_scatter( #JA
-    #    tech_list=tech_list,
-    #    nzia_scenarios_dict=nzia_scenarios,
-    #    perform_clustering=True,  # enable clustering
-    #    eps=0.25,  # tune sensitivity
-    #    min_samples=10
-    # )
-    plot_cumulative_capacity_scatter(  # JA Stand 2. Dez für Tracers
+    plot_window_capacity_scatter( #NEEDED FOR REVISION ROUND 1
         tech_list=tech_list,
         nzia_scenarios_dict=nzia_scenarios,
         perform_clustering=True,  # enable clustering
-        eps=0.3,  # tune sensitivity
-        min_samples=5,
+        eps=0.25,  # tune sensitivity
+        min_samples=10
     )
+    #plot_cumulative_capacity_scatter(  # JA Stand 2. Dez für Tracers
+    #    tech_list=tech_list,
+    #    nzia_scenarios_dict=nzia_scenarios,
+    #    perform_clustering=True,  # enable clustering
+    #    eps=0.3,  # tune sensitivity
+    #    min_samples=5,
+    #)
     # create_cumulative_capacity_csv_with_stats(
     #    nzia_scenarios_dict=nzia_scenarios,
     #    target_years=[2030, 2040],
