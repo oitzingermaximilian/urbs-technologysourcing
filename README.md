@@ -20,6 +20,7 @@ python run_model.py --mode perfect --lr LR1
 ## Repository structure
 
 - `urbs/` – core urbs model code (Pyomo model, IO, reporting, plotting)
+- `urbs/extension` - core extension model code (defined as abstract interoperable scripts)
 - `Input/` – model input datasets (the default run expects `Input/urbs_intertemporal_2050/`)
 - `run_model.py` – main command-line runner for the LR scenarios
 - `run_all_after_another.sh` – convenience script to run multiple LR scenarios sequentially
@@ -78,7 +79,7 @@ The run copies the used input data and the used run script into the result folde
 
 `run_model.py` supports:
 
-- `--mode {perfect,rolling}` (default: `perfect`)
+- `--mode {perfect}` (default: `perfect`)
 - `--lr {LR1,LR3_5,LR4,LR5,LR6,LR7,LR8,LR9,LR10,LR25}` (default: `LR5`)
 - `--window N` (used by the alternative myopic mode code path)
 
