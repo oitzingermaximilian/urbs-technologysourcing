@@ -7,7 +7,7 @@ import pandas as pd
 from collections import defaultdict
 
 # from urbs_auto_plotting import plot_from_excel
-import plot_auto
+
 
 
 def read_carry_over_from_excel(result_path, scenario_name):
