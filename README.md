@@ -75,6 +75,43 @@ After a run, look in:
 
 The run copies the used input data and the used run script into the result folder for reproducibility.
 
+## Model workflow (perfect foresight)
+
+This repository is run via `run_model.py` in **perfect foresight** mode.
+
+### Step-by-step workflow
+
+1. **Run command (entry point)**
+   - Reviewer runs:
+     ```bash
+     python run_model.py --mode perfect --lr LR1
+     ```
+   - `run_model.py` parses CLI arguments and sets the learning-rate scenario via:
+     - `os.environ["URBS_LR"] = args.lr`
+
+2. **Input selection**
+   - `run_model.py` uses the default input folder:
+     - `Input/urbs_intertemporal_2050`
+
+3. **Create output folder**
+   - A timestamped folder is created under:
+     - `result/`
+   - For reproducibility, `run_model.py` copies the used input data and the run script into that result folder.
+
+4. **Model build + extension integration**
+   - `run_model.py` calls:
+     - `urbs.run_scenario(...)`
+   - Internally, the optimization model is constructed in:
+     - `urbs/model.py`
+   - **The extension logic is integrated/used during model creation in `urbs/model.py`.**
+     (This is the central place where the Pyomo model structure—including any added variables/constraints from the extension—is assembled.)
+
+5. **Solve**
+   - The solver is chosen in `run_model.py` (currently `gurobi`) and executed through Pyomo.
+
+6. **Write results**
+   - Results are written into the corresponding `result/<run-name-timestamp>/` folder.
+
 ## CLI options (run_model.py)
 
 `run_model.py` supports:
